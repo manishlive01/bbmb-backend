@@ -10,7 +10,7 @@ namespace BBMB_Budget.Features.Geographical.Districts.GetById
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/Districts/Get-District-ById", async (
+            app.MapPost("/api/Get-District-ById", async (
                 [FromBody] GetByIdRequestDto dto,
                 IMediator mediator,
                 CancellationToken ct) =>

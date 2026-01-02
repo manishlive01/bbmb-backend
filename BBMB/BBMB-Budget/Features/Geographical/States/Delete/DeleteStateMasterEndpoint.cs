@@ -10,7 +10,7 @@ namespace BBMB_Budget.Features.Geographical.States.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/states/Delete-State", async (
+            app.MapDelete("/api/Delete-State", async (
                 [FromBody] GetByIdRequestDto dto,
                 IMediator mediator,
                 CancellationToken ct) =>

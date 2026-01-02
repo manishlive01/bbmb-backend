@@ -10,7 +10,7 @@ namespace BBMB_Budget.Features.Geographical.States.GetById
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/states/Get-State-ById", async (
+            app.MapPost("/api/Get-State-ById", async (
                 [FromBody] GetByIdRequestDto dto,
                 IMediator mediator,
                 CancellationToken ct) =>
