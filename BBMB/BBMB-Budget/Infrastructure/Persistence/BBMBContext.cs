@@ -1,4 +1,5 @@
-﻿using BBMB_Budget.Features.Geographical.States.Entities;
+﻿using BBMB_Budget.Features.Geographical.Districts.Entities;
+using BBMB_Budget.Features.Geographical.States.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace BBMB_Budget.Infrastructure.Persistence
@@ -10,5 +11,6 @@ namespace BBMB_Budget.Infrastructure.Persistence
         {
         }
         public DbSet<StateMaster> StateMasters { get; set; }
+        public DbSet<DistrictMaster> DistrictMasters { get; set; }
     }
 }

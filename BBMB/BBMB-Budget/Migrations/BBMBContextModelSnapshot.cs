@@ -22,7 +22,59 @@ namespace BBMB_Budget.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("BBMB_Budget.Features.Geographical.StateMaster.Entities.StateMaster", b =>
+            modelBuilder.Entity("BBMB_Budget.Features.Geographical.Districts.Entities.DistrictMaster", b =>
+                {
+                    b.Property<int>("DistrictMasterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("district_master_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DistrictMasterId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("DistrictCode")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasColumnName("district_code");
+
+                    b.Property<string>("DistrictName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("district_name");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<int>("StateMasterId")
+                        .HasColumnType("integer")
+                        .HasColumnName("state_master_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("DistrictMasterId");
+
+                    b.HasIndex("StateMasterId");
+
+                    b.ToTable("district_master");
+                });
+
+            modelBuilder.Entity("BBMB_Budget.Features.Geographical.States.Entities.StateMaster", b =>
                 {
                     b.Property<int>("StateMasterId")
                         .ValueGeneratedOnAdd()
@@ -66,6 +118,22 @@ namespace BBMB_Budget.Migrations
                     b.HasKey("StateMasterId");
 
                     b.ToTable("state_master");
+                });
+
+            modelBuilder.Entity("BBMB_Budget.Features.Geographical.Districts.Entities.DistrictMaster", b =>
+                {
+                    b.HasOne("BBMB_Budget.Features.Geographical.States.Entities.StateMaster", "StateMasters")
+                        .WithMany("DistrictMasters")
+                        .HasForeignKey("StateMasterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("StateMasters");
+                });
+
+            modelBuilder.Entity("BBMB_Budget.Features.Geographical.States.Entities.StateMaster", b =>
+                {
+                    b.Navigation("DistrictMasters");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,7 +1,5 @@
-﻿using BBMB_Budget.Features.Geographical.States.Entities;
-using BBMB_Budget.Features.Geographical.States.GetById.Dtos;
+﻿using BBMB_Budget.Features.Geographical.States.GetById.Dtos;
 using BBMB_Budget.Infrastructure.Persistence;
-using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,14 +21,18 @@ namespace BBMB_Budget.Features.Geographical.States.GetById
         {
             var id = request.Request.Id;
 
-            var state = await _context.StateMasters
+            return await _context.StateMasters
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x =>
+                .Where(x =>
                     x.StateMasterId == id &&
-                    x.IsDeleted == false,
-                    ct);
-
-            return state?.Adapt<GetStateMasterByIdResponseDto>();
+                    !x.IsDeleted)
+                .Select(x => new GetStateMasterByIdResponseDto
+                {
+                    StateCode = x.StateCode,
+                    StateName = x.StateName,
+                    IsActive = x.IsActive
+                })
+                .FirstOrDefaultAsync(ct);
         }
     }
 }

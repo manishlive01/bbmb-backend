@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BBMB_Budget.Features.Geographical.Districts.Entities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BBMB_Budget.Features.Geographical.States.Entities
@@ -35,5 +36,8 @@ namespace BBMB_Budget.Features.Geographical.States.Entities
 
         [Column("deleted_at")]
         public DateTime? DeletedAt { get; set; }
+
+        public virtual ICollection<DistrictMaster> DistrictMasters { get; set; } = new List<DistrictMaster>();
+
     }
 }
