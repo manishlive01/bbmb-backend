@@ -16,7 +16,7 @@ namespace BBMB_Budget.Features.Geographical.Districts.GetById
                      src => src.StateMasterId)
 
                 .Map(dest => dest.StateName,
-                     src => src.StateMaster.StateName)
+                     src => src.StateMasters.StateName)
 
                 // ===== District fields =====
                 .Map(dest => dest.DistrictCode,

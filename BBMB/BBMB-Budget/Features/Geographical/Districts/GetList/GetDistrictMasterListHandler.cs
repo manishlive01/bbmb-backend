@@ -27,7 +27,7 @@ namespace BBMB_Budget.Features.Geographical.Districts.GetList
                 {
                     DistrictMasterId = x.DistrictMasterId,
                     StateMasterId = x.StateMasterId,
-                    StateName = x.StateMaster.StateName,
+                    StateName = x.StateMasters.StateName,
                     DistrictCode = x.DistrictCode,
                     DistrictName = x.DistrictName,
                     IsActive = x.IsActive

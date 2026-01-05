@@ -41,7 +41,7 @@ namespace BBMB_Budget.Features.Geographical.Districts.Entities
         public DateTime? DeletedAt { get; set; }
 
         [ForeignKey(nameof(StateMasterId))]
-        public virtual StateMaster StateMaster { get; set; }
+        public virtual StateMaster StateMasters { get; set; }
 
     }
 }

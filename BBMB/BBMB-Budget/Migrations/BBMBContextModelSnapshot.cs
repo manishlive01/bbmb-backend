@@ -22,6 +22,160 @@ namespace BBMB_Budget.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("BBMB_Budget.Features.Budgets.BudgetTypes.Entities.BudgetTypeMaster", b =>
+                {
+                    b.Property<int>("BudgetTypeMasterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("budget_type_master_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BudgetTypeMasterId"));
+
+                    b.Property<string>("BudgetTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("budget_type_code");
+
+                    b.Property<string>("BudgetTypeName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("budget_type_name");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("BudgetTypeMasterId");
+
+                    b.ToTable("budget_type_master");
+                });
+
+            modelBuilder.Entity("BBMB_Budget.Features.Budgets.Budgets.Entities.BudgetMaster", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal?>("BudgetAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("budget_amount");
+
+                    b.Property<string>("BudgetDescription")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("budget_description");
+
+                    b.Property<int?>("BudgetTypeMasterId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CalendarYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("calendar_year");
+
+                    b.Property<string>("DetailAccCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("detail_acc_code");
+
+                    b.Property<int>("DivSection")
+                        .HasColumnType("integer")
+                        .HasColumnName("div_section");
+
+                    b.Property<int>("DivisionCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("division_code");
+
+                    b.Property<string>("MajorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("major_acc_code");
+
+                    b.Property<string>("MinorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("minor_acc_code");
+
+                    b.Property<string>("ObjectAccCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("object_acc_code");
+
+                    b.Property<decimal?>("ProposedBudget")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("proposed_budget");
+
+                    b.Property<decimal?>("RevisedAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("revised_amount");
+
+                    b.Property<int>("SequenceNo")
+                        .HasColumnType("integer")
+                        .HasColumnName("sequence_no");
+
+                    b.Property<string>("SubMajorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("sub_major_acc_code");
+
+                    b.Property<string>("SubMinorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("sub_minor_acc_code");
+
+                    b.Property<string>("UserCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("user_code");
+
+                    b.Property<string>("WorkCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("work_code");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetTypeMasterId");
+
+                    b.ToTable("budget_master");
+                });
+
             modelBuilder.Entity("BBMB_Budget.Features.Geographical.Districts.Entities.DistrictMaster", b =>
                 {
                     b.Property<int>("DistrictMasterId")
@@ -120,6 +274,15 @@ namespace BBMB_Budget.Migrations
                     b.ToTable("state_master");
                 });
 
+            modelBuilder.Entity("BBMB_Budget.Features.Budgets.Budgets.Entities.BudgetMaster", b =>
+                {
+                    b.HasOne("BBMB_Budget.Features.Budgets.BudgetTypes.Entities.BudgetTypeMaster", "BudgetTypeMasters")
+                        .WithMany("BudgetMasters")
+                        .HasForeignKey("BudgetTypeMasterId");
+
+                    b.Navigation("BudgetTypeMasters");
+                });
+
             modelBuilder.Entity("BBMB_Budget.Features.Geographical.Districts.Entities.DistrictMaster", b =>
                 {
                     b.HasOne("BBMB_Budget.Features.Geographical.States.Entities.StateMaster", "StateMasters")
@@ -129,6 +292,11 @@ namespace BBMB_Budget.Migrations
                         .IsRequired();
 
                     b.Navigation("StateMasters");
+                });
+
+            modelBuilder.Entity("BBMB_Budget.Features.Budgets.BudgetTypes.Entities.BudgetTypeMaster", b =>
+                {
+                    b.Navigation("BudgetMasters");
                 });
 
             modelBuilder.Entity("BBMB_Budget.Features.Geographical.States.Entities.StateMaster", b =>
