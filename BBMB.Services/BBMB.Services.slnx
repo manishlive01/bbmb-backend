@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="BBMB.BudgetService/BBMB.BudgetService.csproj" />
+  <Project Path="BBMB.Services.AppHost/BBMB.Services.AppHost.csproj" />
+  <Project Path="BBMB.Services.ServiceDefaults/BBMB.Services.ServiceDefaults.csproj" />
+</Solution>

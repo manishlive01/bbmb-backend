@@ -1,6 +1,0 @@
-@BBMB_Budget_HostAddress = http://localhost:5119
-
-GET {{BBMB_Budget_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
