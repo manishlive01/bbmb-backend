@@ -9,6 +9,7 @@ using Mapster;
 using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
@@ -50,6 +51,10 @@ builder.Services.AddScoped<IMapper, ServiceMapper>();
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        name: "postgres-db");
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -157,7 +162,27 @@ app.UseExceptionHandler(appBuilder =>
 // ENDPOINT MAPPING
 // ===================================================================
 app.MapEndpoints();
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+
+        var response = new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                error = e.Value.Exception?.Message
+            })
+        };
+
+        await context.Response.WriteAsJsonAsync(response);
+    }
+});
+
 // ===================================================================
 // APPLICATION START
 // ===================================================================
