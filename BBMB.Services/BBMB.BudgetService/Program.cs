@@ -59,8 +59,7 @@ builder.Services.AddScoped<IMapper, ServiceMapper>();
 // SWAGGER / OPENAPI
 // ===================================================================
 builder.Services.AddOpenApi();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddHealthChecks();
+builder.Services.AddEndpointsApiExplorer(); 
 builder.Services.AddHealthChecks()
     .AddNpgSql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
