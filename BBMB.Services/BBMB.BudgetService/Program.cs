@@ -1,7 +1,8 @@
 ﻿// =======================
 // USING STATEMENTS
 // =======================
-using BBMB.BudgetService.Infrastructure.Persistence;
+using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Infrastructure.Persistence.FinanceContexts;
 using BBMB.BudgetService.Shared.Behaviors;
 using BBMB.BudgetService.Shared.Endpoints.EndpointExtensions;
 using FluentValidation;
@@ -16,13 +17,22 @@ using Microsoft.OpenApi;
 var builder = WebApplication.CreateBuilder(args);
 
 // ===================================================================
-// DATABASE CONFIGURATION
+// DATABASE CONFIGURATION (Single DB, Multiple Schemas)
 // ===================================================================
-builder.Services.AddDbContextPool<BBMBContext>(options =>
+
+// Budget
+builder.Services.AddDbContextPool<BudgetContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddScoped<DapperContext>();
+builder.Services.AddScoped<BudgetDContext>();
+
+// Finance
+builder.Services.AddDbContextPool<FinanceContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<FinanceDContext>();
 
 // ===================================================================
 // MEDIATR (CQRS)

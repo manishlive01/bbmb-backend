@@ -1,4 +1,4 @@
-﻿using BBMB.BudgetService.Infrastructure.Persistence;
+﻿using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +8,9 @@ namespace BBMB.BudgetService.Features.Budgets.BudgetTypes.Delete
     public class DeleteBudgetTypeMasterHandler
         : IRequestHandler<DeleteBudgetTypeMasterCommand, Response>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public DeleteBudgetTypeMasterHandler(BBMBContext context)
+        public DeleteBudgetTypeMasterHandler(BudgetContext context)
         {
             _context = context;
         }

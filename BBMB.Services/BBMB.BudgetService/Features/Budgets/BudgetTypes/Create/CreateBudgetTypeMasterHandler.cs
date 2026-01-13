@@ -1,5 +1,5 @@
 ﻿using BBMB.BudgetService.Features.Budgets.BudgetTypes.Entities;
-using BBMB.BudgetService.Infrastructure.Persistence;
+using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using Mapster;
 using MediatR;
@@ -10,9 +10,9 @@ namespace BBMB.BudgetService.Features.Budgets.BudgetTypes.Create
     public class CreateBudgetTypeMasterHandler
          : IRequestHandler<CreateBudgetTypeMasterCommand, Response>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public CreateBudgetTypeMasterHandler(BBMBContext context)
+        public CreateBudgetTypeMasterHandler(BudgetContext context)
         {
             _context = context;
         }

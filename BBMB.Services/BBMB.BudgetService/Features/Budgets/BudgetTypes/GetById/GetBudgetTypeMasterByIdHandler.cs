@@ -1,5 +1,5 @@
 ﻿using BBMB.BudgetService.Features.Budgets.BudgetTypes.GetById.Dtos;
-using BBMB.BudgetService.Infrastructure.Persistence;
+using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,9 +8,9 @@ namespace BBMB.BudgetService.Features.Budgets.BudgetTypes.GetById
     public class GetBudgetTypeMasterByIdHandler
         : IRequestHandler<GetBudgetTypeMasterByIdCommand, GetBudgetTypeMasterByIdResponseDto?>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public GetBudgetTypeMasterByIdHandler(BBMBContext context)
+        public GetBudgetTypeMasterByIdHandler(BudgetContext context)
         {
             _context = context;
         }

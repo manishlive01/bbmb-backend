@@ -1,5 +1,5 @@
 ﻿using BBMB.BudgetService.Features.Geographical.Districts.Entities;
-using BBMB.BudgetService.Infrastructure.Persistence;
+using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using Mapster;
 using MediatR;
@@ -10,9 +10,9 @@ namespace BBMB.BudgetService.Features.Geographical.Districts.Create
     public class CreateDistrictMasterHandler
         : IRequestHandler<CreateDistrictMasterCommand, Response>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public CreateDistrictMasterHandler(BBMBContext context)
+        public CreateDistrictMasterHandler(BudgetContext context)
         {
             _context = context;
         }

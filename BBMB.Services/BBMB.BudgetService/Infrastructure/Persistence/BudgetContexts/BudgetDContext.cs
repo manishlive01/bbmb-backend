@@ -1,7 +1,7 @@
 ﻿using Npgsql;
 using System.Data;
 
-namespace BBMB.BudgetService.Infrastructure.Persistence
+namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
 {
     /// <summary>
     /// DapperContext
@@ -16,7 +16,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence
     /// Lifetime:
     /// - Registered as Scoped (1 instance per HTTP request)
     /// </summary>
-    public class DapperContext
+    public class BudgetDContext
     {
         // Holds application configuration (appsettings.json, env vars, etc.)
         private readonly IConfiguration _configuration;
@@ -27,7 +27,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence
         /// - Used to read the database connection string
         /// </summary>
         /// <param name="config">Application configuration</param>
-        public DapperContext(IConfiguration config)
+        public BudgetDContext(IConfiguration config)
         {
             _configuration = config;
         }

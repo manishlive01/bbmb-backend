@@ -1,5 +1,5 @@
 ﻿using BBMB.BudgetService.Features.Geographical.States.GetById.Dtos;
-using BBMB.BudgetService.Infrastructure.Persistence;
+using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,9 +8,9 @@ namespace BBMB.BudgetService.Features.Geographical.States.GetById
     public class GetStateMasterByIdHandler
         : IRequestHandler<GetStateMasterByIdCommand, GetStateMasterByIdResponseDto?>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public GetStateMasterByIdHandler(BBMBContext context)
+        public GetStateMasterByIdHandler(BudgetContext context)
         {
             _context = context;
         }

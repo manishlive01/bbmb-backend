@@ -1,5 +1,5 @@
 ﻿using BBMB.BudgetService.Features.Geographical.States.GetList.Dtos;
-using BBMB.BudgetService.Infrastructure.Persistence;
+using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,9 +8,9 @@ namespace BBMB.BudgetService.Features.Geographical.States.GetList
     public class GetStateMasterListHandler
         : IRequestHandler<GetStateMasterListCommand, List<GetStateMasterListResponseDto>>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public GetStateMasterListHandler(BBMBContext context)
+        public GetStateMasterListHandler(BudgetContext context)
         {
             _context = context;
         }

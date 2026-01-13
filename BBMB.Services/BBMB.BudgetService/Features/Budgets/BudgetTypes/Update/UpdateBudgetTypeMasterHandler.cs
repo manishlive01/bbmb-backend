@@ -1,4 +1,4 @@
-﻿using BBMB.BudgetService.Infrastructure.Persistence;
+﻿using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using Mapster;
 using MediatR;
@@ -9,9 +9,9 @@ namespace BBMB.BudgetService.Features.Budgets.BudgetTypes.Update
     public class UpdateBudgetTypeMasterHandler
         : IRequestHandler<UpdateBudgetTypeMasterCommand, Response>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public UpdateBudgetTypeMasterHandler(BBMBContext context)
+        public UpdateBudgetTypeMasterHandler(BudgetContext context)
         {
             _context = context;
         }

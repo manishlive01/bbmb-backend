@@ -1,5 +1,5 @@
 ﻿using BBMB.BudgetService.Features.Geographical.States.Entities;
-using BBMB.BudgetService.Infrastructure.Persistence;
+using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using Mapster;
 using MediatR;
@@ -10,9 +10,9 @@ namespace BBMB.BudgetService.Features.Geographical.States.Create
     public class CreateStateMasterHandler
         : IRequestHandler<CreateStateMasterCommand, Response>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public CreateStateMasterHandler(BBMBContext context)
+        public CreateStateMasterHandler(BudgetContext context)
         {
             _context = context;
         }

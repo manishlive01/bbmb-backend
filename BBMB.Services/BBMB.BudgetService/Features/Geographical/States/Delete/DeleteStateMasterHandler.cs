@@ -1,4 +1,4 @@
-﻿using BBMB.BudgetService.Infrastructure.Persistence;
+﻿using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +8,9 @@ namespace BBMB.BudgetService.Features.Geographical.States.Delete
     public class DeleteStateMasterHandler
         : IRequestHandler<DeleteStateMasterCommand, Response>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public DeleteStateMasterHandler(BBMBContext context)
+        public DeleteStateMasterHandler(BudgetContext context)
         {
             _context = context;
         }

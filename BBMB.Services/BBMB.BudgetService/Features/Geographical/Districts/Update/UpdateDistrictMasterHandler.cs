@@ -1,5 +1,5 @@
-﻿using BBMB.BudgetService.Infrastructure.Persistence;
-using BBMB.BudgetService.Shared.ResponseDTOs; 
+﻿using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +9,9 @@ namespace BBMB.BudgetService.Features.Geographical.Districts.Update
     public class UpdateDistrictMasterHandler
         : IRequestHandler<UpdateDistrictMasterCommand, Response>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public UpdateDistrictMasterHandler(BBMBContext context)
+        public UpdateDistrictMasterHandler(BudgetContext context)
         {
             _context = context;
         }

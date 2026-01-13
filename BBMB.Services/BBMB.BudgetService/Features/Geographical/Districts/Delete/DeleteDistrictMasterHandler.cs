@@ -1,4 +1,4 @@
-﻿using BBMB.BudgetService.Infrastructure.Persistence;
+﻿using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +8,9 @@ namespace BBMB.BudgetService.Features.Geographical.Districts.Delete
     public class DeleteDistrictMasterHandler
         : IRequestHandler<DeleteDistrictMasterCommand, Response>
     {
-        private readonly BBMBContext _context;
+        private readonly BudgetContext _context;
 
-        public DeleteDistrictMasterHandler(BBMBContext context)
+        public DeleteDistrictMasterHandler(BudgetContext context)
         {
             _context = context;
         }
