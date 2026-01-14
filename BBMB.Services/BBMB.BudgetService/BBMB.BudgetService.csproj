@@ -35,4 +35,18 @@
     <ProjectReference Include="..\BBMB.Services.ServiceDefaults\BBMB.Services.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\AccountingHeads\MajorHeads\Create\Dtos\" />
+    <Folder Include="Features\AccountingHeads\MajorHeads\Create\" />
+    <Folder Include="Features\AccountingHeads\MajorHeads\Delete\" />
+    <Folder Include="Features\AccountingHeads\MajorHeads\GetById\Dtos\" />
+    <Folder Include="Features\AccountingHeads\MajorHeads\GetList\Dtos\" />
+    <Folder Include="Features\AccountingHeads\MajorHeads\Update\Dtos\" />
+    <Folder Include="Features\AccountingHeads\SubMajorHeads\Delete\" />
+    <Folder Include="Features\AccountingHeads\SubMajorHeads\GetList\" />
+    <Folder Include="Features\AccountingHeads\SubMajorHeads\GetById\" />
+    <Folder Include="Features\AccountingHeads\SubMajorHeads\Create\" />
+    <Folder Include="Features\AccountingHeads\SubMajorHeads\Update\" />
+  </ItemGroup>
+
 </Project>
