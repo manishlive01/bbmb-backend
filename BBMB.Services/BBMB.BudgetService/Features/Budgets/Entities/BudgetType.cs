@@ -1,4 +1,4 @@
-﻿namespace BBMB.BudgetService.Features.Budgets.Budgets.Entities
+﻿namespace BBMB.BudgetService.Features.Budgets.Entities
 {
     public enum BudgetType
     {

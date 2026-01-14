@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BBMB.BudgetService.Migrations
 {
     [DbContext(typeof(BudgetContext))]
-    [Migration("20260113115315_InitialBudgetTables")]
-    partial class InitialBudgetTables
+    [Migration("20260114095920_AddInitialMigration")]
+    partial class AddInitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -26,7 +26,7 @@ namespace BBMB.BudgetService.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.Entities.MajorHead", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", b =>
                 {
                     b.Property<string>("MajorAccCode")
                         .HasMaxLength(4)
@@ -54,7 +54,7 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("fa_major_head", "budget");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.Entities.SubMajorHead", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -101,7 +101,7 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("fa_sub_major_head", "budget");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.Budgets.Budgets.Entities.BudgetEntry", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.Budgets.Entities.BudgetEntry", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1159,16 +1159,16 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("work", "budget");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.Entities.SubMajorHead", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", b =>
                 {
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.Entities.MajorHead", "MajorHead")
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
                         .WithMany("SubMajorHeads")
                         .HasForeignKey("MajorHeadMajorAccCode");
 
                     b.Navigation("MajorHead");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.Budgets.Budgets.Entities.BudgetEntry", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.Budgets.Entities.BudgetEntry", b =>
                 {
                     b.HasOne("BBMB.BudgetService.Features.DetailHeads.Entities.DetailHead", "DetailHead")
                         .WithMany()
@@ -1178,7 +1178,7 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("DivisionCode1");
 
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.Entities.MajorHead", "MajorHead")
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
                         .WithMany()
                         .HasForeignKey("MajorHeadMajorAccCode");
 
@@ -1190,7 +1190,7 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("ObjectClassificationObjectAccCode");
 
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.Entities.SubMajorHead", "SubMajorHead")
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
                         .WithMany()
                         .HasForeignKey("SubMajorHeadId");
 
@@ -1236,7 +1236,7 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("AccountOfficeAccOffice");
 
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.Entities.MajorHead", "MajorHead")
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
                         .WithMany()
                         .HasForeignKey("MajorHeadMajorAccCode");
 
@@ -1286,7 +1286,7 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("DetailHeadDetailAccCode");
 
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.Entities.MajorHead", "MajorHead")
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
                         .WithMany()
                         .HasForeignKey("MajorHeadMajorAccCode");
 
@@ -1349,7 +1349,7 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("DivisionCode1");
 
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.Entities.MajorHead", "MajorHead")
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
                         .WithMany()
                         .HasForeignKey("MajorHeadMajorAccCode");
 
@@ -1361,7 +1361,7 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("ObjectClassificationObjectAccCode");
 
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.Entities.SubMajorHead", "SubMajorHead")
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
                         .WithMany()
                         .HasForeignKey("SubMajorHeadId");
 
@@ -1386,7 +1386,7 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("SubMinorHead");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.Entities.MajorHead", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", b =>
                 {
                     b.Navigation("SubMajorHeads");
                 });

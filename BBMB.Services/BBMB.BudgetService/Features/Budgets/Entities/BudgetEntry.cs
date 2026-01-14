@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BBMB.BudgetService.Features.Budgets.Budgets.Entities
+namespace BBMB.BudgetService.Features.Budgets.Entities
 {
     [Table("budget_table")]
     public class BudgetEntry

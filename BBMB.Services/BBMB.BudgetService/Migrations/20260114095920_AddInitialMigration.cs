@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BBMB.BudgetService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialBudgetTables : Migration
+    public partial class AddInitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

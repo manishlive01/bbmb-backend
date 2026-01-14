@@ -1,6 +1,6 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
-using BBMB.BudgetService.Features.Budgets.Budgets.Entities;
+using BBMB.BudgetService.Features.Budgets.Entities;
 using BBMB.BudgetService.Features.Classes.Entities;
 using BBMB.BudgetService.Features.Designations.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;

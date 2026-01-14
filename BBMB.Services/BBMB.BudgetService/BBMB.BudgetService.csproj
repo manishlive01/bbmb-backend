@@ -36,17 +36,41 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\AccountingHeads\MajorHeads\Create\Dtos\" />
-    <Folder Include="Features\AccountingHeads\MajorHeads\Create\" />
     <Folder Include="Features\AccountingHeads\MajorHeads\Delete\" />
-    <Folder Include="Features\AccountingHeads\MajorHeads\GetById\Dtos\" />
-    <Folder Include="Features\AccountingHeads\MajorHeads\GetList\Dtos\" />
-    <Folder Include="Features\AccountingHeads\MajorHeads\Update\Dtos\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\Delete\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\GetList\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\GetById\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\Create\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\Update\" />
+    <Folder Include="Features\Budgets\GetList\" />
+    <Folder Include="Features\Budgets\Create\" />
+    <Folder Include="Features\Budgets\GetById\" />
+    <Folder Include="Features\Budgets\Delete\" />
+    <Folder Include="Features\Budgets\Update\" />
+    <Folder Include="Features\Classes\GetList\" />
+    <Folder Include="Features\Classes\GetById\" />
+    <Folder Include="Features\Classes\Delete\" />
+    <Folder Include="Features\Classes\Create\" />
+    <Folder Include="Features\Classes\Update\" />
+    <Folder Include="Features\Designations\GetList\" />
+    <Folder Include="Features\Designations\GetById\" />
+    <Folder Include="Features\Designations\Delete\" />
+    <Folder Include="Features\Designations\Create\" />
+    <Folder Include="Features\Designations\Update\" />
+    <Folder Include="Features\DetailHeads\GetList\" />
+    <Folder Include="Features\DetailHeads\GetById\" />
+    <Folder Include="Features\DetailHeads\Delete\" />
+    <Folder Include="Features\DetailHeads\Create\" />
+    <Folder Include="Features\DetailHeads\Update\" />
+    <Folder Include="Features\Divisions\GetList\" />
+    <Folder Include="Features\Divisions\GetById\" />
+    <Folder Include="Features\Divisions\Delete\" />
+    <Folder Include="Features\Divisions\Create\" />
+    <Folder Include="Features\Divisions\Update\" />
+    <Folder Include="Features\FinancialYears\GetList\" />
+    <Folder Include="Features\FinancialYears\GetById\" />
+    <Folder Include="Features\FinancialYears\Delete\" />
+    <Folder Include="Features\FinancialYears\Update\" />
   </ItemGroup>
 
 </Project>
