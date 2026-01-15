@@ -1,4 +1,5 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
+using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
@@ -50,6 +51,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Update
                 };
             }
 
+            majorHead.MajorAccCode = dto.MajorAccCode;
             majorHead.UserCode = " ";
             majorHead.ModificationDate = DateTime.UtcNow;
 

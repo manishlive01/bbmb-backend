@@ -14,6 +14,7 @@ public abstract class PostgresTestBase : IAsyncLifetime
         // 1️⃣ Start PostgreSQL container
         _container = new PostgreSqlBuilder()
             .WithImage("postgres:17")
+            .WithHostname("10.147.8.83")
             .WithDatabase("budget_test")
             .WithUsername("postgres")
             .WithPassword("postgres")

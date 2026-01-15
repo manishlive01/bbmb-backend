@@ -19,11 +19,10 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.GetById
             GetMajorHeadByIdCommand request,
             CancellationToken ct)
         {
-            var code = request.Request.Id; // MajorAccCode comes from universal GetByIdRequestDto
 
             return await _context.MajorHeads
                 .AsNoTracking()
-                .Where(x => x.MajorAccCode == code)
+                .Where(x => x.MajorAccCode == request.Request.Id)
                 .Select(x => new GetMajorHeadByIdResponseDto
                 {
                     MajorAccCode = x.MajorAccCode,
