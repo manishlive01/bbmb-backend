@@ -39,7 +39,6 @@
     <Folder Include="Features\AccountingHeads\MajorHeads\Delete\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\Delete\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\GetList\" />
-    <Folder Include="Features\AccountingHeads\SubMajorHeads\GetById\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\Update\" />
     <Folder Include="Features\Budgets\GetList\" />
     <Folder Include="Features\Budgets\Create\" />
