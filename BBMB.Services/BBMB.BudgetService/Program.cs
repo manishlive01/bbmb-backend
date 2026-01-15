@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -191,7 +192,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         await context.Response.WriteAsJsonAsync(response);
     }
 });
-
+ 
 // ===================================================================
 // APPLICATION START
 // ===================================================================

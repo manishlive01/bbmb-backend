@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="BBMB.BudgetService.Tests/BBMB.BudgetService.Tests.csproj" Id="f6d31c3e-e23a-462f-bb4e-e17b2c4de363" />
   <Project Path="BBMB.BudgetService/BBMB.BudgetService.csproj" />
   <Project Path="BBMB.Services.AppHost/BBMB.Services.AppHost.csproj" />
   <Project Path="BBMB.Services.ServiceDefaults/BBMB.Services.ServiceDefaults.csproj" />
