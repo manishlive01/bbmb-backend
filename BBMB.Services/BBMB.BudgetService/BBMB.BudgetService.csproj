@@ -40,7 +40,6 @@
     <Folder Include="Features\AccountingHeads\SubMajorHeads\Delete\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\GetList\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\GetById\" />
-    <Folder Include="Features\AccountingHeads\SubMajorHeads\Create\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\Update\" />
     <Folder Include="Features\Budgets\GetList\" />
     <Folder Include="Features\Budgets\Create\" />
@@ -71,6 +70,9 @@
     <Folder Include="Features\FinancialYears\GetById\" />
     <Folder Include="Features\FinancialYears\Delete\" />
     <Folder Include="Features\FinancialYears\Update\" />
+    <Folder Include="Features\Regions\GetById\Dtos\" />
+    <Folder Include="Features\Regions\GetList\Dtos\" />
+    <Folder Include="Features\Regions\Update\Dtos\" />
   </ItemGroup>
 
 </Project>

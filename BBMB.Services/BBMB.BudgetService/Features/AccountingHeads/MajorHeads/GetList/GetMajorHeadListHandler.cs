@@ -16,20 +16,25 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.GetList
         }
 
         public async Task<List<GetMajorHeadListResponseDto>> Handle(
-            GetMajorHeadListCommand request,
-            CancellationToken ct)
+     GetMajorHeadListCommand request,
+     CancellationToken ct)
         {
             return await _context.MajorHeads
                 .AsNoTracking()
+                .Include(x => x.SubMajorHeads) 
                 .OrderBy(x => x.MajorAccCode)
                 .Select(x => new GetMajorHeadListResponseDto
                 {
                     MajorAccCode = x.MajorAccCode,
                     MajorAccDesc = x.MajorAccDesc,
-                    ModificationDate = x.ModificationDate,
-                    UserCode = x.UserCode
+                    ModificationDate = x.ModificationDate.ToString("dd-MM-yyyy"),
+                    UserCode = x.UserCode,
+
+                    // ✅ Count SubMajorHeads linked to this MajorAccCode
+                    SubMajorCount = x.SubMajorHeads.Count
                 })
                 .ToListAsync(ct);
         }
+
     }
 }

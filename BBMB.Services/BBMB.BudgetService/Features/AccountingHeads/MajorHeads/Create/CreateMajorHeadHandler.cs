@@ -21,8 +21,27 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Create
             CreateMajorHeadCommand request,
             CancellationToken ct)
         {
-            // 1️⃣ Map DTO → Entity
+            // 1️⃣ Duplicate check
+            var exists = await _context.MajorHeads
+                .AnyAsync(x =>
+                    x.MajorAccCode == request.dto.MajorAccCode,
+                    ct);
+
+            if (exists)
+            {
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = "Major Account Code already exists"
+                };
+            }
+
+            // 2️⃣ Map DTO → Entity
             var majorHead = request.dto.Adapt<MajorHead>();
+
+            // 3️⃣ System fields
+            majorHead.ModificationDate = DateTime.UtcNow;
+            majorHead.UserCode = " "; // 🔁 replace with logged-in user later
 
             // 4️⃣ Persist
             _context.MajorHeads.Add(majorHead);

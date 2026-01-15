@@ -14,8 +14,9 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Update
 
                 // ✅ Updatable fields
                 .Map(dest => dest.MajorAccDesc, src => src.MajorAccDesc)
-                .Map(dest => dest.UserCode, src => src.UserCode)
 
+                // 🔒 System-managed fields
+                .Ignore(dest => dest.UserCode)
                 // 🔒 System-managed fields
                 .Ignore(dest => dest.ModificationDate)
 

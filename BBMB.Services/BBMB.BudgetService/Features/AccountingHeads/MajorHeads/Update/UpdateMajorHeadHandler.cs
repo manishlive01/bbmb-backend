@@ -1,7 +1,6 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
-using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,8 +35,23 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Update
                 };
             }
 
-            // 2️⃣ Map updatable fields
-            dto.Adapt(majorHead);
+            // 2️⃣ Duplicate check (exclude current record)
+            var duplicateExists = await _context.MajorHeads
+                .AnyAsync(x =>
+                    x.MajorAccCode != majorHead.MajorAccCode,
+                    ct);
+
+            if (duplicateExists)
+            {
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = "Major Account Code already exists"
+                };
+            }
+
+            majorHead.UserCode = " ";
+            majorHead.ModificationDate = DateTime.UtcNow;
 
             // 4️⃣ Persist
             await _context.SaveChangesAsync(ct);

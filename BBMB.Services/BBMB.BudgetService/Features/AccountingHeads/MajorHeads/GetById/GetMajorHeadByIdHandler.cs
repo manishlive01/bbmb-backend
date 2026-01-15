@@ -27,9 +27,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.GetById
                 .Select(x => new GetMajorHeadByIdResponseDto
                 {
                     MajorAccCode = x.MajorAccCode,
-                    MajorAccDesc = x.MajorAccDesc,
-                    ModificationDate = x.ModificationDate,
-                    UserCode = x.UserCode
+                    MajorAccDesc = x.MajorAccDesc
                 })
                 .FirstOrDefaultAsync(ct);
         }
