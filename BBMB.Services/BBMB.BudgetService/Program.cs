@@ -13,8 +13,11 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
-using System;
+using Microsoft.OpenApi.Models;
 
+// =======================
+// BUILDER
+// =======================
 var builder = WebApplication.CreateBuilder(args);
 
 // ===================================================================
@@ -36,6 +39,24 @@ builder.Services.AddDbContextPool<FinanceContext>(options =>
 builder.Services.AddScoped<FinanceDContext>();
 
 // ===================================================================
+// CORS CONFIGURATION
+// ===================================================================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://10.147.8.83:8087",
+                "http://localhost:3000"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // remove if not using cookies/auth
+    });
+});
+
+// ===================================================================
 // MEDIATR (CQRS)
 // ===================================================================
 builder.Services.AddMediatR(cfg =>
@@ -43,7 +64,7 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
-// Validation pipeline before handler execution
+// Validation pipeline
 builder.Services.AddTransient(
     typeof(IPipelineBehavior<,>),
     typeof(ValidationBehavior<,>)
@@ -59,39 +80,45 @@ builder.Services.AddScoped<IMapper, ServiceMapper>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
-builder.Services.AddOpenApi();
-builder.Services.AddEndpointsApiExplorer(); 
-builder.Services.AddHealthChecks()
-    .AddNpgSql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        name: "postgres-db");
+builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
 {
-    // JWT Bearer authentication support in Swagger
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "BBMB Budget API",
+        Version = "v1"
+    });
+
+    // JWT Support (if required later)
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
-        Description = "Please enter JWT with Bearer into field",
+        Description = "Enter JWT with Bearer prefix",
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey
     });
 });
 
+builder.Services.AddHealthChecks()
+    .AddNpgSql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        name: "postgres-db");
+
+// ===================================================================
+// BUILD APP
+// ===================================================================
 var app = builder.Build();
 
 // ===================================================================
-// AUTO-OPEN SWAGGER UI
+// AUTO REDIRECT TO SWAGGER
 // ===================================================================
-
-// 🔹 Redirect application root ("/") directly to Swagger UI
-// 🔹 So when you run the project, Swagger opens automatically
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // ===================================================================
-// OPENAPI
+// CORS (MUST BE BEFORE ROUTING)
 // ===================================================================
-app.MapOpenApi();
+app.UseCors("AllowFrontend");
 
 // ===================================================================
 // CORE MIDDLEWARE
@@ -103,22 +130,21 @@ app.UseStaticFiles();
 // SWAGGER MIDDLEWARE
 // ===================================================================
 app.UseSwagger();
-
 app.UseSwaggerUI(options =>
 {
     options.DocumentTitle = "Budget API's";
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
-
-    // Optional custom styling
     options.InjectStylesheet("/swagger-ui/custom.css");
 });
 
 // ===================================================================
-// SECURITY & EXCEPTION HANDLING
+// SECURITY
 // ===================================================================
 app.UseHttpsRedirection();
 
-// Global exception handler
+// ===================================================================
+// GLOBAL EXCEPTION HANDLER
+// ===================================================================
 app.UseExceptionHandler(appBuilder =>
 {
     appBuilder.Run(async context =>
@@ -127,7 +153,7 @@ app.UseExceptionHandler(appBuilder =>
             .Get<IExceptionHandlerFeature>()?.Error;
 
         // FluentValidation errors
-        if (exception is FluentValidation.ValidationException validationException)
+        if (exception is ValidationException validationException)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             context.Response.ContentType = "application/json";
@@ -138,13 +164,13 @@ app.UseExceptionHandler(appBuilder =>
 
             await context.Response.WriteAsJsonAsync(new
             {
-                message = "Validation Message",
+                message = "Validation Error",
                 errors
             });
             return;
         }
 
-        // Invalid JSON payload
+        // Invalid JSON
         if (exception is BadHttpRequestException badRequest &&
             badRequest.InnerException is System.Text.Json.JsonException jsonEx)
         {
@@ -159,7 +185,7 @@ app.UseExceptionHandler(appBuilder =>
             return;
         }
 
-        // Fallback error
+        // Fallback
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await context.Response.WriteAsJsonAsync(new
         {
@@ -172,6 +198,7 @@ app.UseExceptionHandler(appBuilder =>
 // ENDPOINT MAPPING
 // ===================================================================
 app.MapEndpoints();
+
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
@@ -192,8 +219,8 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         await context.Response.WriteAsJsonAsync(response);
     }
 });
- 
+
 // ===================================================================
-// APPLICATION START
+// RUN APPLICATION
 // ===================================================================
 app.Run();
