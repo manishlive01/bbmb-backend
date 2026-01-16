@@ -1,7 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BBMB.BudgetService.Features.AccountingHeads.SubMinorHeads.Entities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BBMB.BudgetService.Features.MinorHeads.Entities
+namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities
 {
     [Table("fa_minor_head")]
     public class MinorHead
