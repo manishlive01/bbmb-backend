@@ -19,8 +19,8 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetList
         public async Task<PagedResponse<GetSubMinorHeadListResponseDto>> Handle(GetSubMinorHeadListQuery request, CancellationToken ct)
         {
             var query = _context.SubMinorHeads
-                .Include(s => s.MajorHead)
-                .Include(s => s.SubMajorHead)
+                //.Include(s => s.MajorHead)
+                //.Include(s => s.SubMajorHead)
                 .Include(s => s.MinorHead)
                 .AsQueryable();
 
@@ -28,11 +28,11 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetList
             if (!string.IsNullOrEmpty(request.SubMinorAccCode))
                 query = query.Where(s => s.SubMinorAccCode == request.SubMinorAccCode);
 
-            if (!string.IsNullOrEmpty(request.MajorAccCode))
-                query = query.Where(s => s.MajorAccCode == request.MajorAccCode);
+            //if (!string.IsNullOrEmpty(request.MajorAccCode))
+            //    query = query.Where(s => s.MajorAccCode == request.MajorAccCode);
 
-            if (!string.IsNullOrEmpty(request.SubMajorAccCode))
-                query = query.Where(s => s.SubMajorAccCode == request.SubMajorAccCode);
+            //if (!string.IsNullOrEmpty(request.SubMajorAccCode))
+            //    query = query.Where(s => s.SubMajorAccCode == request.SubMajorAccCode);
 
             if (!string.IsNullOrEmpty(request.MinorAccCode))
                 query = query.Where(s => s.MinorAccCode == request.MinorAccCode);
@@ -64,10 +64,10 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetList
                 {
                     SubMinorAccCode = s.SubMinorAccCode,
                     SubMinorAccDesc = s.SubMinorAccDesc,
-                    MajorAccCode = s.MajorAccCode,
-                    MajorAccDesc = s.MajorHead.MajorAccDesc,
-                    SubMajorAccCode = s.SubMajorAccCode,
-                    SubMajorAccDesc = s.SubMajorHead.SubMajorAccDesc,
+                    //MajorAccCode = s.MajorAccCode,
+                    //MajorAccDesc = s.MajorHead.MajorAccDesc,
+                    //SubMajorAccCode = s.SubMajorAccCode,
+                    //SubMajorAccDesc = s.SubMajorHead.SubMajorAccDesc,
                     MinorAccCode = s.MinorAccCode,
                     MinorAccDesc = s.MinorHead.MinorAccDesc,
                     ModificationDate = s.ModificationDate,
@@ -99,8 +99,8 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetList
             return sortBy.ToLower() switch
             {
                 "subminoracccode" => sortDescending ? query.OrderByDescending(s => s.SubMinorAccCode) : query.OrderBy(s => s.SubMinorAccCode),
-                "majoracccode" => sortDescending ? query.OrderByDescending(s => s.MajorAccCode) : query.OrderBy(s => s.MajorAccCode),
-                "submajoracccode" => sortDescending ? query.OrderByDescending(s => s.SubMajorAccCode) : query.OrderBy(s => s.SubMajorAccCode),
+                //"majoracccode" => sortDescending ? query.OrderByDescending(s => s.MajorAccCode) : query.OrderBy(s => s.MajorAccCode),
+                //"submajoracccode" => sortDescending ? query.OrderByDescending(s => s.SubMajorAccCode) : query.OrderBy(s => s.SubMajorAccCode),
                 "minoracccode" => sortDescending ? query.OrderByDescending(s => s.MinorAccCode) : query.OrderBy(s => s.MinorAccCode),
                 "subminoraccdesc" => sortDescending ? query.OrderByDescending(s => s.SubMinorAccDesc) : query.OrderBy(s => s.SubMinorAccDesc),
                 "modificationdate" => sortDescending ? query.OrderByDescending(s => s.ModificationDate) : query.OrderBy(s => s.ModificationDate),

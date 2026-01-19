@@ -17,17 +17,17 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.GetBySubMajorHe
         public async Task<List<GetMinorHeadsBySubMajorHeadResponseDto>> Handle(GetMinorHeadsBySubMajorHeadQuery request, CancellationToken ct)
         {
             var minorHeads = await _context.MinorHeads
-                .Include(m => m.MajorHead)
-                .Include(m => m.SubMajorHead)
-                .Where(m => m.SubMajorAccCode == request.SubMajorAccCode)
+                //.Include(m => m.MajorHead)
+                //.Include(m => m.SubMajorHead)
+                //.Where(m => m.SubMajorAccCode == request.SubMajorAccCode)
                 .Select(m => new GetMinorHeadsBySubMajorHeadResponseDto
                 {
                     MinorAccCode = m.MinorAccCode,
                     MinorAccDesc = m.MinorAccDesc,
-                    MajorAccCode = m.MajorAccCode,
-                    MajorAccDesc = m.MajorHead.MajorAccDesc,
-                    SubMajorAccCode = m.SubMajorAccCode,
-                    SubMajorAccDesc = m.SubMajorHead.SubMajorAccDesc,
+                    //MajorAccCode = m.MajorAccCode,
+                    //MajorAccDesc = m.MajorHead.MajorAccDesc,
+                    //SubMajorAccCode = m.SubMajorAccCode,
+                    //SubMajorAccDesc = m.SubMajorHead.SubMajorAccDesc,
                     ModificationDate = m.ModificationDate,
                     UserCode = m.UserCode
                 })

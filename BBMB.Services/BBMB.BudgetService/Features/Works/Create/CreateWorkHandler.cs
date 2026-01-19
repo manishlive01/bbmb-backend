@@ -65,8 +65,9 @@ namespace BBMB.BudgetService.Features.Works.Create
 
             // Validate minor head exists
             var minorHeadExists = await _context.MinorHeads
-                .AnyAsync(m => m.MajorAccCode == request.dto.MajorAccCode &&
-                              m.SubMajorAccCode == request.dto.SubMajorAccCode &&
+                .AnyAsync(m => 
+                //m.MajorAccCode == request.dto.MajorAccCode &&
+                //              m.SubMajorAccCode == request.dto.SubMajorAccCode &&
                               m.MinorAccCode == request.dto.MinorAccCode, ct);
 
             if (!minorHeadExists)
@@ -78,8 +79,9 @@ namespace BBMB.BudgetService.Features.Works.Create
 
             // Validate sub-minor head exists
             var subMinorHeadExists = await _context.SubMinorHeads
-                .AnyAsync(s => s.MajorAccCode == request.dto.MajorAccCode &&
-                              s.SubMajorAccCode == request.dto.SubMajorAccCode &&
+                .AnyAsync(s => 
+                              //  s.MajorAccCode == request.dto.MajorAccCode &&
+                              //s.SubMajorAccCode == request.dto.SubMajorAccCode &&
                               s.MinorAccCode == request.dto.MinorAccCode &&
                               s.SubMinorAccCode == request.dto.SubMinorAccCode, ct);
 

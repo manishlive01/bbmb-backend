@@ -13,15 +13,15 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities
         [Column("minor_acc_code")]
         public string MinorAccCode { get; set; } = string.Empty;
 
-        [Required]
-        [MaxLength(4)]
-        [Column("major_acc_code")]
-        public string MajorAccCode { get; set; } = string.Empty;
+        //[Required]
+        //[MaxLength(4)]
+        //[Column("major_acc_code")]
+        //public string MajorAccCode { get; set; } = string.Empty;
 
-        [Required]
-        [MaxLength(2)]
-        [Column("sub_major_acc_code")]
-        public string SubMajorAccCode { get; set; } = string.Empty;
+        //[Required]
+        //[MaxLength(2)]
+        //[Column("sub_major_acc_code")]
+        //public string SubMajorAccCode { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(100)]
@@ -37,12 +37,12 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities
         [Column("user_code")]
         public string UserCode { get; set; } = string.Empty;
 
-        // Navigation properties
-        [ForeignKey(nameof(MajorAccCode))]
-        public virtual MajorHead? MajorHead { get; set; }
+        //// Navigation properties
+        //[ForeignKey(nameof(MajorAccCode))]
+        //public virtual MajorHead? MajorHead { get; set; }
         
-        [ForeignKey(nameof(SubMajorAccCode))]
-        public virtual SubMajorHead? SubMajorHead { get; set; }
+        //[ForeignKey(nameof(SubMajorAccCode))]
+        //public virtual SubMajorHead? SubMajorHead { get; set; }
         
         public virtual ICollection<SubMinorHead> SubMinorHeads { get; set; } = new List<SubMinorHead>();
     }

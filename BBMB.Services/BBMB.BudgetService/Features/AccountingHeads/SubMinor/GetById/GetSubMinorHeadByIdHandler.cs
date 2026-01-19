@@ -17,8 +17,8 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetById
         public async Task<GetSubMinorHeadByIdResponseDto> Handle(GetSubMinorHeadByIdQuery request, CancellationToken ct)
         {
             var subMinorHead = await _context.SubMinorHeads
-                .Include(s => s.MajorHead)
-                .Include(s => s.SubMajorHead)
+                //.Include(s => s.MajorHead)
+                //.Include(s => s.SubMajorHead)
                 .Include(s => s.MinorHead)
                 .FirstOrDefaultAsync(s => s.SubMinorAccCode == request.SubMinorAccCode, ct);
 
@@ -29,10 +29,10 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetById
             {
                 SubMinorAccCode = subMinorHead.SubMinorAccCode,
                 SubMinorAccDesc = subMinorHead.SubMinorAccDesc,
-                MajorAccCode = subMinorHead.MajorAccCode,
-                MajorAccDesc = subMinorHead.MajorHead.MajorAccDesc,
-                SubMajorAccCode = subMinorHead.SubMajorAccCode,
-                SubMajorAccDesc = subMinorHead.SubMajorHead.SubMajorAccDesc,
+                //MajorAccCode = subMinorHead.MajorAccCode,
+                //MajorAccDesc = subMinorHead.MajorHead.MajorAccDesc,
+                //SubMajorAccCode = subMinorHead.SubMajorAccCode,
+                //SubMajorAccDesc = subMinorHead.SubMajorHead.SubMajorAccDesc,
                 MinorAccCode = subMinorHead.MinorAccCode,
                 MinorAccDesc = subMinorHead.MinorHead.MinorAccDesc,
                 ModificationDate = subMinorHead.ModificationDate,
