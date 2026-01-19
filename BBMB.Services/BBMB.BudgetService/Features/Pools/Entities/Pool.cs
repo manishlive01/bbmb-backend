@@ -7,7 +7,7 @@ namespace BBMB.BudgetService.Features.Pools.Entities
     public class Pool
     {
         [Key]
-        [MaxLength(1)]
+        [MaxLength(2)]
         [Column("pool_code")]
         public string PoolCode { get; set; } = string.Empty;
 

@@ -1,7 +1,5 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
-using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
-using BBMB.BudgetService.Features.AccountingHeads.SubMinorHeads.Entities;
 using BBMB.BudgetService.Features.Budgets.Entities;
 using BBMB.BudgetService.Features.Classes.Entities;
 using BBMB.BudgetService.Features.Designations.Entities;
@@ -12,6 +10,7 @@ using BBMB.BudgetService.Features.FinancialYears.Entities;
 using BBMB.BudgetService.Features.Geographical.Districts.Entities;
 using BBMB.BudgetService.Features.Geographical.States.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
+using BBMB.BudgetService.Features.MinorHeads.Entities;
 using BBMB.BudgetService.Features.ObjectClassifications.Entities;
 using BBMB.BudgetService.Features.Offices.Entities;
 using BBMB.BudgetService.Features.Pools.Entities;
@@ -39,7 +38,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<Designation> Designations { get; set; }
         public DbSet<DetailHead> DetailHeads { get; set; }
         public DbSet<Division> Divisions { get; set; }
-        //public DbSet<Estimate> Estimates { get; set; }
+        public DbSet<Estimate> Estimates { get; set; }
         public DbSet<FinancialYear> FinancialYears { get; set; }
         public DbSet<HeadOfAccount> HeadOfAccounts { get; set; }
         public DbSet<MinorHead> MinorHeads { get; set; }

@@ -1,4 +1,4 @@
-﻿using BBMB.BudgetService.Features.Regions.Create.Dtos;
+using BBMB.BudgetService.Features.Regions.Create.Dtos;
 using BBMB.BudgetService.Shared.Endpoints;
 using MediatR;
 
@@ -8,26 +8,24 @@ namespace BBMB.BudgetService.Features.Regions.Create
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/Create-Region", async (
-                CreateRegionDto dto,
-                IMediator mediator) =>
+            app.MapPost("/api/regions", async (CreateRegionDto dto, IMediator mediator) =>
             {
                 var command = new CreateRegionCommand(dto);
-
                 var response = await mediator.Send(command);
-                if (response.IsSucced == false)
+
+                if (!response.IsSucced)
                 {
-                    return Results.BadRequest(response);
+                    return Results.Conflict(response);
                 }
 
-                return Results.Ok(response);
+                return Results.Created($"/api/regions/{dto.RegionCode}", response);
             })
-            .Produces<string>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest)
-            .WithSummary("Create Region")
-            .WithDescription("Creates a new Region entry")
-            .WithName("Create Region")
-            .WithTags("Region");
+            .WithName("CreateRegion")
+            .WithTags("Regions")
+            .WithSummary("Create a new region")
+            .WithDescription("Creates a new region entry")
+            .Produces(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status409Conflict);
         }
     }
 }

@@ -1,28 +1,35 @@
-﻿using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create.Dtos;
+using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create.Dtos;
+using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using FluentValidation;
-using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create
 {
     public class CreateSubMajorHeadValidator : AbstractValidator<CreateSubMajorHeadDto>
     {
-        public CreateSubMajorHeadValidator()
+        private readonly BudgetContext _context;
+        
+        public CreateSubMajorHeadValidator(BudgetContext context)
         {
-            RuleFor(x => x.MajorAccCode)
-                .NotEmpty().WithMessage("Major Account Code is required")
-                .MaximumLength(4).WithMessage("Major Account Code must be at most 4 characters")
-                .Matches("^[a-zA-Z0-9]+$")
-                .WithMessage("Major Account Code must be alphanumeric");
-
+            _context = context;
+            
             RuleFor(x => x.SubMajorAccCode)
-                .NotEmpty().WithMessage("Sub Major Account Code is required")
-                .MaximumLength(6).WithMessage("Sub Major Account Code must be at most 6 characters")
-                .Matches("^[a-zA-Z0-9]+$")
-                .WithMessage("Sub Major Account Code must be alphanumeric");
-
+                .NotEmpty().WithMessage("Sub-major account code is required")
+                .MaximumLength(2).WithMessage("Sub-major account code must not exceed 2 characters");
+                
+            RuleFor(x => x.MajorAccCode)
+                .NotEmpty().WithMessage("Major account code is required")
+                .MaximumLength(4).WithMessage("Major account code must not exceed 4 characters")
+                .MustAsync(async (code, ct) => await _context.MajorHeads.AnyAsync(m => m.MajorAccCode == code, ct))
+                .WithMessage("Major account code does not exist");
+                
             RuleFor(x => x.SubMajorAccDesc)
-                .NotEmpty().WithMessage("Sub Major Description is required")
-                .MaximumLength(100).WithMessage("Sub Major Description must not exceed 100 characters");
+                .NotEmpty().WithMessage("Sub-major account description is required")
+                .MaximumLength(100).WithMessage("Sub-major account description must not exceed 100 characters");
+                
+            RuleFor(x => x.UserCode)
+                .NotEmpty().WithMessage("User code is required")
+                .MaximumLength(6).WithMessage("User code must not exceed 6 characters");
         }
     }
 }

@@ -1,5 +1,6 @@
-﻿using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Update.Dtos;
+using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Update.Dtos;
 using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 
 namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Update
@@ -8,26 +9,19 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/Update-SubMajorHead", async (
-                UpdateSubMajorHeadDto dto,
-                IMediator mediator) =>
+            app.MapPut("/api/accounting-heads/sub-major/{code}", async (string code, UpdateSubMajorHeadDto dto, IMediator mediator) =>
             {
-                var command = new UpdateSubMajorHeadCommand(dto);
-
+                var command = new UpdateSubMajorHeadCommand(code, dto);
                 var response = await mediator.Send(command);
-                if (response.IsSucced == false)
-                {
-                    return Results.BadRequest(response);
-                }
-
-                return Results.Ok(response);
+                
+                return response.IsSucced 
+                    ? Results.Ok(response)
+                    : Results.NotFound(response);
             })
-            .Produces<string>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest)
-            .WithSummary("Update Sub Major Head")
-            .WithDescription("Updates an existing Sub Major Head")
-            .WithName("Update Sub Major Head")
-            .WithTags("SubMajorHead");
+            .WithName("UpdateSubMajorHead")
+            .WithTags("SubMajorHeads")
+            .Produces<Response>(StatusCodes.Status200OK)
+            .Produces<Response>(StatusCodes.Status404NotFound);
         }
     }
 }

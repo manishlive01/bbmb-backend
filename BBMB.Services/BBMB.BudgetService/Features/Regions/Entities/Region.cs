@@ -7,7 +7,7 @@ namespace BBMB.BudgetService.Features.Regions.Entities
     public class Region
     {
         [Key]
-        [MaxLength(1)]
+        [MaxLength(2)]
         [Column("region_code")]
         public string RegionCode { get; set; } = string.Empty;
 
