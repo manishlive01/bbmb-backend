@@ -1,3 +1,4 @@
+using BBMB.BudgetService.Features.Designations.GetList.Dtos;
 using BBMB.BudgetService.Shared.Endpoints;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -8,30 +9,19 @@ namespace BBMB.BudgetService.Features.Designations.GetList
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/designations", async (
+            app.MapPost("/api/designations/list", async (
+                [FromBody] GetDesignationListRequestDto dto,
                 IMediator mediator,
-                [FromQuery] int pageNumber = 1,
-                [FromQuery] int pageSize = 10,
-                [FromQuery] string? sortBy = null,
-                [FromQuery] bool sortDescending = false,
-                [FromQuery] string? designationCode = null,
-                [FromQuery] string? designationDesc = null,
-                [FromQuery] string? userCode = null,
-                [FromQuery] DateTime? modificationDateFrom = null,
-                [FromQuery] DateTime? modificationDateTo = null) =>
+                CancellationToken ct) =>
             {
-                var query = new GetDesignationListQuery(
-                    pageNumber, pageSize, sortBy, sortDescending,
-                    designationCode, designationDesc, userCode,
-                    modificationDateFrom, modificationDateTo);
-
-                var result = await mediator.Send(query);
+                var query = new GetDesignationListCommand(dto);
+                var result = await mediator.Send(query, ct);
                 return Results.Ok(result);
             })
             .WithName("GetDesignationList")
             .WithTags("Designations")
-            .WithSummary("Get a paginated list of designations")
-            .WithDescription("Retrieves designations with filtering, sorting, and pagination")
+            .WithSummary("Get Designation List")
+            .WithDescription("Retrieves designation list using body parameters with pagination, sorting, and filters")
             .Produces(StatusCodes.Status200OK);
         }
     }

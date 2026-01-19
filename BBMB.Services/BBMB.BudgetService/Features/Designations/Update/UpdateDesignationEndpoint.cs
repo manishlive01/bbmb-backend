@@ -1,5 +1,6 @@
 using BBMB.BudgetService.Features.Designations.Update.Dtos;
 using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 
 namespace BBMB.BudgetService.Features.Designations.Update
@@ -8,10 +9,13 @@ namespace BBMB.BudgetService.Features.Designations.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/designations/{code}", async (string code, UpdateDesignationDto dto, IMediator mediator) =>
+            app.MapPut("/api/designations", async (
+                UpdateDesignationDto dto,
+                IMediator mediator,
+                CancellationToken ct) =>
             {
-                var command = new UpdateDesignationCommand(code, dto);
-                var response = await mediator.Send(command);
+                var response = await mediator.Send(
+                    new UpdateDesignationCommand(dto), ct);
 
                 return response.IsSucced
                     ? Results.Ok(response)
@@ -20,9 +24,9 @@ namespace BBMB.BudgetService.Features.Designations.Update
             .WithName("UpdateDesignation")
             .WithTags("Designations")
             .WithSummary("Update a designation")
-            .WithDescription("Updates an existing designation's description and user code")
-            .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound);
+            .WithDescription("Updates an existing designation using request body")
+            .Produces<Response>(StatusCodes.Status200OK)
+            .Produces<Response>(StatusCodes.Status404NotFound);
         }
     }
 }
