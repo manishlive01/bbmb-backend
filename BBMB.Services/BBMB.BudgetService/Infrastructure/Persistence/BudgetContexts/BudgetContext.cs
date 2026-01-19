@@ -60,6 +60,16 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
 
             base.OnModelCreating(modelBuilder);
 
+            // Configure composite key for Estimate
+            modelBuilder.Entity<Estimate>()
+                .HasKey(e => new { e.WorkCode, e.EstimateCode });
+
+            modelBuilder.Entity<Estimate>()
+                .HasOne(e => e.Work)
+                .WithMany()
+                .HasForeignKey(e => e.WorkCode)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // modelBuilder.ApplyConfigurationsFromAssembly(typeof(BudgetContext).Assembly);
         }
     }
