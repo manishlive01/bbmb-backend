@@ -1,6 +1,5 @@
 ﻿using BBMB.BudgetService.Features.Designations.Entities;
 using BBMB.BudgetService.Features.Designations.Update.Dtos;
-using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts.Entities;
 using Mapster;
 
 namespace BBMB.BudgetService.Features.Designations.Update

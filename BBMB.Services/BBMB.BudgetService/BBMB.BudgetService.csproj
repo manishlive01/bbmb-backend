@@ -44,7 +44,6 @@
     <Folder Include="Features\Designations\GetById\" />
     <Folder Include="Features\Designations\Delete\" />
     <Folder Include="Features\Designations\Create\" />
-    <Folder Include="Features\Designations\Update\" />
     <Folder Include="Features\DetailHeads\GetList\" />
     <Folder Include="Features\DetailHeads\GetById\" />
     <Folder Include="Features\DetailHeads\Delete\" />
