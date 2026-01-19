@@ -29,7 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\AccountingHeads\MajorHeads\Delete\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\Delete\" />
     <Folder Include="Features\Budgets\GetList\" />
     <Folder Include="Features\Budgets\Create\" />
