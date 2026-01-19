@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Update
 {
-    public class UpdateMinorHeadValidator : AbstractValidator<UpdateMinorHeadDto>
+    public class UpdateMinorHeadValidator : AbstractValidator<UpdateMinorHeadCommand>
     {
         private readonly BudgetContext _context;
 
@@ -25,11 +25,11 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Update
             //    .MustAsync(async (code, ct) => await _context.SubMajorHeads.AnyAsync(s => s.SubMajorAccCode == code, ct))
             //    .WithMessage("Sub-major account code does not exist");
 
-            RuleFor(x => x.MinorAccDesc)
+            RuleFor(x => x.dto.MinorAccDesc)
                 .NotEmpty().WithMessage("Minor account description is required")
                 .MaximumLength(100).WithMessage("Minor account description must not exceed 100 characters");
 
-            RuleFor(x => x.UserCode)
+            RuleFor(x => x.dto.UserCode)
                 .NotEmpty().WithMessage("User code is required")
                 .MaximumLength(6).WithMessage("User code must not exceed 6 characters");
         }

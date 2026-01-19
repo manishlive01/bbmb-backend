@@ -1,11 +1,10 @@
-using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create
 {
-    public class CreateSubMajorHeadValidator : AbstractValidator<CreateSubMajorHeadCommand>
+    public sealed class CreateSubMajorHeadValidator : AbstractValidator<CreateSubMajorHeadCommand>
     {
         private readonly BudgetContext _context;
         
@@ -20,7 +19,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create
             RuleFor(x => x.dto.MajorAccCode)
                 .NotEmpty().WithMessage("Major account code is required")
                 .MaximumLength(4).WithMessage("Major account code must not exceed 4 characters")
-                .MustAsync(async (code, ct) => await _context.MajorHeads.AnyAsync(m => m.MajorAccCode == code, ct))
+                .MustAsync(async (code, ct) => await _context.MajorHeads.AsNoTracking().AnyAsync(m => m.MajorAccCode == code, ct))
                 .WithMessage("Major account code does not exist");
                 
             RuleFor(x => x.dto.SubMajorAccDesc)

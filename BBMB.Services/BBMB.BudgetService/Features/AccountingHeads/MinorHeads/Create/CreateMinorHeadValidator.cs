@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Create
 {
-    public class CreateMinorHeadValidator : AbstractValidator<CreateMinorHeadDto>
+    public class CreateMinorHeadValidator : AbstractValidator<CreateMinorHeadCommand>
     {
         private readonly BudgetContext _context;
 
@@ -13,7 +13,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Create
         {
             _context = context;
 
-            RuleFor(x => x.MinorAccCode)
+            RuleFor(x => x.dto.MinorAccCode)
                 .NotEmpty().WithMessage("Minor account code is required")
                 .MaximumLength(3).WithMessage("Minor account code must not exceed 3 characters");
 
@@ -29,11 +29,11 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Create
             //    .MustAsync(async (code, ct) => await _context.SubMajorHeads.AnyAsync(s => s.SubMajorAccCode == code, ct))
             //    .WithMessage("Sub-major account code does not exist");
 
-            RuleFor(x => x.MinorAccDesc)
+            RuleFor(x => x.dto.MinorAccDesc)
                 .NotEmpty().WithMessage("Minor account description is required")
                 .MaximumLength(100).WithMessage("Minor account description must not exceed 100 characters");
 
-            RuleFor(x => x.UserCode)
+            RuleFor(x => x.dto.UserCode)
                 .NotEmpty().WithMessage("User code is required")
                 .MaximumLength(6).WithMessage("User code must not exceed 6 characters");
         }

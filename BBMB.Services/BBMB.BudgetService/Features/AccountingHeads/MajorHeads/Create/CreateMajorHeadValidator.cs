@@ -2,7 +2,7 @@
 
 namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Create
 {
-    public class CreateMajorHeadValidator
+    public sealed class CreateMajorHeadValidator
         : AbstractValidator<CreateMajorHeadCommand>
     {
         public CreateMajorHeadValidator()

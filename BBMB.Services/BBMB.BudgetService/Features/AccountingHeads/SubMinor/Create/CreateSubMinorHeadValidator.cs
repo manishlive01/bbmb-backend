@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Create
 {
-    public class CreateSubMinorHeadValidator : AbstractValidator<CreateSubMinorHeadDto>
+    public sealed class CreateSubMinorHeadValidator : AbstractValidator<CreateSubMinorHeadCommand>
     {
         private readonly BudgetContext _context;
 
@@ -13,7 +13,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Create
         {
             _context = context;
 
-            RuleFor(x => x.SubMinorAccCode)
+            RuleFor(x => x.dto.SubMinorAccCode)
                 .NotEmpty().WithMessage("Sub-minor account code is required")
                 .MaximumLength(2).WithMessage("Sub-minor account code must not exceed 2 characters");
 
@@ -29,17 +29,17 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Create
             //    .MustAsync(async (code, ct) => await _context.SubMajorHeads.AnyAsync(s => s.SubMajorAccCode == code, ct))
             //    .WithMessage("Sub-major account code does not exist");
 
-            RuleFor(x => x.MinorAccCode)
+            RuleFor(x => x.dto.MinorAccCode)
                 .NotEmpty().WithMessage("Minor account code is required")
                 .MaximumLength(3).WithMessage("Minor account code must not exceed 3 characters")
-                .MustAsync(async (code, ct) => await _context.MinorHeads.AnyAsync(m => m.MinorAccCode == code, ct))
+                .MustAsync(async (code, ct) => await _context.MinorHeads.AsNoTracking().AnyAsync(m => m.MinorAccCode == code, ct))
                 .WithMessage("Minor account code does not exist");
 
-            RuleFor(x => x.SubMinorAccDesc)
+            RuleFor(x => x.dto.SubMinorAccDesc)
                 .NotEmpty().WithMessage("Sub-minor account description is required")
                 .MaximumLength(100).WithMessage("Sub-minor account description must not exceed 100 characters");
 
-            RuleFor(x => x.UserCode)
+            RuleFor(x => x.dto.UserCode)
                 .NotEmpty().WithMessage("User code is required")
                 .MaximumLength(6).WithMessage("User code must not exceed 6 characters");
         }

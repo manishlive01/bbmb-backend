@@ -9,13 +9,9 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/minor-heads/sub-minor/{code}", async (string code, UpdateSubMinorHeadDto dto, IMediator mediator, IValidator<UpdateSubMinorHeadDto> validator) =>
+            app.MapPut("/api/minor-heads/sub-minor/{code}", async (string code, UpdateSubMinorHeadDto dto, IMediator mediator) =>
             {
-                var validationResult = await validator.ValidateAsync(dto);
-                if (!validationResult.IsValid)
-                {
-                    return Results.BadRequest(new { errors = validationResult.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage }) });
-                }
+                
 
                 var command = new UpdateSubMinorHeadCommand(code, dto);
                 var result = await mediator.Send(command);

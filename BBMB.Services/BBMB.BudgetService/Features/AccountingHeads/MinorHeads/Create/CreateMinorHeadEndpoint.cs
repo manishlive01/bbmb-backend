@@ -11,20 +11,14 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Create
         {
             app.MapPost("/api/minor-heads", async (CreateMinorHeadDto dto, IMediator mediator, ILogger<CreateMinorHeadEndpoint> logger) =>
             {
-                try
-                {
+                
                     var command = new CreateMinorHeadCommand(dto);
                     var response = await mediator.Send(command);
 
                     return response.IsSucced
                         ? Results.Created($"/api/minor-heads/{dto.MinorAccCode}", response)
                         : Results.BadRequest(response);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Error creating minor head with code {MinorAccCode}", dto.MinorAccCode);
-                    throw; // Re-throw to let global exception handler deal with it
-                }
+               
             })
             .WithName("CreateMinorHead")
             .WithTags("MinorHeads")
