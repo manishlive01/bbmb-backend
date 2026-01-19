@@ -12,7 +12,7 @@ namespace BBMB.BudgetService.Features.Works.Create.Dtos
         public string SubMinorAccCode { get; set; } = string.Empty;
         public string DetailAccCode { get; set; } = string.Empty;
         public string ObjectAccCode { get; set; } = string.Empty;
-        public string UserCode { get; set; } = string.Empty;
+        public string UserCode { get; set; } = "123";
         public string? FinYrStart { get; set; }
         public string? FinYrEnd { get; set; }
         public string? SanctionNo { get; set; }

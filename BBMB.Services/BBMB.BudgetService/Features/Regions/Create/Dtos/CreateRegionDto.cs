@@ -4,6 +4,6 @@ namespace BBMB.BudgetService.Features.Regions.Create.Dtos
     {
         public string RegionCode { get; set; } = string.Empty;
         public string RegionDesc { get; set; } = string.Empty;
-        public string UserCode { get; set; } = string.Empty;
+        public string UserCode { get; set; } = "123";
     }
 }

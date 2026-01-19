@@ -15,6 +15,6 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Create.Dtos
         public string? AdvanceHead { get; set; }
         public string? BankCash { get; set; }
         public string? MonthlyCarryFwd { get; set; }
-        public string UserCode { get; set; } = string.Empty;
+        public string UserCode { get; set; } = "123";
     }
 }
