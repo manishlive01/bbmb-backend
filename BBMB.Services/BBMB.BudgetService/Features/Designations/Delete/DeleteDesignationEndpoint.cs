@@ -1,6 +1,7 @@
 using BBMB.BudgetService.Shared.Endpoints;
 using BBMB.BudgetService.Shared.RequestDTOs;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BBMB.BudgetService.Features.Designations.Delete
 {
@@ -9,7 +10,7 @@ namespace BBMB.BudgetService.Features.Designations.Delete
         public void Map(IEndpointRouteBuilder app)
         {
             app.MapDelete("/api/designations",
-                async (GetByStringIdRequestDto dto, IMediator mediator, CancellationToken ct) =>
+                async ([FromBody] GetByStringIdRequestDto dto, IMediator mediator, CancellationToken ct) =>
                 {
                     var response = await mediator.Send(
                         new DeleteDesignationCommand(dto), ct);
