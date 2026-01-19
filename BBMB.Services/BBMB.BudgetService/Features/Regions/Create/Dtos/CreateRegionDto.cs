@@ -1,4 +1,4 @@
-﻿namespace BBMB.BudgetService.Features.Regions.Create.Dtos
+namespace BBMB.BudgetService.Features.Regions.Create.Dtos
 {
     public class CreateRegionDto
     {

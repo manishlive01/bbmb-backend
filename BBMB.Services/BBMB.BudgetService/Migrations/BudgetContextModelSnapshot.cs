@@ -53,12 +53,10 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<string>("SubMajorAccCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("sub_major_acc_code");
 
                     b.Property<string>("MajorAccCode")
                         .IsRequired()
@@ -66,18 +64,9 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(4)")
                         .HasColumnName("major_acc_code");
 
-                    b.Property<string>("MajorHeadMajorAccCode")
-                        .HasColumnType("character varying(4)");
-
                     b.Property<DateTime>("ModificationDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modification_date");
-
-                    b.Property<string>("SubMajorAccCode")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("sub_major_acc_code");
 
                     b.Property<string>("SubMajorAccDesc")
                         .IsRequired()
@@ -91,9 +80,9 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(6)")
                         .HasColumnName("user_code");
 
-                    b.HasKey("Id");
+                    b.HasKey("SubMajorAccCode");
 
-                    b.HasIndex("MajorHeadMajorAccCode");
+                    b.HasIndex("MajorAccCode");
 
                     b.ToTable("fa_sub_major_head", "budget");
                 });
@@ -133,7 +122,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("detail_acc_code");
 
                     b.Property<string>("DetailHeadDetailAccCode")
-                        .HasColumnType("character varying(3)");
+                        .HasColumnType("character varying(2)");
 
                     b.Property<int>("DivSection")
                         .HasColumnType("integer")
@@ -193,8 +182,8 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(2)")
                         .HasColumnName("sub_major_acc_code");
 
-                    b.Property<int?>("SubMajorHeadId")
-                        .HasColumnType("integer");
+                    b.Property<string>("SubMajorHeadSubMajorAccCode")
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("SubMinorAccCode")
                         .IsRequired()
@@ -202,8 +191,8 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(2)")
                         .HasColumnName("sub_minor_acc_code");
 
-                    b.Property<int?>("SubMinorHeadId")
-                        .HasColumnType("integer");
+                    b.Property<string>("SubMinorHeadSubMinorAccCode")
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("UserCode")
                         .IsRequired()
@@ -231,9 +220,9 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("ObjectClassificationObjectAccCode");
 
-                    b.HasIndex("SubMajorHeadId");
+                    b.HasIndex("SubMajorHeadSubMajorAccCode");
 
-                    b.HasIndex("SubMinorHeadId");
+                    b.HasIndex("SubMinorHeadSubMinorAccCode");
 
                     b.HasIndex("WorkCode1");
 
@@ -309,8 +298,8 @@ namespace BBMB.BudgetService.Migrations
             modelBuilder.Entity("BBMB.BudgetService.Features.DetailHeads.Entities.DetailHead", b =>
                 {
                     b.Property<string>("DetailAccCode")
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
                         .HasColumnName("detail_acc_code");
 
                     b.Property<string>("DetailAccDesc")
@@ -319,9 +308,33 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("detail_acc_desc");
 
+                    b.Property<string>("MajorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("major_acc_code");
+
+                    b.Property<string>("MinorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("minor_acc_code");
+
                     b.Property<DateTime>("ModificationDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modification_date");
+
+                    b.Property<string>("SubMajorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("sub_major_acc_code");
+
+                    b.Property<string>("SubMinorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("sub_minor_acc_code");
 
                     b.Property<string>("UserCode")
                         .IsRequired()
@@ -330,6 +343,14 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("user_code");
 
                     b.HasKey("DetailAccCode");
+
+                    b.HasIndex("MajorAccCode");
+
+                    b.HasIndex("MinorAccCode");
+
+                    b.HasIndex("SubMajorAccCode");
+
+                    b.HasIndex("SubMinorAccCode");
 
                     b.ToTable("fa_detail_head", "budget");
                 });
@@ -396,7 +417,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("pool_code");
 
                     b.Property<string>("PoolCode1")
-                        .HasColumnType("character varying(1)");
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("RegionCode")
                         .HasMaxLength(1)
@@ -404,7 +425,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("region_code");
 
                     b.Property<string>("RegionCode1")
-                        .HasColumnType("character varying(1)");
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("RemittanceOfficeRoCode")
                         .HasColumnType("character varying(3)");
@@ -448,6 +469,46 @@ namespace BBMB.BudgetService.Migrations
                     b.HasIndex("UnitMastersUnitCode");
 
                     b.ToTable("division", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.Estimates.Entities.Estimate", b =>
+                {
+                    b.Property<string>("WorkCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("work_code");
+
+                    b.Property<string>("EstimateCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("estimate_code");
+
+                    b.Property<int>("DivisionCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("division_code");
+
+                    b.Property<decimal?>("EstimateAmt")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("estimate_amt");
+
+                    b.Property<string>("EstimateDesc")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("estimate_desc");
+
+                    b.Property<string>("EstimateNarr")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)")
+                        .HasColumnName("estimate_narr");
+
+                    b.Property<int>("FinYearEnd")
+                        .HasColumnType("integer")
+                        .HasColumnName("fin_year_end");
+
+                    b.HasKey("WorkCode", "EstimateCode");
+
+                    b.ToTable("estimate", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.FinancialYears.Entities.FinancialYear", b =>
@@ -600,7 +661,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("detail_acc_code_fk");
 
                     b.Property<string>("DetailHeadDetailAccCode")
-                        .HasColumnType("character varying(3)");
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("HeadDesc")
                         .IsRequired()
@@ -695,6 +756,12 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("minor_acc_code");
 
+                    b.Property<string>("MajorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("major_acc_code");
+
                     b.Property<string>("MinorAccDesc")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -705,6 +772,12 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modification_date");
 
+                    b.Property<string>("SubMajorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("sub_major_acc_code");
+
                     b.Property<string>("UserCode")
                         .IsRequired()
                         .HasMaxLength(6)
@@ -713,17 +786,25 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasKey("MinorAccCode");
 
+                    b.HasIndex("MajorAccCode");
+
+                    b.HasIndex("SubMajorAccCode");
+
                     b.ToTable("fa_minor_head", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.MinorHeads.Entities.SubMinorHead", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                    b.Property<string>("SubMinorAccCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("sub_minor_acc_code");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<string>("MajorAccCode")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("major_acc_code");
 
                     b.Property<string>("MinorAccCode")
                         .IsRequired()
@@ -731,18 +812,15 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("minor_acc_code");
 
-                    b.Property<string>("MinorHeadMinorAccCode")
-                        .HasColumnType("character varying(3)");
-
                     b.Property<DateTime>("ModificationDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modification_date");
 
-                    b.Property<string>("SubMinorAccCode")
+                    b.Property<string>("SubMajorAccCode")
                         .IsRequired()
                         .HasMaxLength(2)
                         .HasColumnType("character varying(2)")
-                        .HasColumnName("sub_minor_acc_code");
+                        .HasColumnName("sub_major_acc_code");
 
                     b.Property<string>("SubMinorAccDesc")
                         .IsRequired()
@@ -756,9 +834,13 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(6)")
                         .HasColumnName("user_code");
 
-                    b.HasKey("Id");
+                    b.HasKey("SubMinorAccCode");
 
-                    b.HasIndex("MinorHeadMinorAccCode");
+                    b.HasIndex("MajorAccCode");
+
+                    b.HasIndex("MinorAccCode");
+
+                    b.HasIndex("SubMajorAccCode");
 
                     b.ToTable("fa_sub_minor_head", "budget");
                 });
@@ -850,8 +932,8 @@ namespace BBMB.BudgetService.Migrations
             modelBuilder.Entity("BBMB.BudgetService.Features.Pools.Entities.Pool", b =>
                 {
                     b.Property<string>("PoolCode")
-                        .HasMaxLength(1)
-                        .HasColumnType("character varying(1)")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
                         .HasColumnName("pool_code");
 
                     b.Property<DateTime>("ModificationDate")
@@ -934,8 +1016,8 @@ namespace BBMB.BudgetService.Migrations
             modelBuilder.Entity("BBMB.BudgetService.Features.Regions.Entities.Region", b =>
                 {
                     b.Property<string>("RegionCode")
-                        .HasMaxLength(1)
-                        .HasColumnType("character varying(1)")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
                         .HasColumnName("region_code");
 
                     b.Property<DateTime>("ModificationDate")
@@ -1025,7 +1107,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("detail_acc_code");
 
                     b.Property<string>("DetailHeadDetailAccCode")
-                        .HasColumnType("character varying(3)");
+                        .HasColumnType("character varying(2)");
 
                     b.Property<int>("DivSection")
                         .HasColumnType("integer")
@@ -1111,8 +1193,8 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(2)")
                         .HasColumnName("sub_major_acc_code");
 
-                    b.Property<int?>("SubMajorHeadId")
-                        .HasColumnType("integer");
+                    b.Property<string>("SubMajorHeadSubMajorAccCode")
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("SubMinorAccCode")
                         .IsRequired()
@@ -1120,8 +1202,8 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(2)")
                         .HasColumnName("sub_minor_acc_code");
 
-                    b.Property<int?>("SubMinorHeadId")
-                        .HasColumnType("integer");
+                    b.Property<string>("SubMinorHeadSubMinorAccCode")
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("UserCode")
                         .IsRequired()
@@ -1149,9 +1231,9 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("ObjectClassificationObjectAccCode");
 
-                    b.HasIndex("SubMajorHeadId");
+                    b.HasIndex("SubMajorHeadSubMajorAccCode");
 
-                    b.HasIndex("SubMinorHeadId");
+                    b.HasIndex("SubMinorHeadSubMinorAccCode");
 
                     b.ToTable("work", "budget");
                 });
@@ -1160,7 +1242,9 @@ namespace BBMB.BudgetService.Migrations
                 {
                     b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
                         .WithMany("SubMajorHeads")
-                        .HasForeignKey("MajorHeadMajorAccCode");
+                        .HasForeignKey("MajorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("MajorHead");
                 });
@@ -1189,11 +1273,11 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
                         .WithMany()
-                        .HasForeignKey("SubMajorHeadId");
+                        .HasForeignKey("SubMajorHeadSubMajorAccCode");
 
                     b.HasOne("BBMB.BudgetService.Features.MinorHeads.Entities.SubMinorHead", "SubMinorHead")
                         .WithMany()
-                        .HasForeignKey("SubMinorHeadId");
+                        .HasForeignKey("SubMinorHeadSubMinorAccCode");
 
                     b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", "Work")
                         .WithMany()
@@ -1225,6 +1309,41 @@ namespace BBMB.BudgetService.Migrations
                         .IsRequired();
 
                     b.Navigation("Class");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.DetailHeads.Entities.DetailHead", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
+                        .WithMany()
+                        .HasForeignKey("MajorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.MinorHeads.Entities.MinorHead", "MinorHead")
+                        .WithMany()
+                        .HasForeignKey("MinorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
+                        .WithMany()
+                        .HasForeignKey("SubMajorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.MinorHeads.Entities.SubMinorHead", "SubMinorHead")
+                        .WithMany("DetailHeads")
+                        .HasForeignKey("SubMinorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MajorHead");
+
+                    b.Navigation("MinorHead");
+
+                    b.Navigation("SubMajorHead");
+
+                    b.Navigation("SubMinorHead");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Divisions.Entities.Division", b =>
@@ -1266,6 +1385,17 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("UnitMasters");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.Estimates.Entities.Estimate", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", "Work")
+                        .WithMany()
+                        .HasForeignKey("WorkCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Work");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.Geographical.Districts.Entities.DistrictMaster", b =>
                 {
                     b.HasOne("BBMB.BudgetService.Features.Geographical.States.Entities.StateMaster", "StateMasters")
@@ -1304,13 +1434,50 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("ObjectClassification");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.MinorHeads.Entities.MinorHead", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
+                        .WithMany()
+                        .HasForeignKey("MajorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
+                        .WithMany()
+                        .HasForeignKey("SubMajorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MajorHead");
+
+                    b.Navigation("SubMajorHead");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.MinorHeads.Entities.SubMinorHead", b =>
                 {
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
+                        .WithMany()
+                        .HasForeignKey("MajorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("BBMB.BudgetService.Features.MinorHeads.Entities.MinorHead", "MinorHead")
                         .WithMany("SubMinorHeads")
-                        .HasForeignKey("MinorHeadMinorAccCode");
+                        .HasForeignKey("MinorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
+                        .WithMany()
+                        .HasForeignKey("SubMajorAccCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MajorHead");
 
                     b.Navigation("MinorHead");
+
+                    b.Navigation("SubMajorHead");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Units.Entities.UnitMaster", b =>
@@ -1360,11 +1527,11 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
                         .WithMany()
-                        .HasForeignKey("SubMajorHeadId");
+                        .HasForeignKey("SubMajorHeadSubMajorAccCode");
 
                     b.HasOne("BBMB.BudgetService.Features.MinorHeads.Entities.SubMinorHead", "SubMinorHead")
                         .WithMany()
-                        .HasForeignKey("SubMinorHeadId");
+                        .HasForeignKey("SubMinorHeadSubMinorAccCode");
 
                     b.Navigation("Designation");
 
@@ -1396,6 +1563,11 @@ namespace BBMB.BudgetService.Migrations
             modelBuilder.Entity("BBMB.BudgetService.Features.MinorHeads.Entities.MinorHead", b =>
                 {
                     b.Navigation("SubMinorHeads");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.MinorHeads.Entities.SubMinorHead", b =>
+                {
+                    b.Navigation("DetailHeads");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.PowerIrrigations.Entities.PowerIrrigation", b =>

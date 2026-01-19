@@ -1,29 +1,15 @@
-﻿using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create.Dtos;
+using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create.Dtos;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using Mapster;
 
 namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create
 {
-    public static class CreateSubMajorHeadMapping
+    public class CreateSubMajorHeadMapping : IRegister
     {
-        public static void Register()
+        public void Register(TypeAdapterConfig config)
         {
-            TypeAdapterConfig<CreateSubMajorHeadDto, SubMajorHead>
-                .NewConfig()
-
-                // ===== Simple direct mappings =====
-                .Map(dest => dest.MajorAccCode,
-                     src => src.MajorAccCode.Trim().ToUpper())
-
-                .Map(dest => dest.SubMajorAccCode,
-                     src => src.SubMajorAccCode.Trim().ToUpper())
-
-                .Map(dest => dest.SubMajorAccDesc,
-                     src => src.SubMajorAccDesc.Trim())
-
-
-                // ===== Ignore DB / system-controlled fields =====
-                .Ignore(dest => dest.ModificationDate);
+            config.NewConfig<CreateSubMajorHeadDto, SubMajorHead>()
+                .Map(dest => dest.ModificationDate, src => DateTime.UtcNow);
         }
     }
 }

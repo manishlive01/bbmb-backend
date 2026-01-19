@@ -1,0 +1,20 @@
+using BBMB.BudgetService.Features.Units.GetList.Dtos;
+using BBMB.BudgetService.Shared.ResponseDTOs;
+using MediatR;
+
+namespace BBMB.BudgetService.Features.Units.GetList
+{
+    public sealed record GetUnitListQuery(
+        int PageNumber = 1,
+        int PageSize = 10,
+        string? SortBy = null,
+        bool SortDescending = false,
+        string? UnitCode = null,
+        string? UnitDesc = null,
+        string? ProjCode = null,
+        string? IrrPwrCode = null,
+        string? UserCode = null,
+        DateTime? ModificationDateFrom = null,
+        DateTime? ModificationDateTo = null
+    ) : IRequest<PagedResponse<GetUnitListResponseDto>>;
+}

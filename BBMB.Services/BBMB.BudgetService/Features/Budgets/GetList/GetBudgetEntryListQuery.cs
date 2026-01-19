@@ -1,0 +1,18 @@
+using BBMB.BudgetService.Features.Budgets.Entities;
+using BBMB.BudgetService.Features.Budgets.GetList.Dtos;
+using BBMB.BudgetService.Shared.ResponseDTOs;
+using MediatR;
+
+namespace BBMB.BudgetService.Features.Budgets.GetList
+{
+    public sealed record GetBudgetEntryListQuery(
+        int PageNumber,
+        int PageSize,
+        string? SortBy,
+        bool SortDescending,
+        int? DivisionCode,
+        int? CalendarYear,
+        BudgetType? BudgetType,
+        string? WorkCode
+    ) : IRequest<PagedResponse<GetBudgetEntryListResponseDto>>;
+}

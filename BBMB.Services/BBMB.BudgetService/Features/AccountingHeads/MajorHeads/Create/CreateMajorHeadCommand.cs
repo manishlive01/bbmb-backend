@@ -1,5 +1,4 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Create.Dtos;
-using BBMB.BudgetService.Features.Geographical.States.Create.Dtos;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 

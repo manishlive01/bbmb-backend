@@ -1,5 +1,6 @@
-﻿using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create.Dtos;
+using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create.Dtos;
 using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 
 namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create
@@ -8,26 +9,19 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/Create-SubMajorHead", async (
-                CreateSubMajorHeadDto dto,
-                IMediator mediator) =>
+            app.MapPost("/api/accounting-heads/sub-major", async (CreateSubMajorHeadDto dto, IMediator mediator) =>
             {
                 var command = new CreateSubMajorHeadCommand(dto);
-
                 var response = await mediator.Send(command);
-                if (response.IsSucced == false)
-                {
-                    return Results.BadRequest(response);
-                }
-
-                return Results.Ok(response);
+                
+                return response.IsSucced 
+                    ? Results.Created($"/api/accounting-heads/sub-major/{dto.SubMajorAccCode}", response)
+                    : Results.Conflict(response);
             })
-            .Produces<string>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest)
-            .WithSummary("Create Sub Major Head")
-            .WithDescription("Creates a new Sub Major Head under a Major Head")
-            .WithName("Create Sub Major Head")
-            .WithTags("SubMajorHead");
+            .WithName("CreateSubMajorHead")
+            .WithTags("SubMajorHeads")
+            .Produces<Response>(StatusCodes.Status201Created)
+            .Produces<Response>(StatusCodes.Status409Conflict);
         }
     }
 }
