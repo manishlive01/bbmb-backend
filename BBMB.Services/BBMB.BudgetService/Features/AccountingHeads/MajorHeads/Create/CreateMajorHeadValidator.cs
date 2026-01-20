@@ -9,7 +9,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Create
         {
             RuleFor(x => x.dto.MajorAccCode)
                 .NotEmpty()
-                .Length(1, 4)
+                .Length(4, 4)
                 .WithMessage("Major Account Code is required and must be maximum 4 characters");
 
             RuleFor(x => x.dto.MajorAccDesc)

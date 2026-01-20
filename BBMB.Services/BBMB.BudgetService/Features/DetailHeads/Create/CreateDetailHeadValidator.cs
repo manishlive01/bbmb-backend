@@ -15,7 +15,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.Create
 
             RuleFor(x => x.DetailAccCode)
                 .NotEmpty().WithMessage("Detail Account Code is required.")
-                .MaximumLength(2).WithMessage("Detail Account Code must not exceed 2 characters.");
+                .Length(3, 3).WithMessage("Detail Account Code must not exceed 3 characters.");
 
            
             RuleFor(x => x.DetailAccDesc)

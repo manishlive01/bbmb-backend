@@ -14,7 +14,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create
             
             RuleFor(x => x.dto.SubMajorAccCode)
                 .NotEmpty().WithMessage("Sub-major account code is required")
-                .MaximumLength(2).WithMessage("Sub-major account code must not exceed 2 characters");
+                .Length(2,2).WithMessage("Sub-major account code must not exceed 2 characters");
                 
             RuleFor(x => x.dto.MajorAccCode)
                 .NotEmpty().WithMessage("Major account code is required")
