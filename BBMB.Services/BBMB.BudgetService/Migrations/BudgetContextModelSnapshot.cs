@@ -186,7 +186,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("detail_acc_code");
 
                     b.Property<string>("DetailHeadDetailAccCode")
-                        .HasColumnType("character varying(2)");
+                        .HasColumnType("character varying(3)");
 
                     b.Property<int>("DivSection")
                         .HasColumnType("integer")
@@ -362,8 +362,8 @@ namespace BBMB.BudgetService.Migrations
             modelBuilder.Entity("BBMB.BudgetService.Features.DetailHeads.Entities.DetailHead", b =>
                 {
                     b.Property<string>("DetailAccCode")
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
                         .HasColumnName("detail_acc_code");
 
                     b.Property<string>("DetailAccDesc")
@@ -698,7 +698,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("detail_acc_code_fk");
 
                     b.Property<string>("DetailHeadDetailAccCode")
-                        .HasColumnType("character varying(2)");
+                        .HasColumnType("character varying(3)");
 
                     b.Property<string>("HeadDesc")
                         .IsRequired()
@@ -814,7 +814,7 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("fa_object_head", "budget");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.Offices.Entities.AccountOffice", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.Offices.AccountOffices.Entities.AccountOffice", b =>
                 {
                     b.Property<string>("AccOffice")
                         .HasMaxLength(2)
@@ -842,7 +842,7 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("account_office", "budget");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.Offices.Entities.RemittanceOffice", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities.RemittanceOffice", b =>
                 {
                     b.Property<string>("RoCode")
                         .HasMaxLength(3)
@@ -1048,7 +1048,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("detail_acc_code");
 
                     b.Property<string>("DetailHeadDetailAccCode")
-                        .HasColumnType("character varying(2)");
+                        .HasColumnType("character varying(3)");
 
                     b.Property<int>("DivSection")
                         .HasColumnType("integer")
@@ -1272,7 +1272,7 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Divisions.Entities.Division", b =>
                 {
-                    b.HasOne("BBMB.BudgetService.Features.Offices.Entities.AccountOffice", "AccountOffice")
+                    b.HasOne("BBMB.BudgetService.Features.Offices.AccountOffices.Entities.AccountOffice", "AccountOffice")
                         .WithMany()
                         .HasForeignKey("AccountOfficeAccOffice");
 
@@ -1288,7 +1288,7 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("RegionCode1");
 
-                    b.HasOne("BBMB.BudgetService.Features.Offices.Entities.RemittanceOffice", "RemittanceOffice")
+                    b.HasOne("BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities.RemittanceOffice", "RemittanceOffice")
                         .WithMany()
                         .HasForeignKey("RemittanceOfficeRoCode");
 
