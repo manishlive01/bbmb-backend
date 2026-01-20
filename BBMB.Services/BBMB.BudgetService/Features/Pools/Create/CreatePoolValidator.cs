@@ -2,9 +2,9 @@ using FluentValidation;
 
 namespace BBMB.BudgetService.Features.Pools.Create
 {
-    public class CreatePoolValidator : AbstractValidator<CreatePoolCommand>
+    public class CreateRemittanceValidator : AbstractValidator<CreatePoolCommand>
     {
-        public CreatePoolValidator()
+        public CreateRemittanceValidator()
         {
             RuleFor(x => x.dto.PoolCode)
                 .NotEmpty().WithMessage("Pool code is required")

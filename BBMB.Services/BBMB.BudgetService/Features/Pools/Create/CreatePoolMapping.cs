@@ -4,7 +4,7 @@ using Mapster;
 
 namespace BBMB.BudgetService.Features.Pools.Create
 {
-    public class CreatePoolMapping : IRegister
+    public class CreateRemittanceMapping : IRegister
     {
         public void Register(TypeAdapterConfig config)
         {

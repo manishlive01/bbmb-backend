@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.Pools.Create
 {
-    public class CreatePoolHandler : IRequestHandler<CreatePoolCommand, Response>
+    public class CreateRemittanceHandler : IRequestHandler<CreatePoolCommand, Response>
     {
         private readonly BudgetContext _context;
 
-        public CreatePoolHandler(BudgetContext context)
+        public CreateRemittanceHandler(BudgetContext context)
         {
             _context = context;
         }
