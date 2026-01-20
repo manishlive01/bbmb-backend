@@ -9,7 +9,7 @@ namespace BBMB.BudgetService.Features.Designations.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/designations/update", async (
+            app.MapPut("/api/designations", async (
                 UpdateDesignationDto dto,
                 IMediator mediator,
                 CancellationToken ct) =>

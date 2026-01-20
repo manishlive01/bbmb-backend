@@ -19,36 +19,12 @@ namespace BBMB.BudgetService.Features.DetailHeads.GetList
         {
             // Start with base query including all parent entities
             var query = _context.DetailHeads
-                .Include(d => d.MajorHead)
-                .Include(d => d.SubMajorHead)
-                .Include(d => d.MinorHead)
-                .Include(d => d.SubMinorHead)
                 .AsQueryable();
 
             // Apply filters
             if (!string.IsNullOrWhiteSpace(request.DetailAccCode))
             {
                 query = query.Where(d => d.DetailAccCode.Contains(request.DetailAccCode));
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.MajorAccCode))
-            {
-                query = query.Where(d => d.MajorAccCode == request.MajorAccCode);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.SubMajorAccCode))
-            {
-                query = query.Where(d => d.SubMajorAccCode == request.SubMajorAccCode);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.MinorAccCode))
-            {
-                query = query.Where(d => d.MinorAccCode == request.MinorAccCode);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.SubMinorAccCode))
-            {
-                query = query.Where(d => d.SubMinorAccCode == request.SubMinorAccCode);
             }
 
             if (!string.IsNullOrWhiteSpace(request.DetailAccDesc))
@@ -88,14 +64,6 @@ namespace BBMB.BudgetService.Features.DetailHeads.GetList
                 {
                     DetailAccCode = d.DetailAccCode,
                     DetailAccDesc = d.DetailAccDesc,
-                    MajorAccCode = d.MajorAccCode,
-                    MajorAccDesc = d.MajorHead != null ? d.MajorHead.MajorAccDesc : string.Empty,
-                    SubMajorAccCode = d.SubMajorAccCode,
-                    SubMajorAccDesc = d.SubMajorHead != null ? d.SubMajorHead.SubMajorAccDesc : string.Empty,
-                    MinorAccCode = d.MinorAccCode,
-                    MinorAccDesc = d.MinorHead != null ? d.MinorHead.MinorAccDesc : string.Empty,
-                    SubMinorAccCode = d.SubMinorAccCode,
-                    SubMinorAccDesc = d.SubMinorHead != null ? d.SubMinorHead.SubMinorAccDesc : string.Empty,
                     UserCode = d.UserCode,
                     ModificationDate = d.ModificationDate
                 })
@@ -135,10 +103,6 @@ namespace BBMB.BudgetService.Features.DetailHeads.GetList
             {
                 "detailacccode" => sortDescending ? query.OrderByDescending(d => d.DetailAccCode) : query.OrderBy(d => d.DetailAccCode),
                 "detailaccdesc" => sortDescending ? query.OrderByDescending(d => d.DetailAccDesc) : query.OrderBy(d => d.DetailAccDesc),
-                "majoracccode" => sortDescending ? query.OrderByDescending(d => d.MajorAccCode) : query.OrderBy(d => d.MajorAccCode),
-                "submajoracccode" => sortDescending ? query.OrderByDescending(d => d.SubMajorAccCode) : query.OrderBy(d => d.SubMajorAccCode),
-                "minoracccode" => sortDescending ? query.OrderByDescending(d => d.MinorAccCode) : query.OrderBy(d => d.MinorAccCode),
-                "subminoracccode" => sortDescending ? query.OrderByDescending(d => d.SubMinorAccCode) : query.OrderBy(d => d.SubMinorAccCode),
                 "usercode" => sortDescending ? query.OrderByDescending(d => d.UserCode) : query.OrderBy(d => d.UserCode),
                 "modificationdate" => sortDescending ? query.OrderByDescending(d => d.ModificationDate) : query.OrderBy(d => d.ModificationDate),
                 _ => query.OrderBy(d => d.DetailAccCode)

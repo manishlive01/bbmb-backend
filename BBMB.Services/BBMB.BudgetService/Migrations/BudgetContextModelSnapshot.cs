@@ -372,33 +372,12 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("detail_acc_desc");
 
-                    b.Property<string>("MajorAccCode")
-                        .IsRequired()
-                        .HasMaxLength(4)
-                        .HasColumnType("character varying(4)")
-                        .HasColumnName("major_acc_code");
-
-                    b.Property<string>("MinorAccCode")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasColumnName("minor_acc_code");
-
                     b.Property<DateTime>("ModificationDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modification_date");
 
-                    b.Property<string>("SubMajorAccCode")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("sub_major_acc_code");
-
-                    b.Property<string>("SubMinorAccCode")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("sub_minor_acc_code");
+                    b.Property<string>("SubMinorHeadSubMinorAccCode")
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("UserCode")
                         .IsRequired()
@@ -408,13 +387,7 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasKey("DetailAccCode");
 
-                    b.HasIndex("MajorAccCode");
-
-                    b.HasIndex("MinorAccCode");
-
-                    b.HasIndex("SubMajorAccCode");
-
-                    b.HasIndex("SubMinorAccCode");
+                    b.HasIndex("SubMinorHeadSubMinorAccCode");
 
                     b.ToTable("fa_detail_head", "budget");
                 });
@@ -1292,37 +1265,9 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.DetailHeads.Entities.DetailHead", b =>
                 {
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
-                        .WithMany()
-                        .HasForeignKey("MajorAccCode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities.MinorHead", "MinorHead")
-                        .WithMany()
-                        .HasForeignKey("MinorAccCode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
-                        .WithMany()
-                        .HasForeignKey("SubMajorAccCode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities.SubMinorHead", "SubMinorHead")
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities.SubMinorHead", null)
                         .WithMany("DetailHeads")
-                        .HasForeignKey("SubMinorAccCode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("MajorHead");
-
-                    b.Navigation("MinorHead");
-
-                    b.Navigation("SubMajorHead");
-
-                    b.Navigation("SubMinorHead");
+                        .HasForeignKey("SubMinorHeadSubMinorAccCode");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Divisions.Entities.Division", b =>

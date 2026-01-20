@@ -3,5 +3,5 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.DetailHeads.GetById
 {
-    public sealed record GetDetailHeadByIdQuery(string DetailAccCode) : IRequest<GetDetailHeadByIdResponseDto>;
+    public sealed record GetDetailHeadByIdCommand(string DetailAccCode) : IRequest<GetDetailHeadByIdResponseDto>;
 }
