@@ -9,7 +9,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetList
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/minor-heads/sub-minor", async (
+            app.MapGet("/api/sub-minor-heads", async (
                 string? subMinorAccCode,
                 string? majorAccCode,
                 string? subMajorAccCode,

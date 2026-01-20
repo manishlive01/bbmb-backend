@@ -9,14 +9,14 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Create
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPost("/api/minor-heads/sub-minor", async (CreateSubMinorHeadDto dto, IMediator mediator, ILogger<CreateSubMinorHeadEndpoint> logger) =>
+            app.MapPost("/api/sub-minor-heads", async (CreateSubMinorHeadDto dto, IMediator mediator, ILogger<CreateSubMinorHeadEndpoint> logger) =>
             {
                  
                     var command = new CreateSubMinorHeadCommand(dto);
                     var response = await mediator.Send(command);
 
                     return response.IsSucced
-                        ? Results.Created($"/api/minor-heads/sub-minor/{dto.SubMinorAccCode}", response)
+                        ? Results.Created($"/api/sub-minor-heads/{dto.SubMinorAccCode}", response)
                         : Results.BadRequest(response);
                 
             })

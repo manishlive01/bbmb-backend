@@ -7,7 +7,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/minor-heads/sub-minor/{code}", async (string code, IMediator mediator) =>
+            app.MapDelete("/api/sub-minor-heads/{code}", async (string code, IMediator mediator) =>
             {
                 var command = new DeleteSubMinorHeadCommand(code);
                 var result = await mediator.Send(command);

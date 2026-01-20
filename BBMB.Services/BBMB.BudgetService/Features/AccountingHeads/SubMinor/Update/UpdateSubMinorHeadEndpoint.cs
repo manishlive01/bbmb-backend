@@ -9,7 +9,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/minor-heads/sub-minor/{code}", async (string code, UpdateSubMinorHeadDto dto, IMediator mediator) =>
+            app.MapPut("/api/sub-minor-heads/{code}", async (string code, UpdateSubMinorHeadDto dto, IMediator mediator) =>
             {
                 
 

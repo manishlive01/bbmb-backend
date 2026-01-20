@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetById
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/minor-heads/sub-minor/{code}", async (string code, IMediator mediator) =>
+            app.MapGet("/api/sub-minor-heads/{code}", async (string code, IMediator mediator) =>
             {
                 try
                 {
