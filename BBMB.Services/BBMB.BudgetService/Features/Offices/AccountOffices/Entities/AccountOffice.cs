@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BBMB.BudgetService.Features.Offices.Entities
+namespace BBMB.BudgetService.Features.Offices.AccountOffices.Entities
 {
     [Table("account_office")]
     public class AccountOffice

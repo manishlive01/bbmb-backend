@@ -61,6 +61,9 @@
     <Folder Include="Features\FinancialYears\GetById\" />
     <Folder Include="Features\FinancialYears\Delete\" />
     <Folder Include="Features\FinancialYears\Update\" />
+    <Folder Include="Features\Offices\AccountOffices\Delete\" />
+    <Folder Include="Features\Offices\AccountOffices\GetById\" />
+    <Folder Include="Features\Offices\AccountOffices\Update\" />
     <Folder Include="Features\Regions\GetById\Dtos\" />
     <Folder Include="Features\Regions\GetList\Dtos\" />
     <Folder Include="Features\Regions\Update\Dtos\" />
