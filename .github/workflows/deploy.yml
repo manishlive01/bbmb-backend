@@ -38,7 +38,7 @@ jobs:
           target: "/home/ubuntu/bbmb-app"
           strip_components: 1
 
-      - name: Restart application service
+      - name: Apply Staging config and restart service
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -46,5 +46,17 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -e
+            cd /home/ubuntu/bbmb-app
+
+            echo "Applying Staging configuration..."
+            if [ -f appsettings.Staging.json ]; then
+              cp appsettings.Staging.json appsettings.json
+            else
+              echo "ERROR: appsettings.Staging.json not found"
+              exit 1
+            fi
+
+            echo "Restarting service..."
             sudo systemctl restart bbmb-budget-service
             sudo systemctl status bbmb-budget-service --no-pager
