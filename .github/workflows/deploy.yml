@@ -45,6 +45,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          timeout: 60s
+          command_timeout: 10m
+          script_stop: true
           script: |
             set -e
             cd /home/ubuntu/bbmb-app
@@ -59,4 +62,4 @@ jobs:
 
             echo "Restarting service..."
             sudo systemctl restart bbmb-budget-service
-            sudo systemctl status bbmb-budget-service --no-pager
+            sudo systemctl is-active bbmb-budget-service
