@@ -6,7 +6,6 @@ on:
       - main
   workflow_dispatch:
 
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -14,11 +13,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
 
       - name: Restore
         working-directory: BBMB.Services/BBMB.BudgetService
@@ -44,24 +38,19 @@ jobs:
           strip_components: 1
           timeout: 60s
 
+      - name: Apply Staging config and restart service (native SSH)
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+          chmod 600 key.pem
 
-      - name: Apply Staging config and restart service
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          port: ${{ secrets.SSH_PORT }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          timeout: 60s
-          command_timeout: 10m
-          script_stop: true
-          script: |
+          ssh -o StrictHostKeyChecking=no \
+              -i key.pem \
+              ubuntu@${{ secrets.SSH_HOST }} << 'EOF'
             set -e
             cd /home/ubuntu/bbmb-app
-
             echo "Applying Staging configuration..."
             cp appsettings.Staging.json appsettings.json
-
             echo "Restarting service..."
             sudo systemctl restart bbmb-budget-service
             sudo systemctl is-active bbmb-budget-service
+          EOF
