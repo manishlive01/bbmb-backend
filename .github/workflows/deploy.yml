@@ -36,12 +36,14 @@ jobs:
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          port: ${{ secrets.SSH_PORT }}
+          username: ubuntu
+          port: 22
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "BBMB.Services/BBMB.BudgetService/publish/*"
           target: "/home/ubuntu/bbmb-app"
           strip_components: 1
+          timeout: 60s
+
 
       - name: Apply Staging config and restart service
         uses: appleboy/ssh-action@v1.0.3
