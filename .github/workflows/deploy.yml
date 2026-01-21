@@ -19,12 +19,15 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
+        working-directory: BBMB.Services/BBMB.BudgetService
         run: dotnet restore
 
       - name: Build
+        working-directory: BBMB.Services/BBMB.BudgetService
         run: dotnet build -c Release --no-restore
 
       - name: Publish
+        working-directory: BBMB.Services/BBMB.BudgetService
         run: dotnet publish -c Release -o publish
 
       - name: Copy files to server
@@ -34,7 +37,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "publish/*"
+          source: "BBMB.Services/BBMB.BudgetService/publish/*"
           target: "/home/ubuntu/bbmb-app"
           strip_components: 1
 
@@ -53,12 +56,7 @@ jobs:
             cd /home/ubuntu/bbmb-app
 
             echo "Applying Staging configuration..."
-            if [ -f appsettings.Staging.json ]; then
-              cp appsettings.Staging.json appsettings.json
-            else
-              echo "ERROR: appsettings.Staging.json not found"
-              exit 1
-            fi
+            cp appsettings.Staging.json appsettings.json
 
             echo "Restarting service..."
             sudo systemctl restart bbmb-budget-service
