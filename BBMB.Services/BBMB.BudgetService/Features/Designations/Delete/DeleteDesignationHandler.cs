@@ -1,11 +1,12 @@
-using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+﻿using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.Designations.Delete
 {
-    public class DeleteDesignationHandler : IRequestHandler<DeleteDesignationCommand, Response>
+    public class DeleteDesignationHandler
+        : IRequestHandler<DeleteDesignationCommand, Response>
     {
         private readonly BudgetContext _context;
 
@@ -14,36 +15,51 @@ namespace BBMB.BudgetService.Features.Designations.Delete
             _context = context;
         }
 
-        public async Task<Response> Handle(DeleteDesignationCommand request, CancellationToken ct)
+        public async Task<Response> Handle(
+            DeleteDesignationCommand request,
+            CancellationToken ct)
         {
+            // 1️⃣ Fetch WITHOUT tracking
             var designation = await _context.Designations
-                .FirstOrDefaultAsync(d => d.DesignationCode == request.Code, ct);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    d => d.DesignationCode == request.dto.Id,
+                    ct);
 
             if (designation == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Designation with code '{request.Code}' not found"
+                    Message = $"Designation with code '{request.dto.Id}' not found"
                 };
             }
 
-            // Check for associated works
-            var associatedWorks = await _context.Works
-                .Where(w => w.DesignationCode == request.Code)
-                .Select(w => w.WorkCode)
-                .ToListAsync(ct);
+            // 2️⃣ Check associated works (NO tracking)
+            var hasAssociatedWorks = await _context.Works
+                .AsNoTracking()
+                .AnyAsync(
+                    w => w.DesignationCode == request.dto.Id,
+                    ct);
 
-            if (associatedWorks.Any())
+            if (hasAssociatedWorks)
             {
-                var workCodes = string.Join(", ", associatedWorks);
+                var workCodes = await _context.Works
+                    .AsNoTracking()
+                    .Where(w => w.DesignationCode == request.dto.Id)
+                    .Select(w => w.WorkCode)
+                    .ToListAsync(ct);
+
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Cannot delete designation. Associated works: {workCodes}"
+                    Message =
+                        $"Cannot delete designation. Associated works: {string.Join(", ", workCodes)}"
                 };
             }
 
+            // 3️⃣ Attach + HARD DELETE
+            _context.Designations.Attach(designation);
             _context.Designations.Remove(designation);
             await _context.SaveChangesAsync(ct);
 

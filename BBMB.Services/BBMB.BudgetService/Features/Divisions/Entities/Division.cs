@@ -1,5 +1,6 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
-using BBMB.BudgetService.Features.Offices.Entities;
+using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
+using BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities;
 using BBMB.BudgetService.Features.Pools.Entities;
 using BBMB.BudgetService.Features.Regions.Entities;
 using BBMB.BudgetService.Features.Units.Entities;

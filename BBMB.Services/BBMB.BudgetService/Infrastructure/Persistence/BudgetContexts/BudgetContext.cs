@@ -1,4 +1,5 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
+using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using BBMB.BudgetService.Features.Budgets.Entities;
 using BBMB.BudgetService.Features.Classes.Entities;
@@ -10,9 +11,9 @@ using BBMB.BudgetService.Features.FinancialYears.Entities;
 using BBMB.BudgetService.Features.Geographical.Districts.Entities;
 using BBMB.BudgetService.Features.Geographical.States.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
-using BBMB.BudgetService.Features.MinorHeads.Entities;
 using BBMB.BudgetService.Features.ObjectClassifications.Entities;
-using BBMB.BudgetService.Features.Offices.Entities;
+using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
+using BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities;
 using BBMB.BudgetService.Features.Pools.Entities;
 using BBMB.BudgetService.Features.PowerIrrigations.Entities;
 using BBMB.BudgetService.Features.Projects.Entities;

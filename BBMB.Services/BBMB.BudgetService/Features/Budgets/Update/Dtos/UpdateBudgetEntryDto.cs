@@ -20,6 +20,6 @@ namespace BBMB.BudgetService.Features.Budgets.Update.Dtos
         public decimal? RevisedAmount { get; set; }
         public decimal? ProposedBudget { get; set; }
         public BudgetType BudgetType { get; set; }
-        public string UserCode { get; set; } = string.Empty;
+        public string UserCode { get; set; } = "123";
     }
 }

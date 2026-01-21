@@ -1,6 +1,6 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
+using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
-using BBMB.BudgetService.Features.MinorHeads.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -10,29 +10,9 @@ namespace BBMB.BudgetService.Features.DetailHeads.Entities
     public class DetailHead
     {
         [Key]
-        [MaxLength(2)]
+        [MaxLength(3)]
         [Column("detail_acc_code")]
         public string DetailAccCode { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(4)]
-        [Column("major_acc_code")]
-        public string MajorAccCode { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(2)]
-        [Column("sub_major_acc_code")]
-        public string SubMajorAccCode { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(3)]
-        [Column("minor_acc_code")]
-        public string MinorAccCode { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(2)]
-        [Column("sub_minor_acc_code")]
-        public string SubMinorAccCode { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(100)]
@@ -48,17 +28,5 @@ namespace BBMB.BudgetService.Features.DetailHeads.Entities
         [Column("user_code")]
         public string UserCode { get; set; } = string.Empty;
 
-        // Navigation properties
-        [ForeignKey(nameof(MajorAccCode))]
-        public virtual MajorHead? MajorHead { get; set; }
-
-        [ForeignKey(nameof(SubMajorAccCode))]
-        public virtual SubMajorHead? SubMajorHead { get; set; }
-
-        [ForeignKey(nameof(MinorAccCode))]
-        public virtual MinorHead? MinorHead { get; set; }
-
-        [ForeignKey(nameof(SubMinorAccCode))]
-        public virtual SubMinorHead? SubMinorHead { get; set; }
     }
 }

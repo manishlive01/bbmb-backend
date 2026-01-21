@@ -7,7 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.Designations.GetList
 {
-    public class GetDesignationListHandler : IRequestHandler<GetDesignationListQuery, PagedResponse<GetDesignationListResponseDto>>
+    public class GetDesignationListHandler
+        : IRequestHandler<GetDesignationListCommand, PagedResponse<GetDesignationListResponseDto>>
     {
         private readonly BudgetContext _context;
 
@@ -16,41 +17,52 @@ namespace BBMB.BudgetService.Features.Designations.GetList
             _context = context;
         }
 
-        public async Task<PagedResponse<GetDesignationListResponseDto>> Handle(GetDesignationListQuery request, CancellationToken ct)
+        public async Task<PagedResponse<GetDesignationListResponseDto>> Handle(
+            GetDesignationListCommand request,
+            CancellationToken ct)
         {
-            var query = _context.Designations.AsQueryable();
+            var r = request.Request;
 
-            // Apply filters
-            if (!string.IsNullOrEmpty(request.DesignationCode))
-                query = query.Where(d => d.DesignationCode == request.DesignationCode);
+            var query = _context.Designations
+                .AsNoTracking()
+                .AsQueryable();
 
-            if (!string.IsNullOrEmpty(request.DesignationDesc))
-                query = query.Where(d => d.DesignationDesc.Contains(request.DesignationDesc));
+            // ===== Filters =====
+            if (!string.IsNullOrWhiteSpace(r.DesignationCode))
+                query = query.Where(d => d.DesignationCode == r.DesignationCode.Trim());
 
-            if (!string.IsNullOrEmpty(request.UserCode))
-                query = query.Where(d => d.UserCode == request.UserCode);
+            if (!string.IsNullOrWhiteSpace(r.DesignationDesc))
+                query = query.Where(d => d.DesignationDesc.Contains(r.DesignationDesc.Trim()));
 
-            if (request.ModificationDateFrom.HasValue)
-                query = query.Where(d => d.ModificationDate >= request.ModificationDateFrom.Value);
+            if (!string.IsNullOrWhiteSpace(r.UserCode))
+                query = query.Where(d => d.UserCode == r.UserCode.Trim());
 
-            if (request.ModificationDateTo.HasValue)
-                query = query.Where(d => d.ModificationDate <= request.ModificationDateTo.Value);
+            if (r.ModificationDateFrom.HasValue)
+                query = query.Where(d => d.ModificationDate >= r.ModificationDateFrom.Value);
 
-            // Get total count
+            if (r.ModificationDateTo.HasValue)
+                query = query.Where(d => d.ModificationDate <= r.ModificationDateTo.Value);
+
+            // ===== Total Count =====
             var totalCount = await query.CountAsync(ct);
 
-            // Apply sorting
-            query = ApplySorting(query, request.SortBy, request.SortDescending);
+            // ===== Sorting =====
+            query = ApplySorting(query, r.SortBy, r.SortDescending);
 
-            // Apply pagination
-            var pageSize = Math.Min(request.PageSize, 100);
+            // ===== Pagination =====
+            var pageNumber = r.PageNumber <= 0 ? 1 : r.PageNumber;
+            var pageSize = r.PageSize <= 0 ? 10 : Math.Min(r.PageSize, 100);
+
             var items = await query
-                .Skip((request.PageNumber - 1) * pageSize)
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(d => new GetDesignationListResponseDto
                 {
                     DesignationCode = d.DesignationCode,
                     DesignationDesc = d.DesignationDesc,
+                    ClassCode = d.ClassCode,
+                    MinBasic = d.MinBasic,
+                    MaxBasic = d.MaxBasic,
                     ModificationDate = d.ModificationDate,
                     UserCode = d.UserCode
                 })
@@ -65,26 +77,37 @@ namespace BBMB.BudgetService.Features.Designations.GetList
                 Pagination = new PaginationMetadata
                 {
                     TotalCount = totalCount,
-                    PageNumber = request.PageNumber,
+                    PageNumber = pageNumber,
                     PageSize = pageSize,
                     TotalPages = totalPages,
-                    HasPreviousPage = request.PageNumber > 1,
-                    HasNextPage = request.PageNumber < totalPages
+                    HasPreviousPage = pageNumber > 1,
+                    HasNextPage = pageNumber < totalPages
                 }
             };
         }
 
-        private IQueryable<Designation> ApplySorting(IQueryable<Designation> query, string? sortBy, bool sortDescending)
+        private static IQueryable<Designation> ApplySorting(
+            IQueryable<Designation> query,
+            string? sortBy,
+            bool sortDescending)
         {
-            if (string.IsNullOrEmpty(sortBy))
+            if (string.IsNullOrWhiteSpace(sortBy))
                 return query.OrderBy(d => d.DesignationCode);
 
-            return sortBy.ToLower() switch
+            return sortBy.Trim().ToLower() switch
             {
-                "designationcode" => sortDescending ? query.OrderByDescending(d => d.DesignationCode) : query.OrderBy(d => d.DesignationCode),
-                "designationdesc" => sortDescending ? query.OrderByDescending(d => d.DesignationDesc) : query.OrderBy(d => d.DesignationDesc),
-                "modificationdate" => sortDescending ? query.OrderByDescending(d => d.ModificationDate) : query.OrderBy(d => d.ModificationDate),
-                "usercode" => sortDescending ? query.OrderByDescending(d => d.UserCode) : query.OrderBy(d => d.UserCode),
+                "designationcode" =>
+                    sortDescending ? query.OrderByDescending(d => d.DesignationCode) : query.OrderBy(d => d.DesignationCode),
+
+                "designationdesc" =>
+                    sortDescending ? query.OrderByDescending(d => d.DesignationDesc) : query.OrderBy(d => d.DesignationDesc),
+
+                "modificationdate" =>
+                    sortDescending ? query.OrderByDescending(d => d.ModificationDate) : query.OrderBy(d => d.ModificationDate),
+
+                "usercode" =>
+                    sortDescending ? query.OrderByDescending(d => d.UserCode) : query.OrderBy(d => d.UserCode),
+
                 _ => query.OrderBy(d => d.DesignationCode)
             };
         }

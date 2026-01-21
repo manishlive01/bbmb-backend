@@ -1,5 +1,7 @@
 using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.RequestDTOs;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BBMB.BudgetService.Features.Designations.GetById
 {
@@ -7,34 +9,36 @@ namespace BBMB.BudgetService.Features.Designations.GetById
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/designations/{code}", async (string code, IMediator mediator) =>
+            app.MapPost("/api/designations/byId", async (
+     [FromBody] GetByStringIdRequestDto dto,
+     IMediator mediator,
+     CancellationToken ct) =>
             {
-                try
-                {
-                    var query = new GetDesignationByIdQuery(code);
-                    var result = await mediator.Send(query);
-                    return Results.Ok(new
-                    {
-                        message = "Designation retrieved successfully",
-                        data = result
-                    });
-                }
-                catch (KeyNotFoundException ex)
+                var query = new GetDesignationByIdQuery(dto);
+
+                var result = await mediator.Send(query, ct);
+
+                if (result == null)
                 {
                     return Results.NotFound(new
                     {
                         error = "designation_not_found",
-                        message = ex.Message,
-                        timestamp = DateTime.UtcNow
+                        message = $"Designation with code '{dto.Id}' not found"
                     });
                 }
+
+                return Results.Ok(new
+                {
+                    message = "Designation retrieved successfully",
+                    data = result
+                });
             })
-            .WithName("GetDesignationById")
-            .WithTags("Designations")
-            .WithSummary("Get a designation by code")
-            .WithDescription("Retrieves a specific designation by its code")
-            .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound);
+ .WithName("GetDesignationById")
+ .WithTags("Designations")
+ .WithSummary("Get Designation By Id")
+ .WithDescription("Retrieves designation details using request body")
+ .Produces(StatusCodes.Status200OK)
+ .Produces(StatusCodes.Status404NotFound);
         }
     }
 }

@@ -2,14 +2,14 @@
 
 namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Create
 {
-    public class CreateMajorHeadValidator
+    public sealed class CreateMajorHeadValidator
         : AbstractValidator<CreateMajorHeadCommand>
     {
         public CreateMajorHeadValidator()
         {
             RuleFor(x => x.dto.MajorAccCode)
                 .NotEmpty()
-                .Length(1, 4)
+                .Length(4, 4)
                 .WithMessage("Major Account Code is required and must be maximum 4 characters");
 
             RuleFor(x => x.dto.MajorAccDesc)

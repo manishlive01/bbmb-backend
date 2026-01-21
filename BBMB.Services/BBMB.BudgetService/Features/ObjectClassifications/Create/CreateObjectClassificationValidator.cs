@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Features.ObjectClassifications.Create
         {
             RuleFor(x => x.dto.ObjectAccCode)
                 .NotEmpty().WithMessage("Object classification code is required")
-                .MaximumLength(3).WithMessage("Object classification code must not exceed 3 characters");
+                .Length(3,3).WithMessage("Object classification code must not exceed 3 characters");
 
             RuleFor(x => x.dto.ObjectAccDesc)
                 .NotEmpty().WithMessage("Object classification description is required")

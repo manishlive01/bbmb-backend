@@ -4,6 +4,6 @@ namespace BBMB.BudgetService.Features.PowerIrrigations.Create.Dtos
     {
         public string IrrPwrCode { get; set; } = string.Empty;
         public string IrrPwrDesc { get; set; } = string.Empty;
-        public string UserCode { get; set; } = string.Empty;
+        public string UserCode { get; set; } = "123";
     }
 }

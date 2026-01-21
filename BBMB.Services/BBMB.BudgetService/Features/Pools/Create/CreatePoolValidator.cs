@@ -2,13 +2,13 @@ using FluentValidation;
 
 namespace BBMB.BudgetService.Features.Pools.Create
 {
-    public class CreatePoolValidator : AbstractValidator<CreatePoolCommand>
+    public class CreateRemittanceValidator : AbstractValidator<CreatePoolCommand>
     {
-        public CreatePoolValidator()
+        public CreateRemittanceValidator()
         {
             RuleFor(x => x.dto.PoolCode)
                 .NotEmpty().WithMessage("Pool code is required")
-                .MaximumLength(2).WithMessage("Pool code must be maximum 2 characters");
+                .MaximumLength(1).WithMessage("Pool code must be maximum 1 characters");
 
             RuleFor(x => x.dto.PoolDesc)
                 .NotEmpty().WithMessage("Pool description is required")

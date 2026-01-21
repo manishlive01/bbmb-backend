@@ -31,11 +31,11 @@ namespace BBMB.BudgetService.Features.DetailHeads.Update
 
             // Update fields
             detailHead.DetailAccDesc = request.dto.DetailAccDesc;
-            detailHead.MajorAccCode = request.dto.MajorAccCode;
-            detailHead.SubMajorAccCode = request.dto.SubMajorAccCode;
-            detailHead.MinorAccCode = request.dto.MinorAccCode;
-            detailHead.SubMinorAccCode = request.dto.SubMinorAccCode;
-            detailHead.UserCode = request.dto.UserCode;
+            //detailHead.MajorAccCode = request.dto.MajorAccCode;
+            //detailHead.SubMajorAccCode = request.dto.SubMajorAccCode;
+            //detailHead.MinorAccCode = request.dto.MinorAccCode;
+            //detailHead.SubMinorAccCode = request.dto.SubMinorAccCode;
+            detailHead.UserCode = "123";
             detailHead.ModificationDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);

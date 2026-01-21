@@ -2,7 +2,7 @@
 
 namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Update
 {
-    public class UpdateMajorHeadValidator
+    public sealed class UpdateMajorHeadValidator
         : AbstractValidator<UpdateMajorHeadCommand>
     {
         public UpdateMajorHeadValidator()

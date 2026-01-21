@@ -9,28 +9,16 @@ namespace BBMB.BudgetService.Features.Estimates.Update
 {
     public class UpdateEstimateHandler : IRequestHandler<UpdateEstimateCommand, Response<string>>
     {
-        private readonly BudgetContext _context;
-        private readonly IValidator<UpdateEstimateDto> _validator;
+        private readonly BudgetContext _context; 
 
-        public UpdateEstimateHandler(BudgetContext context, IValidator<UpdateEstimateDto> validator)
+        public UpdateEstimateHandler(BudgetContext context )
         {
-            _context = context;
-            _validator = validator;
+            _context = context; 
         }
 
         public async Task<Response<string>> Handle(UpdateEstimateCommand request, CancellationToken cancellationToken)
         {
-            // Validate
-            var validationResult = await _validator.ValidateAsync(request.Dto, cancellationToken);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return new Response<string>
-                {
-                    IsSucced = false,
-                    Message = errors
-                };
-            }
+             
 
             // Find estimate
             var estimate = await _context.Estimates

@@ -11,7 +11,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.GetById
             {
                 try
                 {
-                    var query = new GetDetailHeadByIdQuery(code);
+                    var query = new GetDetailHeadByIdCommand(code);
                     var result = await sender.Send(query);
                     return Results.Ok(result);
                 }

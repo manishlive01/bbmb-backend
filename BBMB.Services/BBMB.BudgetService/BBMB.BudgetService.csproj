@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -17,21 +17,16 @@
 
   <ItemGroup>
 	  <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
-	  <PackageReference Include="Dapper" Version="2.1.66" />
 	  <PackageReference Include="FluentValidation" Version="12.1.1" />
 	  <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
 	  <PackageReference Include="Mapster" Version="7.4.0" />
 	  <PackageReference Include="Mapster.DependencyInjection" Version="1.0.1" />
-	  <PackageReference Include="MediatR" Version="14.0.0" />
-	  <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
-	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.1" />
-	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-	  </PackageReference>
-	  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.1">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  <PackageReference Include="MediatR" Version="12.5.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.2">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
 	  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
 	  <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
@@ -39,11 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BBMB.Services.ServiceDefaults\BBMB.Services.ServiceDefaults.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Features\AccountingHeads\MajorHeads\Delete\" />
     <Folder Include="Features\AccountingHeads\SubMajorHeads\Delete\" />
     <Folder Include="Features\Budgets\GetList\" />
     <Folder Include="Features\Budgets\Create\" />
@@ -55,13 +45,10 @@
     <Folder Include="Features\Classes\Delete\" />
     <Folder Include="Features\Classes\Create\" />
     <Folder Include="Features\Classes\Update\" />
-    <Folder Include="Features\Designations\GetList\" />
     <Folder Include="Features\Designations\GetById\" />
     <Folder Include="Features\Designations\Delete\" />
     <Folder Include="Features\Designations\Create\" />
-    <Folder Include="Features\Designations\Update\" />
     <Folder Include="Features\DetailHeads\GetList\" />
-    <Folder Include="Features\DetailHeads\GetById\" />
     <Folder Include="Features\DetailHeads\Delete\" />
     <Folder Include="Features\DetailHeads\Create\" />
     <Folder Include="Features\DetailHeads\Update\" />
@@ -74,6 +61,9 @@
     <Folder Include="Features\FinancialYears\GetById\" />
     <Folder Include="Features\FinancialYears\Delete\" />
     <Folder Include="Features\FinancialYears\Update\" />
+    <Folder Include="Features\Offices\AccountOffices\Delete\" />
+    <Folder Include="Features\Offices\AccountOffices\GetById\" />
+    <Folder Include="Features\Offices\AccountOffices\Update\" />
     <Folder Include="Features\Regions\GetById\Dtos\" />
     <Folder Include="Features\Regions\GetList\Dtos\" />
     <Folder Include="Features\Regions\Update\Dtos\" />

@@ -34,6 +34,7 @@ namespace BBMB.BudgetService.Features.Designations.Create
             // Map DTO to Entity
             var designation = request.dto.Adapt<Designation>();
             designation.ModificationDate = DateTime.UtcNow;
+            designation.UserCode  = " ";
 
             // Persist
             _context.Designations.Add(designation);

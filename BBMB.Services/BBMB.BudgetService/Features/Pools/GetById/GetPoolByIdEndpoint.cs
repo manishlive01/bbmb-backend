@@ -3,7 +3,7 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.Pools.GetById
 {
-    public class GetPoolByIdEndpoint : IEndpoint
+    public class GetRemittanceByIdEndpoint : IEndpoint
     {
         public void Map(IEndpointRouteBuilder app)
         {
