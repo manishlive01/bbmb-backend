@@ -1,6 +1,7 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
+using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
 using BBMB.BudgetService.Features.Budgets.Entities;
 using BBMB.BudgetService.Features.Classes.Entities;
 using BBMB.BudgetService.Features.Designations.Entities;
@@ -70,6 +71,15 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .WithMany()
                 .HasForeignKey(e => e.WorkCode)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
+            modelBuilder.Entity<SubMajorHead>()
+        .HasIndex(x => new { x.MajorAccCode, x.SubMajorAccCode })
+        .IsUnique();
+
+            modelBuilder.Entity<SubMinorHead>()
+    .HasIndex(x => new { x.MinorAccCode, x.SubMinorAccCode })
+    .IsUnique();
 
             // modelBuilder.ApplyConfigurationsFromAssembly(typeof(BudgetContext).Assembly);
         }
