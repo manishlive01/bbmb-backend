@@ -38,7 +38,7 @@ jobs:
           strip_components: 1
           timeout: 60s
 
-      - name: Restart service (stable)
+      - name: Restart BBMB Budget Service
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           chmod 600 key.pem
@@ -48,9 +48,8 @@ jobs:
               -o StrictHostKeyChecking=no \
               -i key.pem \
               ubuntu@${{ secrets.SSH_HOST }} \
-              "cd /home/ubuntu/bbmb-app && \
-               cp appsettings.Staging.json appsettings.json && \
-               sudo systemctl daemon-reload && \
+              "sudo systemctl daemon-reload && \
                sudo systemctl restart bbmb-budget-service.service && \
                sudo systemctl is-active bbmb-budget-service.service"
+
 
