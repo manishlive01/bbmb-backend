@@ -26,7 +26,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Create
             try
             {
                 _logger.LogInformation(
-                    "Creating Sub-Minor Head {SubMinorAccCode} under Minor {MinorAccCode}",
+                    "Creating sub-minor head {SubMinorAccCode} for minor head {MinorAccCode}",
                     request.dto.SubMinorAccCode,
                     request.dto.MinorAccCode);
 
@@ -39,11 +39,11 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Create
                     return new Response
                     {
                         IsSucced = false,
-                        Message = $"Minor head '{request.dto.MinorAccCode}' does not exist"
+                        Message = $"Minor head '{request.dto.MinorAccCode}' not found"
                     };
                 }
 
-                // 2. Check duplicate ONLY within same Minor Head
+                // 2. Check Duplicate ONLY within same Minor Head
                 bool exists = await _context.SubMinorHeads
                     .AnyAsync(x =>
                         x.SubMinorAccCode == request.dto.SubMinorAccCode &&
@@ -60,7 +60,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Create
                     };
                 }
 
-                // 3. Map DTO → Entity
+                // 3. Map DTO
                 var entity = request.dto.Adapt<SubMinorHead>();
                 entity.ModificationDate = DateTime.UtcNow;
 
@@ -68,52 +68,20 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Create
                 _context.SubMinorHeads.Add(entity);
                 await _context.SaveChangesAsync(ct);
 
-                _logger.LogInformation(
-                    "Sub-Minor Head {SubMinorAccCode} created under Minor {MinorAccCode}",
-                    request.dto.SubMinorAccCode,
-                    request.dto.MinorAccCode);
-
                 return new Response
                 {
                     IsSucced = true,
                     Message = "Sub-minor head created successfully"
                 };
             }
-            catch (DbUpdateException ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Database error while creating Sub-Minor Head {SubMinorAccCode}",
-                    request.dto.SubMinorAccCode);
-
-                if (ex.InnerException?.Message.Contains("foreign key") == true)
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = "Invalid Minor Head reference"
-                    };
-                }
-
-                if (ex.InnerException?.Message.Contains("duplicate") == true ||
-                    ex.InnerException?.Message.Contains("unique") == true)
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = "Sub-minor head already exists for this minor head"
-                    };
-                }
-
-                throw;
-            }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Unexpected error while creating Sub-Minor Head {SubMinorAccCode}",
-                    request.dto.SubMinorAccCode);
-                throw;
+                _logger.LogError(ex, "Error creating SubMinorHead");
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = "Internal server error"
+                };
             }
         }
     }
