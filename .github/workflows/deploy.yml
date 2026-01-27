@@ -48,8 +48,7 @@ jobs:
               -o StrictHostKeyChecking=no \
               -i key.pem \
               ubuntu@${{ secrets.SSH_HOST }} \
-              "sudo systemctl daemon-reload && \
-               sudo systemctl restart bbmb-budget-service.service && \
-               sudo systemctl is-active bbmb-budget-service.service"
+              "bash -lc 'sudo systemctl daemon-reload && sudo systemctl restart bbmb-budget-service.service && sudo systemctl is-active bbmb-budget-service.service'"
+      
 
 
