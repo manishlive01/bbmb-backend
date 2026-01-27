@@ -38,19 +38,29 @@ jobs:
           strip_components: 1
           timeout: 60s
 
-      - name: Apply Staging config and restart service (native SSH)
+      - name: Apply Staging config and restart service
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           chmod 600 key.pem
-
-          ssh -o StrictHostKeyChecking=no \
+      
+          ssh -tt -o StrictHostKeyChecking=no \
               -i key.pem \
               ubuntu@${{ secrets.SSH_HOST }} << 'EOF'
             set -e
+      
+            echo "Switching to app directory"
             cd /home/ubuntu/bbmb-app
-            echo "Applying Staging configuration..."
+      
+            echo "Applying Staging configuration"
             cp appsettings.Staging.json appsettings.json
-            echo "Restarting service..."
-            sudo systemctl restart bbmb-budget-service
-            sudo systemctl is-active bbmb-budget-service
+      
+            echo "Reloading systemd"
+            sudo systemctl daemon-reload
+      
+            echo "Restarting service"
+            sudo systemctl restart bbmb-budget-service.service
+      
+            echo "Service status:"
+            sudo systemctl status bbmb-budget-service.service --no-pager
           EOF
+
