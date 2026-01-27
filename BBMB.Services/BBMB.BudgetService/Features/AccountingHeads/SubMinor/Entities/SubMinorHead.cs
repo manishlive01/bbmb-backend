@@ -1,6 +1,4 @@
-﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
-using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
-using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
+﻿using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,12 +7,11 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities
 {
     [Table("fa_sub_minor_head")]
     public class SubMinorHead
-    {
-        [Key]
+    { 
         [MaxLength(2)]
         [Column("sub_minor_acc_code")]
         public string SubMinorAccCode { get; set; } = string.Empty;
-
+         
         [Required]
         [MaxLength(3)]
         [Column("minor_acc_code")]

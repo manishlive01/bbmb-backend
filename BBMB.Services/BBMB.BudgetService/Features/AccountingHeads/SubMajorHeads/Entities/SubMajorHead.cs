@@ -12,7 +12,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities
         [Column("major_acc_code")]
         public string MajorAccCode { get; set; } = string.Empty;
 
-        [Key]
+    
         [Required]
         [MaxLength(2)]
         [Column("sub_major_acc_code")]

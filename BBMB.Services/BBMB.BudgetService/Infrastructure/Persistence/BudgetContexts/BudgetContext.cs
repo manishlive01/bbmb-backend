@@ -73,13 +73,63 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .OnDelete(DeleteBehavior.Restrict);
 
 
-            modelBuilder.Entity<SubMajorHead>()
-        .HasIndex(x => new { x.MajorAccCode, x.SubMajorAccCode })
-        .IsUnique();
+            // =====================================================
+            // SubMajorHead Configuration
+            // =====================================================
+            modelBuilder.Entity<SubMajorHead>(entity =>
+            {
+                // 🔹 COMPOSITE PRIMARY KEY
+                entity.HasKey(x => new { x.MajorAccCode, x.SubMajorAccCode });
 
-            modelBuilder.Entity<SubMinorHead>()
-    .HasIndex(x => new { x.MinorAccCode, x.SubMinorAccCode })
-    .IsUnique();
+                // 🔹 UNIQUE INDEX (extra safety, optional)
+                entity.HasIndex(x => new { x.MajorAccCode, x.SubMajorAccCode })
+                      .IsUnique();
+
+                // 🔹 Property rules
+                entity.Property(x => x.MajorAccCode)
+                      .HasMaxLength(4)
+                      .IsRequired();
+
+                entity.Property(x => x.SubMajorAccCode)
+                      .HasMaxLength(2)
+                      .IsRequired();
+
+                entity.Property(x => x.SubMajorAccDesc)
+                      .HasMaxLength(100)
+                      .IsRequired();
+
+                // 🔹 FK → MajorHead
+                entity.HasOne(x => x.MajorHead)
+                      .WithMany() // or .WithMany(m => m.SubMajorHeads) if collection exists
+                      .HasForeignKey(x => x.MajorAccCode)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // =====================================================
+            // SubMinorHead Configuration
+            // =====================================================
+            modelBuilder.Entity<SubMinorHead>(entity =>
+            {
+                // 🔹 COMPOSITE PRIMARY KEY
+                entity.HasKey(x => new { x.MinorAccCode, x.SubMinorAccCode });
+
+                // 🔹 UNIQUE INDEX (optional but recommended)
+                entity.HasIndex(x => new { x.MinorAccCode, x.SubMinorAccCode })
+                      .IsUnique();
+
+                // 🔹 Column rules
+                entity.Property(x => x.MinorAccCode)
+                      .HasMaxLength(3)
+                      .IsRequired();
+
+                entity.Property(x => x.SubMinorAccCode)
+                      .HasMaxLength(2)
+                      .IsRequired();
+
+                entity.Property(x => x.SubMinorAccDesc)
+                      .HasMaxLength(100)
+                      .IsRequired();
+            });
 
             // modelBuilder.ApplyConfigurationsFromAssembly(typeof(BudgetContext).Assembly);
         }
