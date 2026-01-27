@@ -1,5 +1,6 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
+using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

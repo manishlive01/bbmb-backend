@@ -1,4 +1,4 @@
-using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
+using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetList.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
