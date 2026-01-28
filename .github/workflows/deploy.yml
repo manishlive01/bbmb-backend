@@ -1,4 +1,4 @@
- name: Deploy BBMB App to Ubuntu
+name: Deploy BBMB App to Ubuntu
 
 on:
   push:
@@ -38,16 +38,15 @@ jobs:
           strip_components: 1
           timeout: 60s
 
-      - name: Apply Staging config and restart service (native SSH)
+      - name: Restart BBMB Budget Service
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           chmod 600 key.pem
 
-          ssh -o StrictHostKeyChecking=no \
-              -i key.pem \
-              ubuntu@${{ secrets.SSH_HOST }} << 'EOF'
-            set -e 
-            echo "Restarting service..."
-            sudo systemctl restart bbmb-budget-service.service
-            sudo systemctl status bbmb-budget-service.service
-          EOF
+          ssh -tt \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=5 \
+            -o StrictHostKeyChecking=no \
+            -i key.pem \
+            ubuntu@${{ secrets.SSH_HOST }} \
+            "sudo systemctl restart bbmb-budget-service.service && sudo systemctl is-active bbmb-budget-service.service"
