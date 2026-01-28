@@ -3,6 +3,7 @@ using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using Mapster;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.HeadOfAccounts.Create
 {
@@ -17,8 +18,28 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Create
 
         public async Task<Response> Handle(CreateHeadOfAccountCommand request, CancellationToken ct)
         {
-            // Map DTO to entity
-            var headOfAccount = request.dto.Adapt<HeadOfAccount>();
+            var dto = request.dto;
+
+            bool exists = await _context.HeadOfAccounts.AnyAsync(x =>
+                x.MajorAccCode == dto.MajorAccCode &&
+                x.SubMajorAccCode == dto.SubMajorAccCode &&
+                x.MinorAccCode == dto.MinorAccCode &&
+                x.SubMinorAccCode == dto.SubMinorAccCode &&
+                x.DetailAccCode == dto.DetailAccCode &&
+                x.ObjectAccCode == dto.ObjectAccCode,
+                ct
+            );
+
+            if (exists)
+            {
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = "Head of account already exists"
+                };
+            }
+
+            var headOfAccount = dto.Adapt<HeadOfAccount>();
             headOfAccount.ModificationDate = DateTime.UtcNow;
 
             _context.HeadOfAccounts.Add(headOfAccount);
@@ -30,5 +51,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Create
                 Message = "Head of account created successfully"
             };
         }
+
+
     }
 }
