@@ -42,11 +42,11 @@ jobs:
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           chmod 600 key.pem
-
+      
           ssh -tt \
             -o ServerAliveInterval=30 \
             -o ServerAliveCountMax=5 \
             -o StrictHostKeyChecking=no \
             -i key.pem \
             ubuntu@${{ secrets.SSH_HOST }} \
-            "sudo systemctl restart bbmb-budget-service.service && sudo systemctl is-active bbmb-budget-service.service"
+            "sudo -n /usr/bin/systemctl restart bbmb-budget-service.service && sudo -n /usr/bin/systemctl is-active bbmb-budget-service.service"
