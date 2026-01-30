@@ -28,5 +28,6 @@ namespace BBMB.BudgetService.Features.DetailHeads.Entities
         [Column("user_code")]
         public string UserCode { get; set; } = string.Empty;
 
+
     }
 }
