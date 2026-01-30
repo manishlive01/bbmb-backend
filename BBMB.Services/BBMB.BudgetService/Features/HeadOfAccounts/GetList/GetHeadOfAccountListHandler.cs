@@ -1,4 +1,4 @@
-﻿using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
+using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.GetList.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
@@ -16,9 +16,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetList
             _context = context;
         }
 
-        public async Task<PagedResponse<GetHeadOfAccountListResponseDto>> Handle(
-    GetHeadOfAccountListQuery request,
-    CancellationToken ct)
+        public async Task<PagedResponse<GetHeadOfAccountListResponseDto>> Handle(GetHeadOfAccountListQuery request, CancellationToken ct)
         {
             var query = _context.HeadOfAccounts
                 .Include(h => h.MajorHead)
@@ -27,7 +25,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetList
                 .Include(h => h.ObjectClassification)
                 .AsQueryable();
 
-            // Filters
+            // Apply filters
             if (!string.IsNullOrEmpty(request.MajorAccCode))
                 query = query.Where(h => h.MajorAccCode == request.MajorAccCode);
 
@@ -55,40 +53,32 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetList
             if (request.ModificationDateTo.HasValue)
                 query = query.Where(h => h.ModificationDate <= request.ModificationDateTo.Value);
 
+            // Get total count
             var totalCount = await query.CountAsync(ct);
 
+            // Apply sorting
             query = ApplySorting(query, request.SortBy, request.SortDescending);
 
+            // Apply pagination
             var pageSize = Math.Min(request.PageSize, 100);
-
             var items = await query
                 .Skip((request.PageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(h => new GetHeadOfAccountListResponseDto
                 {
+                    Id = h.Id,
                     MajorAccCode = h.MajorAccCode,
+                    MajorHeadDescription = h.MajorHead != null ? h.MajorHead.MajorAccDesc : string.Empty,
                     SubMajorAccCode = h.SubMajorAccCode,
+                    SubMajorHeadDescription = null,
                     MinorAccCode = h.MinorAccCode,
+                    MinorHeadDescription = h.MinorHead != null ? h.MinorHead.MinorAccDesc : string.Empty,
                     SubMinorAccCode = h.SubMinorAccCode,
+                    SubMinorHeadDescription = null,
                     DetailAccCode = h.DetailAccCode,
+                    DetailHeadDescription = h.DetailHead != null ? h.DetailHead.DetailAccDesc : string.Empty,
                     ObjectAccCode = h.ObjectAccCode,
-
-                    MajorHeadDescription = h.MajorHead != null
-                        ? h.MajorHead.MajorAccDesc
-                        : string.Empty,
-
-                    MinorHeadDescription = h.MinorHead != null
-                        ? h.MinorHead.MinorAccDesc
-                        : string.Empty,
-
-                    DetailHeadDescription = h.DetailHead != null
-                        ? h.DetailHead.DetailAccDesc
-                        : string.Empty,
-
-                    ObjectClassificationDescription = h.ObjectClassification != null
-                        ? h.ObjectClassification.ObjectAccDesc
-                        : string.Empty,
-
+                    ObjectClassificationDescription = h.ObjectClassification != null ? h.ObjectClassification.ObjectAccDesc : string.Empty,
                     HeadDesc = h.HeadDesc,
                     FullAccountCode = h.FullAccountCode,
                     ModificationDate = h.ModificationDate,
@@ -114,45 +104,22 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetList
             };
         }
 
-        private IQueryable<HeadOfAccount> ApplySorting(
-     IQueryable<HeadOfAccount> query,
-     string? sortBy,
-     bool sortDescending)
+        private IQueryable<HeadOfAccount> ApplySorting(IQueryable<HeadOfAccount> query, string? sortBy, bool sortDescending)
         {
-            return sortBy?.ToLower() switch
+            if (string.IsNullOrEmpty(sortBy))
+                return query.OrderBy(h => h.Id);
+
+            return sortBy.ToLower() switch
             {
-                "majoracccode" => sortDescending
-                    ? query.OrderByDescending(h => h.MajorAccCode)
-                    : query.OrderBy(h => h.MajorAccCode),
-
-                "minoracccode" => sortDescending
-                    ? query.OrderByDescending(h => h.MinorAccCode)
-                    : query.OrderBy(h => h.MinorAccCode),
-
-                "detailacccode" => sortDescending
-                    ? query.OrderByDescending(h => h.DetailAccCode)
-                    : query.OrderBy(h => h.DetailAccCode),
-
-                "objectacccode" => sortDescending
-                    ? query.OrderByDescending(h => h.ObjectAccCode)
-                    : query.OrderBy(h => h.ObjectAccCode),
-
-                "headdesc" => sortDescending
-                    ? query.OrderByDescending(h => h.HeadDesc)
-                    : query.OrderBy(h => h.HeadDesc),
-
-                "modificationdate" => sortDescending
-                    ? query.OrderByDescending(h => h.ModificationDate)
-                    : query.OrderBy(h => h.ModificationDate),
-
-                _ => query
-                    .OrderBy(h => h.MajorAccCode)
-                    .ThenBy(h => h.MinorAccCode)
-                    .ThenBy(h => h.DetailAccCode)
-                    .ThenBy(h => h.ObjectAccCode)
+                "id" => sortDescending ? query.OrderByDescending(h => h.Id) : query.OrderBy(h => h.Id),
+                "majoracccode" => sortDescending ? query.OrderByDescending(h => h.MajorAccCode) : query.OrderBy(h => h.MajorAccCode),
+                "minoracccode" => sortDescending ? query.OrderByDescending(h => h.MinorAccCode) : query.OrderBy(h => h.MinorAccCode),
+                "detailacccode" => sortDescending ? query.OrderByDescending(h => h.DetailAccCode) : query.OrderBy(h => h.DetailAccCode),
+                "objectacccode" => sortDescending ? query.OrderByDescending(h => h.ObjectAccCode) : query.OrderBy(h => h.ObjectAccCode),
+                "headdesc" => sortDescending ? query.OrderByDescending(h => h.HeadDesc) : query.OrderBy(h => h.HeadDesc),
+                "modificationdate" => sortDescending ? query.OrderByDescending(h => h.ModificationDate) : query.OrderBy(h => h.ModificationDate),
+                _ => query.OrderBy(h => h.Id)
             };
         }
-
-
     }
 }

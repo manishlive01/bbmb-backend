@@ -16,43 +16,36 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Delete
 
         public async Task<Response> Handle(DeleteHeadOfAccountCommand request, CancellationToken ct)
         {
-            try
-            {
-                var affectedRows = await _context.HeadOfAccounts
-                    .Where(h =>
-                        h.MajorAccCode == request.MajorAccCode &&
-                        h.SubMajorAccCode == request.SubMajorAccCode &&
-                        h.MinorAccCode == request.MinorAccCode &&
-                        h.SubMinorAccCode == request.SubMinorAccCode &&
-                        h.DetailAccCode == request.DetailAccCode &&
-                        h.ObjectAccCode == request.ObjectAccCode)
-                    .ExecuteDeleteAsync(ct);
+            var headOfAccount = await _context.HeadOfAccounts
+                .FirstOrDefaultAsync(h => h.Id == request.Id, ct);
 
-                if (affectedRows == 0)
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = "Head of account not found"
-                    };
-                }
-
+            if (headOfAccount == null)
                 return new Response
                 {
-                    IsSucced = true,
-                    Message = "Head of account deleted successfully"
+                    IsSucced = false,
+                    Message = $"Head of account with ID '{request.Id}' not found"
                 };
+
+            _context.HeadOfAccounts.Remove(headOfAccount);
+
+            try
+            {
+                await _context.SaveChangesAsync(ct);
             }
             catch (DbUpdateException)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = "Cannot delete head of account. It is referenced by other records."
+                    Message = "Cannot delete head of account. It has associated records."
                 };
             }
+
+            return new Response
+            {
+                IsSucced = true,
+                Message = "Head of account deleted successfully"
+            };
         }
-
-
     }
 }

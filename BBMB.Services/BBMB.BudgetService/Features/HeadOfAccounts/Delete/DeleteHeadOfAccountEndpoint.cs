@@ -2,7 +2,6 @@ using BBMB.BudgetService.Shared.Endpoints;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
 namespace BBMB.BudgetService.Features.HeadOfAccounts.Delete
@@ -11,41 +10,25 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/head-of-accounts", async (
-     [FromQuery] string majorAccCode,
-     [FromQuery] string? subMajorAccCode,
-     [FromQuery] string minorAccCode,
-     [FromQuery] string? subMinorAccCode,
-     [FromQuery] string detailAccCode,
-     [FromQuery] string objectAccCode,
-     IMediator mediator) =>
+            app.MapDelete("/api/head-of-accounts/{id:int}", async (int id, IMediator mediator) =>
             {
-                var command = new DeleteHeadOfAccountCommand(
-                    majorAccCode,
-                    subMajorAccCode,
-                    minorAccCode,
-                    subMinorAccCode,
-                    detailAccCode,
-                    objectAccCode
-                );
-
+                var command = new DeleteHeadOfAccountCommand(id);
                 var response = await mediator.Send(command);
 
                 if (!response.IsSucced)
                 {
-                    return response.Message.Contains("not found", StringComparison.OrdinalIgnoreCase)
+                    return response.Message.Contains("not found")
                         ? Results.NotFound(response)
                         : Results.Conflict(response);
                 }
 
                 return Results.NoContent();
             })
- .WithName("DeleteHeadOfAccount")
- .WithTags("HeadOfAccounts")
- .Produces(StatusCodes.Status204NoContent)
- .Produces<Response>(StatusCodes.Status404NotFound)
- .Produces<Response>(StatusCodes.Status409Conflict);
-
+            .WithName("DeleteHeadOfAccount")
+            .WithTags("HeadOfAccounts")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces<Response>(StatusCodes.Status404NotFound)
+            .Produces<Response>(StatusCodes.Status409Conflict);
         }
     }
 }

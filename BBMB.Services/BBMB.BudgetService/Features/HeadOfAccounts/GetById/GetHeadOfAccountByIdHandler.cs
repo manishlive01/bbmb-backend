@@ -15,49 +15,28 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetById
             _context = context;
         }
 
-        public async Task<GetHeadOfAccountByIdResponseDto> Handle(
-    GetHeadOfAccountByIdQuery request,
-    CancellationToken ct)
+        public async Task<GetHeadOfAccountByIdResponseDto> Handle(GetHeadOfAccountByIdQuery request, CancellationToken ct)
         {
             var headOfAccount = await _context.HeadOfAccounts
-                .AsNoTracking()
                 .Include(h => h.MajorHead)
                 .Include(h => h.MinorHead)
                 .Include(h => h.DetailHead)
                 .Include(h => h.ObjectClassification)
-                .FirstOrDefaultAsync(h =>
-                    h.MajorAccCode == request.MajorAccCode &&
-                    h.SubMajorAccCode == request.SubMajorAccCode &&
-                    h.MinorAccCode == request.MinorAccCode &&
-                    h.SubMinorAccCode == request.SubMinorAccCode &&
-                    h.DetailAccCode == request.DetailAccCode &&
-                    h.ObjectAccCode == request.ObjectAccCode,
-                    ct);
+                .FirstOrDefaultAsync(h => h.Id == request.Id, ct);
 
             if (headOfAccount == null)
             {
-                throw new KeyNotFoundException("Head of account not found");
+                throw new KeyNotFoundException($"Head of account with ID '{request.Id}' not found");
             }
 
             var response = headOfAccount.Adapt<GetHeadOfAccountByIdResponseDto>();
-
-            response.MajorHeadDescription =
-                headOfAccount.MajorHead?.MajorAccDesc ?? string.Empty;
-
-            response.MinorHeadDescription =
-                headOfAccount.MinorHead?.MinorAccDesc ?? string.Empty;
-
-            response.DetailHeadDescription =
-                headOfAccount.DetailHead?.DetailAccDesc ?? string.Empty;
-
-            response.ObjectClassificationDescription =
-                headOfAccount.ObjectClassification?.ObjectAccDesc ?? string.Empty;
-
+            response.MajorHeadDescription = headOfAccount.MajorHead?.MajorAccDesc ?? string.Empty;
+            response.MinorHeadDescription = headOfAccount.MinorHead?.MinorAccDesc ?? string.Empty;
+            response.DetailHeadDescription = headOfAccount.DetailHead?.DetailAccDesc ?? string.Empty;
+            response.ObjectClassificationDescription = headOfAccount.ObjectClassification?.ObjectAccDesc ?? string.Empty;
             response.FullAccountCode = headOfAccount.FullAccountCode;
 
             return response;
         }
-
     }
 }
-

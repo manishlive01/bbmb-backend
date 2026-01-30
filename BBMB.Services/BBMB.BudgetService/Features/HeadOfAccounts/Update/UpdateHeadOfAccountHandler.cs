@@ -1,4 +1,3 @@
-﻿using BBMB.BudgetService.Features.HeadOfAccounts.Update.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
@@ -18,25 +17,16 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Update
         public async Task<Response> Handle(UpdateHeadOfAccountCommand request, CancellationToken ct)
         {
             var headOfAccount = await _context.HeadOfAccounts
-                .FirstOrDefaultAsync(h =>
-                    h.MajorAccCode == request.MajorAccCode &&
-                    h.SubMajorAccCode == request.SubMajorAccCode &&
-                    h.MinorAccCode == request.MinorAccCode &&
-                    h.SubMinorAccCode == request.SubMinorAccCode &&
-                    h.DetailAccCode == request.DetailAccCode &&
-                    h.ObjectAccCode == request.ObjectAccCode,
-                    ct);
+                .FirstOrDefaultAsync(h => h.Id == request.Id, ct);
 
             if (headOfAccount == null)
-            {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = "Head of account not found"
+                    Message = $"Head of account with ID '{request.Id}' not found"
                 };
-            }
 
-            // 🔹 Update ONLY allowed fields (NO FK updates)
+            // Update only allowed fields (foreign keys cannot be updated)
             headOfAccount.HeadDesc = request.dto.HeadDesc;
             headOfAccount.PartyEmpRequired = request.dto.PartyEmpRequired;
             headOfAccount.PartyLedgToPrint = request.dto.PartyLedgToPrint;
@@ -55,7 +45,5 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Update
                 Message = "Head of account updated successfully"
             };
         }
-
-
     }
 }

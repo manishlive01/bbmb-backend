@@ -10,7 +10,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetList
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/head-of-accountLists", async (
+            app.MapGet("/api/head-of-accounts", async (
                 IMediator mediator,
                 [FromQuery] int pageNumber = 1,
                 [FromQuery] int pageSize = 10,

@@ -2,6 +2,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetList.Dtos
 {
     public class GetHeadOfAccountListResponseDto
     {
+        public int Id { get; set; }
         public string MajorAccCode { get; set; } = string.Empty;
         public string MajorHeadDescription { get; set; } = string.Empty;
         public string? SubMajorAccCode { get; set; }

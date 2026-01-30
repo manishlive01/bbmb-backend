@@ -4,13 +4,5 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.HeadOfAccounts.Update
 {
-    public sealed record UpdateHeadOfAccountCommand(
-        string MajorAccCode,
-        string? SubMajorAccCode,
-        string MinorAccCode,
-        string? SubMinorAccCode,
-        string DetailAccCode,
-        string ObjectAccCode,
-        UpdateHeadOfAccountDto dto
-    ) : IRequest<Response>;
+    public sealed record UpdateHeadOfAccountCommand(int Id, UpdateHeadOfAccountDto dto) : IRequest<Response>;
 }
