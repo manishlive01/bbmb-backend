@@ -10,38 +10,34 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Entities
     [Table("budget_head_master")]
     public class HeadOfAccount
     {
-        [Key][Column("id")]
-        public int Id { get; set; }
-
-
         // 🔹 COMPOSITE PRIMARY KEY FIELDS
 
         [Required]
         [MaxLength(4)]
-        [Column("major_acc_code_fk")]
+        [Column("major_acc_code")]
         public string MajorAccCode { get; set; } = string.Empty;
 
         [MaxLength(4)]
-        [Column("sub_major_acc_code_fk")]
+        [Column("sub_major_acc_code")]
         public string? SubMajorAccCode { get; set; }
 
         [Required]
         [MaxLength(3)]
-        [Column("minor_acc_code_fk")]
+        [Column("minor_acc_code")]
         public string MinorAccCode { get; set; } = string.Empty;
 
         [MaxLength(2)]
-        [Column("sub_minor_acc_code_fk")]
+        [Column("sub_minor_acc_code")]
         public string? SubMinorAccCode { get; set; }
 
         [Required]
         [MaxLength(3)]
-        [Column("detail_acc_code_fk")]
+        [Column("detail_acc_code")]
         public string DetailAccCode { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(3)]
-        [Column("object_acc_code_fk")]
+        [Column("object_acc_code")]
         public string ObjectAccCode { get; set; } = string.Empty;
 
         // 🔹 OTHER COLUMNS
@@ -90,7 +86,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Entities
         public virtual DetailHead? DetailHead { get; set; }
         public virtual ObjectClassification? ObjectClassification { get; set; }
 
-        // 🔹 Computed (Not Mapped)
+        // 🔹 Computed
         [NotMapped]
         public string FullAccountCode =>
             $"{MajorAccCode}{SubMajorAccCode ?? ""}{MinorAccCode}{SubMinorAccCode ?? ""}{DetailAccCode}{ObjectAccCode}";

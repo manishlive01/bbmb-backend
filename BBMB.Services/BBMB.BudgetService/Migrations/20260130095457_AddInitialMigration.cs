@@ -76,6 +76,22 @@ namespace BBMB.BudgetService.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "fa_minor_head",
+                schema: "budget",
+                columns: table => new
+                {
+                    major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
+                    minor_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    minor_acc_desc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_fa_minor_head", x => new { x.major_acc_code, x.minor_acc_code });
+                });
+
+            migrationBuilder.CreateTable(
                 name: "fa_object_head",
                 schema: "budget",
                 columns: table => new
@@ -215,22 +231,53 @@ namespace BBMB.BudgetService.Migrations
                 schema: "budget",
                 columns: table => new
                 {
-                    sub_major_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
                     major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
+                    sub_major_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
                     sub_major_acc_desc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
+                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false),
+                    MajorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_fa_sub_major_head", x => x.sub_major_acc_code);
+                    table.PrimaryKey("PK_fa_sub_major_head", x => new { x.major_acc_code, x.sub_major_acc_code });
+                    table.ForeignKey(
+                        name: "FK_fa_sub_major_head_fa_major_head_MajorHeadMajorAccCode",
+                        column: x => x.MajorHeadMajorAccCode,
+                        principalSchema: "budget",
+                        principalTable: "fa_major_head",
+                        principalColumn: "major_acc_code");
                     table.ForeignKey(
                         name: "FK_fa_sub_major_head_fa_major_head_major_acc_code",
                         column: x => x.major_acc_code,
                         principalSchema: "budget",
                         principalTable: "fa_major_head",
                         principalColumn: "major_acc_code",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "fa_sub_minor_head",
+                schema: "budget",
+                columns: table => new
+                {
+                    minor_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    sub_minor_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
+                    major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
+                    sub_minor_acc_desc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_fa_sub_minor_head", x => new { x.minor_acc_code, x.sub_minor_acc_code });
+                    table.ForeignKey(
+                        name: "FK_fa_sub_minor_head_fa_minor_head_major_acc_code_minor_acc_co~",
+                        columns: x => new { x.major_acc_code, x.minor_acc_code },
+                        principalSchema: "budget",
+                        principalTable: "fa_minor_head",
+                        principalColumns: new[] { "major_acc_code", "minor_acc_code" },
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -293,34 +340,26 @@ namespace BBMB.BudgetService.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "fa_minor_head",
+                name: "fa_detail_head",
                 schema: "budget",
                 columns: table => new
                 {
-                    minor_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
-                    sub_major_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
-                    minor_acc_desc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    detail_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    detail_acc_desc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
+                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false),
+                    SubMinorHeadMinorAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
+                    SubMinorHeadSubMinorAccCode = table.Column<string>(type: "character varying(2)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_fa_minor_head", x => x.minor_acc_code);
+                    table.PrimaryKey("PK_fa_detail_head", x => x.detail_acc_code);
                     table.ForeignKey(
-                        name: "FK_fa_minor_head_fa_major_head_major_acc_code",
-                        column: x => x.major_acc_code,
+                        name: "FK_fa_detail_head_fa_sub_minor_head_SubMinorHeadMinorAccCode_S~",
+                        columns: x => new { x.SubMinorHeadMinorAccCode, x.SubMinorHeadSubMinorAccCode },
                         principalSchema: "budget",
-                        principalTable: "fa_major_head",
-                        principalColumn: "major_acc_code",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_fa_minor_head_fa_sub_major_head_sub_major_acc_code",
-                        column: x => x.sub_major_acc_code,
-                        principalSchema: "budget",
-                        principalTable: "fa_sub_major_head",
-                        principalColumn: "sub_major_acc_code",
-                        onDelete: ReferentialAction.Cascade);
+                        principalTable: "fa_sub_minor_head",
+                        principalColumns: new[] { "minor_acc_code", "sub_minor_acc_code" });
                 });
 
             migrationBuilder.CreateTable(
@@ -394,104 +433,16 @@ namespace BBMB.BudgetService.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "fa_sub_minor_head",
-                schema: "budget",
-                columns: table => new
-                {
-                    sub_minor_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
-                    major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
-                    sub_major_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
-                    minor_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    sub_minor_acc_desc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_fa_sub_minor_head", x => x.sub_minor_acc_code);
-                    table.ForeignKey(
-                        name: "FK_fa_sub_minor_head_fa_major_head_major_acc_code",
-                        column: x => x.major_acc_code,
-                        principalSchema: "budget",
-                        principalTable: "fa_major_head",
-                        principalColumn: "major_acc_code",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_fa_sub_minor_head_fa_minor_head_minor_acc_code",
-                        column: x => x.minor_acc_code,
-                        principalSchema: "budget",
-                        principalTable: "fa_minor_head",
-                        principalColumn: "minor_acc_code",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_fa_sub_minor_head_fa_sub_major_head_sub_major_acc_code",
-                        column: x => x.sub_major_acc_code,
-                        principalSchema: "budget",
-                        principalTable: "fa_sub_major_head",
-                        principalColumn: "sub_major_acc_code",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "fa_detail_head",
-                schema: "budget",
-                columns: table => new
-                {
-                    detail_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
-                    major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
-                    sub_major_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
-                    minor_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    sub_minor_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
-                    detail_acc_desc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_fa_detail_head", x => x.detail_acc_code);
-                    table.ForeignKey(
-                        name: "FK_fa_detail_head_fa_major_head_major_acc_code",
-                        column: x => x.major_acc_code,
-                        principalSchema: "budget",
-                        principalTable: "fa_major_head",
-                        principalColumn: "major_acc_code",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_fa_detail_head_fa_minor_head_minor_acc_code",
-                        column: x => x.minor_acc_code,
-                        principalSchema: "budget",
-                        principalTable: "fa_minor_head",
-                        principalColumn: "minor_acc_code",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_fa_detail_head_fa_sub_major_head_sub_major_acc_code",
-                        column: x => x.sub_major_acc_code,
-                        principalSchema: "budget",
-                        principalTable: "fa_sub_major_head",
-                        principalColumn: "sub_major_acc_code",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_fa_detail_head_fa_sub_minor_head_sub_minor_acc_code",
-                        column: x => x.sub_minor_acc_code,
-                        principalSchema: "budget",
-                        principalTable: "fa_sub_minor_head",
-                        principalColumn: "sub_minor_acc_code",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "budget_head_master",
                 schema: "budget",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    major_acc_code_fk = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
-                    sub_major_acc_code_fk = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
-                    minor_acc_code_fk = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    sub_minor_acc_code_fk = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
-                    detail_acc_code_fk = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    object_acc_code_fk = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
+                    sub_major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: false),
+                    minor_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    sub_minor_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
+                    detail_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    object_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     head_desc = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     party_emp_required = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
                     party_ledg_to_print = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
@@ -500,39 +451,39 @@ namespace BBMB.BudgetService.Migrations
                     bank_cash = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
                     monthly_carry_fwd = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
                     modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false),
-                    MajorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true),
-                    MinorHeadMinorAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
-                    DetailHeadDetailAccCode = table.Column<string>(type: "character varying(2)", nullable: true),
-                    ObjectClassificationObjectAccCode = table.Column<string>(type: "character varying(3)", nullable: true)
+                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_budget_head_master", x => x.id);
+                    table.PrimaryKey("PK_budget_head_master", x => new { x.major_acc_code, x.sub_major_acc_code, x.minor_acc_code, x.sub_minor_acc_code, x.detail_acc_code, x.object_acc_code });
                     table.ForeignKey(
-                        name: "FK_budget_head_master_fa_detail_head_DetailHeadDetailAccCode",
-                        column: x => x.DetailHeadDetailAccCode,
+                        name: "FK_budget_head_master_fa_detail_head_detail_acc_code",
+                        column: x => x.detail_acc_code,
                         principalSchema: "budget",
                         principalTable: "fa_detail_head",
-                        principalColumn: "detail_acc_code");
+                        principalColumn: "detail_acc_code",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_budget_head_master_fa_major_head_MajorHeadMajorAccCode",
-                        column: x => x.MajorHeadMajorAccCode,
+                        name: "FK_budget_head_master_fa_major_head_major_acc_code",
+                        column: x => x.major_acc_code,
                         principalSchema: "budget",
                         principalTable: "fa_major_head",
-                        principalColumn: "major_acc_code");
+                        principalColumn: "major_acc_code",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_budget_head_master_fa_minor_head_MinorHeadMinorAccCode",
-                        column: x => x.MinorHeadMinorAccCode,
+                        name: "FK_budget_head_master_fa_minor_head_major_acc_code_minor_acc_c~",
+                        columns: x => new { x.major_acc_code, x.minor_acc_code },
                         principalSchema: "budget",
                         principalTable: "fa_minor_head",
-                        principalColumn: "minor_acc_code");
+                        principalColumns: new[] { "major_acc_code", "minor_acc_code" },
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_budget_head_master_fa_object_head_ObjectClassificationObjec~",
-                        column: x => x.ObjectClassificationObjectAccCode,
+                        name: "FK_budget_head_master_fa_object_head_object_acc_code",
+                        column: x => x.object_acc_code,
                         principalSchema: "budget",
                         principalTable: "fa_object_head",
-                        principalColumn: "object_acc_code");
+                        principalColumn: "object_acc_code",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -562,10 +513,13 @@ namespace BBMB.BudgetService.Migrations
                     user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false),
                     DivisionCode1 = table.Column<int>(type: "integer", nullable: true),
                     MajorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true),
+                    SubMajorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true),
                     SubMajorHeadSubMajorAccCode = table.Column<string>(type: "character varying(2)", nullable: true),
+                    MinorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true),
                     MinorHeadMinorAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
+                    SubMinorHeadMinorAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
                     SubMinorHeadSubMinorAccCode = table.Column<string>(type: "character varying(2)", nullable: true),
-                    DetailHeadDetailAccCode = table.Column<string>(type: "character varying(2)", nullable: true),
+                    DetailHeadDetailAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
                     ObjectClassificationObjectAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
                     DesignationCode1 = table.Column<string>(type: "character varying(4)", nullable: true)
                 },
@@ -597,11 +551,11 @@ namespace BBMB.BudgetService.Migrations
                         principalTable: "fa_major_head",
                         principalColumn: "major_acc_code");
                     table.ForeignKey(
-                        name: "FK_work_fa_minor_head_MinorHeadMinorAccCode",
-                        column: x => x.MinorHeadMinorAccCode,
+                        name: "FK_work_fa_minor_head_MinorHeadMajorAccCode_MinorHeadMinorAccC~",
+                        columns: x => new { x.MinorHeadMajorAccCode, x.MinorHeadMinorAccCode },
                         principalSchema: "budget",
                         principalTable: "fa_minor_head",
-                        principalColumn: "minor_acc_code");
+                        principalColumns: new[] { "major_acc_code", "minor_acc_code" });
                     table.ForeignKey(
                         name: "FK_work_fa_object_head_ObjectClassificationObjectAccCode",
                         column: x => x.ObjectClassificationObjectAccCode,
@@ -609,17 +563,17 @@ namespace BBMB.BudgetService.Migrations
                         principalTable: "fa_object_head",
                         principalColumn: "object_acc_code");
                     table.ForeignKey(
-                        name: "FK_work_fa_sub_major_head_SubMajorHeadSubMajorAccCode",
-                        column: x => x.SubMajorHeadSubMajorAccCode,
+                        name: "FK_work_fa_sub_major_head_SubMajorHeadMajorAccCode_SubMajorHea~",
+                        columns: x => new { x.SubMajorHeadMajorAccCode, x.SubMajorHeadSubMajorAccCode },
                         principalSchema: "budget",
                         principalTable: "fa_sub_major_head",
-                        principalColumn: "sub_major_acc_code");
+                        principalColumns: new[] { "major_acc_code", "sub_major_acc_code" });
                     table.ForeignKey(
-                        name: "FK_work_fa_sub_minor_head_SubMinorHeadSubMinorAccCode",
-                        column: x => x.SubMinorHeadSubMinorAccCode,
+                        name: "FK_work_fa_sub_minor_head_SubMinorHeadMinorAccCode_SubMinorHea~",
+                        columns: x => new { x.SubMinorHeadMinorAccCode, x.SubMinorHeadSubMinorAccCode },
                         principalSchema: "budget",
                         principalTable: "fa_sub_minor_head",
-                        principalColumn: "sub_minor_acc_code");
+                        principalColumns: new[] { "minor_acc_code", "sub_minor_acc_code" });
                 });
 
             migrationBuilder.CreateTable(
@@ -648,10 +602,13 @@ namespace BBMB.BudgetService.Migrations
                     user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false),
                     DivisionCode1 = table.Column<int>(type: "integer", nullable: true),
                     MajorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true),
+                    SubMajorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true),
                     SubMajorHeadSubMajorAccCode = table.Column<string>(type: "character varying(2)", nullable: true),
+                    MinorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true),
                     MinorHeadMinorAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
+                    SubMinorHeadMinorAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
                     SubMinorHeadSubMinorAccCode = table.Column<string>(type: "character varying(2)", nullable: true),
-                    DetailHeadDetailAccCode = table.Column<string>(type: "character varying(2)", nullable: true),
+                    DetailHeadDetailAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
                     ObjectClassificationObjectAccCode = table.Column<string>(type: "character varying(3)", nullable: true),
                     WorkCode1 = table.Column<string>(type: "character varying(8)", nullable: true)
                 },
@@ -677,11 +634,11 @@ namespace BBMB.BudgetService.Migrations
                         principalTable: "fa_major_head",
                         principalColumn: "major_acc_code");
                     table.ForeignKey(
-                        name: "FK_budget_table_fa_minor_head_MinorHeadMinorAccCode",
-                        column: x => x.MinorHeadMinorAccCode,
+                        name: "FK_budget_table_fa_minor_head_MinorHeadMajorAccCode_MinorHeadM~",
+                        columns: x => new { x.MinorHeadMajorAccCode, x.MinorHeadMinorAccCode },
                         principalSchema: "budget",
                         principalTable: "fa_minor_head",
-                        principalColumn: "minor_acc_code");
+                        principalColumns: new[] { "major_acc_code", "minor_acc_code" });
                     table.ForeignKey(
                         name: "FK_budget_table_fa_object_head_ObjectClassificationObjectAccCo~",
                         column: x => x.ObjectClassificationObjectAccCode,
@@ -689,17 +646,17 @@ namespace BBMB.BudgetService.Migrations
                         principalTable: "fa_object_head",
                         principalColumn: "object_acc_code");
                     table.ForeignKey(
-                        name: "FK_budget_table_fa_sub_major_head_SubMajorHeadSubMajorAccCode",
-                        column: x => x.SubMajorHeadSubMajorAccCode,
+                        name: "FK_budget_table_fa_sub_major_head_SubMajorHeadMajorAccCode_Sub~",
+                        columns: x => new { x.SubMajorHeadMajorAccCode, x.SubMajorHeadSubMajorAccCode },
                         principalSchema: "budget",
                         principalTable: "fa_sub_major_head",
-                        principalColumn: "sub_major_acc_code");
+                        principalColumns: new[] { "major_acc_code", "sub_major_acc_code" });
                     table.ForeignKey(
-                        name: "FK_budget_table_fa_sub_minor_head_SubMinorHeadSubMinorAccCode",
-                        column: x => x.SubMinorHeadSubMinorAccCode,
+                        name: "FK_budget_table_fa_sub_minor_head_SubMinorHeadMinorAccCode_Sub~",
+                        columns: x => new { x.SubMinorHeadMinorAccCode, x.SubMinorHeadSubMinorAccCode },
                         principalSchema: "budget",
                         principalTable: "fa_sub_minor_head",
-                        principalColumn: "sub_minor_acc_code");
+                        principalColumns: new[] { "minor_acc_code", "sub_minor_acc_code" });
                     table.ForeignKey(
                         name: "FK_budget_table_work_WorkCode1",
                         column: x => x.WorkCode1,
@@ -734,28 +691,29 @@ namespace BBMB.BudgetService.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_budget_head_master_DetailHeadDetailAccCode",
+                name: "IX_budget_head_master_detail_acc_code",
                 schema: "budget",
                 table: "budget_head_master",
-                column: "DetailHeadDetailAccCode");
+                column: "detail_acc_code");
 
             migrationBuilder.CreateIndex(
-                name: "IX_budget_head_master_MajorHeadMajorAccCode",
+                name: "IX_budget_head_master_major_acc_code_minor_acc_code",
                 schema: "budget",
                 table: "budget_head_master",
-                column: "MajorHeadMajorAccCode");
+                columns: new[] { "major_acc_code", "minor_acc_code" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_budget_head_master_MinorHeadMinorAccCode",
+                name: "IX_budget_head_master_major_acc_code_sub_major_acc_code_minor_~",
                 schema: "budget",
                 table: "budget_head_master",
-                column: "MinorHeadMinorAccCode");
+                columns: new[] { "major_acc_code", "sub_major_acc_code", "minor_acc_code", "sub_minor_acc_code", "detail_acc_code", "object_acc_code" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_budget_head_master_ObjectClassificationObjectAccCode",
+                name: "IX_budget_head_master_object_acc_code",
                 schema: "budget",
                 table: "budget_head_master",
-                column: "ObjectClassificationObjectAccCode");
+                column: "object_acc_code");
 
             migrationBuilder.CreateIndex(
                 name: "IX_budget_table_DetailHeadDetailAccCode",
@@ -776,10 +734,10 @@ namespace BBMB.BudgetService.Migrations
                 column: "MajorHeadMajorAccCode");
 
             migrationBuilder.CreateIndex(
-                name: "IX_budget_table_MinorHeadMinorAccCode",
+                name: "IX_budget_table_MinorHeadMajorAccCode_MinorHeadMinorAccCode",
                 schema: "budget",
                 table: "budget_table",
-                column: "MinorHeadMinorAccCode");
+                columns: new[] { "MinorHeadMajorAccCode", "MinorHeadMinorAccCode" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_budget_table_ObjectClassificationObjectAccCode",
@@ -788,16 +746,16 @@ namespace BBMB.BudgetService.Migrations
                 column: "ObjectClassificationObjectAccCode");
 
             migrationBuilder.CreateIndex(
-                name: "IX_budget_table_SubMajorHeadSubMajorAccCode",
+                name: "IX_budget_table_SubMajorHeadMajorAccCode_SubMajorHeadSubMajorA~",
                 schema: "budget",
                 table: "budget_table",
-                column: "SubMajorHeadSubMajorAccCode");
+                columns: new[] { "SubMajorHeadMajorAccCode", "SubMajorHeadSubMajorAccCode" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_budget_table_SubMinorHeadSubMinorAccCode",
+                name: "IX_budget_table_SubMinorHeadMinorAccCode_SubMinorHeadSubMinorA~",
                 schema: "budget",
                 table: "budget_table",
-                column: "SubMinorHeadSubMinorAccCode");
+                columns: new[] { "SubMinorHeadMinorAccCode", "SubMinorHeadSubMinorAccCode" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_budget_table_WorkCode1",
@@ -854,64 +812,36 @@ namespace BBMB.BudgetService.Migrations
                 column: "UnitMastersUnitCode");
 
             migrationBuilder.CreateIndex(
-                name: "IX_fa_detail_head_major_acc_code",
+                name: "IX_fa_detail_head_SubMinorHeadMinorAccCode_SubMinorHeadSubMino~",
                 schema: "budget",
                 table: "fa_detail_head",
-                column: "major_acc_code");
+                columns: new[] { "SubMinorHeadMinorAccCode", "SubMinorHeadSubMinorAccCode" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_fa_detail_head_minor_acc_code",
-                schema: "budget",
-                table: "fa_detail_head",
-                column: "minor_acc_code");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_fa_detail_head_sub_major_acc_code",
-                schema: "budget",
-                table: "fa_detail_head",
-                column: "sub_major_acc_code");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_fa_detail_head_sub_minor_acc_code",
-                schema: "budget",
-                table: "fa_detail_head",
-                column: "sub_minor_acc_code");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_fa_minor_head_major_acc_code",
-                schema: "budget",
-                table: "fa_minor_head",
-                column: "major_acc_code");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_fa_minor_head_sub_major_acc_code",
-                schema: "budget",
-                table: "fa_minor_head",
-                column: "sub_major_acc_code");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_fa_sub_major_head_major_acc_code",
+                name: "IX_fa_sub_major_head_major_acc_code_sub_major_acc_code",
                 schema: "budget",
                 table: "fa_sub_major_head",
-                column: "major_acc_code");
+                columns: new[] { "major_acc_code", "sub_major_acc_code" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_fa_sub_minor_head_major_acc_code",
+                name: "IX_fa_sub_major_head_MajorHeadMajorAccCode",
                 schema: "budget",
-                table: "fa_sub_minor_head",
-                column: "major_acc_code");
+                table: "fa_sub_major_head",
+                column: "MajorHeadMajorAccCode");
 
             migrationBuilder.CreateIndex(
-                name: "IX_fa_sub_minor_head_minor_acc_code",
+                name: "IX_fa_sub_minor_head_major_acc_code_minor_acc_code",
                 schema: "budget",
                 table: "fa_sub_minor_head",
-                column: "minor_acc_code");
+                columns: new[] { "major_acc_code", "minor_acc_code" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_fa_sub_minor_head_sub_major_acc_code",
+                name: "IX_fa_sub_minor_head_minor_acc_code_sub_minor_acc_code",
                 schema: "budget",
                 table: "fa_sub_minor_head",
-                column: "sub_major_acc_code");
+                columns: new[] { "minor_acc_code", "sub_minor_acc_code" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_units_irr_pwr_code",
@@ -950,10 +880,10 @@ namespace BBMB.BudgetService.Migrations
                 column: "MajorHeadMajorAccCode");
 
             migrationBuilder.CreateIndex(
-                name: "IX_work_MinorHeadMinorAccCode",
+                name: "IX_work_MinorHeadMajorAccCode_MinorHeadMinorAccCode",
                 schema: "budget",
                 table: "work",
-                column: "MinorHeadMinorAccCode");
+                columns: new[] { "MinorHeadMajorAccCode", "MinorHeadMinorAccCode" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_work_ObjectClassificationObjectAccCode",
@@ -962,16 +892,16 @@ namespace BBMB.BudgetService.Migrations
                 column: "ObjectClassificationObjectAccCode");
 
             migrationBuilder.CreateIndex(
-                name: "IX_work_SubMajorHeadSubMajorAccCode",
+                name: "IX_work_SubMajorHeadMajorAccCode_SubMajorHeadSubMajorAccCode",
                 schema: "budget",
                 table: "work",
-                column: "SubMajorHeadSubMajorAccCode");
+                columns: new[] { "SubMajorHeadMajorAccCode", "SubMajorHeadSubMajorAccCode" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_work_SubMinorHeadSubMinorAccCode",
+                name: "IX_work_SubMinorHeadMinorAccCode_SubMinorHeadSubMinorAccCode",
                 schema: "budget",
                 table: "work",
-                column: "SubMinorHeadSubMinorAccCode");
+                columns: new[] { "SubMinorHeadMinorAccCode", "SubMinorHeadSubMinorAccCode" });
         }
 
         /// <inheritdoc />
@@ -1022,6 +952,10 @@ namespace BBMB.BudgetService.Migrations
                 schema: "budget");
 
             migrationBuilder.DropTable(
+                name: "fa_sub_major_head",
+                schema: "budget");
+
+            migrationBuilder.DropTable(
                 name: "class",
                 schema: "budget");
 
@@ -1050,6 +984,10 @@ namespace BBMB.BudgetService.Migrations
                 schema: "budget");
 
             migrationBuilder.DropTable(
+                name: "fa_major_head",
+                schema: "budget");
+
+            migrationBuilder.DropTable(
                 name: "irr_pwr",
                 schema: "budget");
 
@@ -1059,14 +997,6 @@ namespace BBMB.BudgetService.Migrations
 
             migrationBuilder.DropTable(
                 name: "fa_minor_head",
-                schema: "budget");
-
-            migrationBuilder.DropTable(
-                name: "fa_sub_major_head",
-                schema: "budget");
-
-            migrationBuilder.DropTable(
-                name: "fa_major_head",
                 schema: "budget");
         }
     }

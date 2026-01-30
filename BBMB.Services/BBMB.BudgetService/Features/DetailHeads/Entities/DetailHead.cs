@@ -9,7 +9,6 @@ namespace BBMB.BudgetService.Features.DetailHeads.Entities
     [Table("fa_detail_head")]
     public class DetailHead
     {
-        [Key]
         [MaxLength(3)]
         [Column("detail_acc_code")]
         public string DetailAccCode { get; set; } = string.Empty;
