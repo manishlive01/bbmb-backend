@@ -131,6 +131,73 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .IsRequired();
             });
 
+
+            // =====================================================
+            // HeadOfAccount Configuration
+            // =====================================================
+            modelBuilder.Entity<HeadOfAccount>(entity =>
+            {
+                // 🔹 COMPOSITE PRIMARY KEY
+                entity.HasKey(x => new
+                {
+                    x.MajorAccCode,
+                    x.SubMajorAccCode,
+                    x.MinorAccCode,
+                    x.SubMinorAccCode,
+                    x.DetailAccCode,
+                    x.ObjectAccCode
+                });
+
+                // 🔹 UNIQUE INDEX (Optional but recommended)
+                entity.HasIndex(x => new
+                {
+                    x.MajorAccCode,
+                    x.SubMajorAccCode,
+                    x.MinorAccCode,
+                    x.SubMinorAccCode,
+                    x.DetailAccCode,
+                    x.ObjectAccCode
+                }).IsUnique();
+
+                // 🔹 Property rules
+                entity.Property(x => x.MajorAccCode).HasMaxLength(4).IsRequired();
+                entity.Property(x => x.SubMajorAccCode).HasMaxLength(4);
+                entity.Property(x => x.MinorAccCode).HasMaxLength(3).IsRequired();
+                entity.Property(x => x.SubMinorAccCode).HasMaxLength(2);
+                entity.Property(x => x.DetailAccCode).HasMaxLength(3).IsRequired();
+                entity.Property(x => x.ObjectAccCode).HasMaxLength(3).IsRequired();
+
+                entity.Property(x => x.HeadDesc)
+                      .HasMaxLength(150)
+                      .IsRequired();
+
+                entity.Property(x => x.UserCode)
+                      .HasMaxLength(6)
+                      .IsRequired();
+
+                // 🔹 Foreign Keys
+                entity.HasOne(x => x.MajorHead)
+                      .WithMany()
+                      .HasForeignKey(x => x.MajorAccCode)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.MinorHead)
+                      .WithMany()
+                      .HasForeignKey(x => x.MinorAccCode)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.DetailHead)
+                      .WithMany()
+                      .HasForeignKey(x => x.DetailAccCode)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.ObjectClassification)
+                      .WithMany()
+                      .HasForeignKey(x => x.ObjectAccCode)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
             // modelBuilder.ApplyConfigurationsFromAssembly(typeof(BudgetContext).Assembly);
         }
     }

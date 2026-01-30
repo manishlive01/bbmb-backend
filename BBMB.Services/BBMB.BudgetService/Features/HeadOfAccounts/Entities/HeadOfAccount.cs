@@ -10,9 +10,11 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Entities
     [Table("budget_head_master")]
     public class HeadOfAccount
     {
-        [Key]
-        [Column("id")]
+        [Key][Column("id")]
         public int Id { get; set; }
+
+
+        // 🔹 COMPOSITE PRIMARY KEY FIELDS
 
         [Required]
         [MaxLength(4)]
@@ -41,6 +43,8 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Entities
         [MaxLength(3)]
         [Column("object_acc_code_fk")]
         public string ObjectAccCode { get; set; } = string.Empty;
+
+        // 🔹 OTHER COLUMNS
 
         [Required]
         [MaxLength(150)]
@@ -80,13 +84,13 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Entities
         [Column("user_code")]
         public string UserCode { get; set; } = string.Empty;
 
-        // Navigation properties for foreign keys
+        // 🔹 Navigation Properties
         public virtual MajorHead? MajorHead { get; set; }
         public virtual MinorHead? MinorHead { get; set; }
         public virtual DetailHead? DetailHead { get; set; }
         public virtual ObjectClassification? ObjectClassification { get; set; }
 
-        // Computed property for full account code
+        // 🔹 Computed (Not Mapped)
         [NotMapped]
         public string FullAccountCode =>
             $"{MajorAccCode}{SubMajorAccCode ?? ""}{MinorAccCode}{SubMinorAccCode ?? ""}{DetailAccCode}{ObjectAccCode}";
