@@ -9,15 +9,19 @@ using FluentValidation;
 using Mapster;
 using MapsterMapper;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Security.Cryptography;
 
 // =======================
 // BUILDER
 // =======================
 var builder = WebApplication.CreateBuilder(args);
+Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 
 // ===================================================================
 // DATABASE CONFIGURATION (Single DB, Multiple Schemas)
@@ -70,35 +74,100 @@ builder.Services.AddTransient(
 // ===================================================================
 TypeAdapterConfig.GlobalSettings.Scan(typeof(Program).Assembly);
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
-builder.Services.AddScoped<IMapper, ServiceMapper>();
+builder.Services.AddScoped<IMapper, ServiceMapper>(); 
 
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "BBMB Budget API",
-        Version = "v1"
-    });
 
-    // JWT Support (if required later)
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+var publicKeyRelative = builder.Configuration["JWT:PublicKeyPath"]
+    ?? throw new Exception("JWT PublicKeyPath missing");
+
+var publicKeyFull = Path.Combine(builder.Environment.ContentRootPath, publicKeyRelative);
+
+if (!File.Exists(publicKeyFull))
+    throw new Exception($"Public key not found at {publicKeyFull}");
+
+var rsa = RSA.Create();
+rsa.ImportFromPem(File.ReadAllText(publicKeyFull));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        In = ParameterLocation.Header,
-        Description = "Enter JWT with Bearer prefix",
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["JWT:Issuer"],
+
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["JWT:Audience"],
+
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new RsaSecurityKey(rsa),
+
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    }; 
+    
+        options.TokenValidationParameters.TokenDecryptionKey =
+            new SymmetricSecurityKey(
+                Convert.FromBase64String(builder.Configuration["JWT:EncryptionKey"]));
+    
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("AUTH FAILED: " + context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("TOKEN VALID");
+            return Task.CompletedTask;
+        }
+    };
+
+});
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+
+        // Add Bearer Security Scheme
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Enter JWT token"
+        };
+
+        // Apply globally
+        document.Security =
+        [
+            new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecuritySchemeReference("Bearer"),
+                    []
+                }
+            }
+        ];
+
+        document.SetReferenceHostDocument();
+
+        return Task.CompletedTask;
     });
 });
-
 builder.Services.AddHealthChecks()
     .AddNpgSql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        name: "postgres-db");
+        name: "postgres-db"); 
+builder.Services.AddAuthorization();
 
 // ===================================================================
 // BUILD APP
@@ -120,18 +189,19 @@ app.UseCors("AllowFrontend");
 // ===================================================================
 app.UseRouting();
 app.UseStaticFiles();
+ app.UseAuthentication();
+app.UseAuthorization();
 
-// ===================================================================
-// SWAGGER MIDDLEWARE
-// ===================================================================
-app.UseSwagger();
+
+app.MapOpenApi();
+// ======================================================
+// SWAGGER UI
+// ======================================================
 app.UseSwaggerUI(options =>
 {
-    options.DocumentTitle = "Budget API's";
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
-    options.InjectStylesheet("/swagger-ui/custom.css");
+    options.DocumentTitle = $"Environment: {app.Environment.EnvironmentName} - Auth API's";
+    options.SwaggerEndpoint("/openapi/v1.json", "API v1");
 });
-
 // ===================================================================
 // SECURITY
 // ===================================================================

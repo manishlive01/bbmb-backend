@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.Geographical.States.GetList
                 return Results.Ok(result);
             })
             .Produces<List<GetStateMasterListResponseDto>>(StatusCodes.Status200OK)
+            .RequireAuthorization()
             .WithSummary("Get State List")
             .WithDescription("Returns list of states directly without response wrapper")
             .WithTags("StateMaster");
