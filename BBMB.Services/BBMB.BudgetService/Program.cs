@@ -1,6 +1,7 @@
 ﻿// =======================
 // USING STATEMENTS
 // =======================
+using BBMB.BudgetService.Authorization.Extension;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Infrastructure.Persistence.FinanceContexts;
 using BBMB.BudgetService.Shared.Behaviors;
@@ -9,15 +10,19 @@ using FluentValidation;
 using Mapster;
 using MapsterMapper;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using System.Security.Cryptography;
 
 // =======================
 // BUILDER
 // =======================
 var builder = WebApplication.CreateBuilder(args);
+Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 
 // ===================================================================
 // DATABASE CONFIGURATION (Single DB, Multiple Schemas)
@@ -70,35 +75,91 @@ builder.Services.AddTransient(
 // ===================================================================
 TypeAdapterConfig.GlobalSettings.Scan(typeof(Program).Assembly);
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
-builder.Services.AddScoped<IMapper, ServiceMapper>();
+builder.Services.AddScoped<IMapper, ServiceMapper>(); 
 
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddAuthentication("Bearer")
+.AddJwtBearer("Bearer", options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "BBMB Budget API",
-        Version = "v1"
-    });
+    options.Authority = builder.Configuration["SSO:Authority"];   // IMPORTANT
+    options.RequireHttpsMetadata = false; // because your SSO is HTTP
 
-    // JWT Support (if required later)
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        In = ParameterLocation.Header,
-        Description = "Enter JWT with Bearer prefix",
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
-    });
+        ValidateIssuer = true,
+        //ValidIssuer = builder.Configuration["SSO:Issuer"],//use this in case of only trusted one Issuer
+
+        ValidateAudience = true,
+        ValidAudiences = builder.Configuration
+    .GetSection("SSO:ValidAudiences")
+    .Get<string[]>(),
+
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+
+    options.TokenValidationParameters.TokenDecryptionKey =
+        new SymmetricSecurityKey(
+            Convert.FromBase64String(builder.Configuration["SSO:EncryptionKey"]));
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("AUTH FAILED: " + context.Exception.Message);
+            return Task.CompletedTask;
+        }
+    };
 });
 
+
+// ======================================================
+// 🔐 CUSTOM PROJECT ROLE AUTHORIZATION
+// ======================================================
+builder.Services.AddProjectRoleAuthorization();
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+
+        // Add Bearer Security Scheme
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Enter JWT token"
+        };
+
+        // Apply globally
+        document.Security =
+        [
+            new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecuritySchemeReference("Bearer"),
+                    []
+                }
+            }
+        ];
+
+        document.SetReferenceHostDocument();
+
+        return Task.CompletedTask;
+    });
+});
 builder.Services.AddHealthChecks()
     .AddNpgSql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        name: "postgres-db");
+        name: "postgres-db"); 
+builder.Services.AddAuthorization();
 
 // ===================================================================
 // BUILD APP
@@ -120,18 +181,19 @@ app.UseCors("AllowFrontend");
 // ===================================================================
 app.UseRouting();
 app.UseStaticFiles();
+ app.UseAuthentication();
+app.UseAuthorization();
 
-// ===================================================================
-// SWAGGER MIDDLEWARE
-// ===================================================================
-app.UseSwagger();
+
+app.MapOpenApi();
+// ======================================================
+// SWAGGER UI
+// ======================================================
 app.UseSwaggerUI(options =>
 {
-    options.DocumentTitle = "Budget API's";
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
-    options.InjectStylesheet("/swagger-ui/custom.css");
+    options.DocumentTitle = $"Environment: {app.Environment.EnvironmentName} - Auth API's";
+    options.SwaggerEndpoint("/openapi/v1.json", "API v1");
 });
-
 // ===================================================================
 // SECURITY
 // ===================================================================
