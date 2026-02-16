@@ -1,6 +1,7 @@
 ﻿// =======================
 // USING STATEMENTS
 // =======================
+using BBMB.BudgetService.Authorization.Extension;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Infrastructure.Persistence.FinanceContexts;
 using BBMB.BudgetService.Shared.Behaviors;
@@ -115,6 +116,11 @@ builder.Services.AddAuthentication("Bearer")
     };
 });
 
+
+// ======================================================
+// 🔐 CUSTOM PROJECT ROLE AUTHORIZATION
+// ======================================================
+builder.Services.AddProjectRoleAuthorization();
 
 builder.Services.AddOpenApi(options =>
 {

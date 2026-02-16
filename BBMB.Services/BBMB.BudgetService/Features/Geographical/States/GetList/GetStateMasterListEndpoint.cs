@@ -1,5 +1,5 @@
 ﻿using BBMB.BudgetService.Features.Geographical.States.GetList.Dtos;
-using BBMB.BudgetService.Shared.Endpoints; 
+using BBMB.BudgetService.Shared.Endpoints;
 using MediatR;
 
 namespace BBMB.BudgetService.Features.Geographical.States.GetList
@@ -17,8 +17,8 @@ namespace BBMB.BudgetService.Features.Geographical.States.GetList
 
                 return Results.Ok(result);
             })
+                 .RequireAuthorization("Budget:BudgetViewer,Admin")
             .Produces<List<GetStateMasterListResponseDto>>(StatusCodes.Status200OK)
-            .RequireAuthorization()
             .WithSummary("Get State List")
             .WithDescription("Returns list of states directly without response wrapper")
             .WithTags("StateMaster");
