@@ -93,7 +93,9 @@ builder.Services.AddAuthentication("Bearer")
         //ValidIssuer = builder.Configuration["SSO:Issuer"],//use this in case of only trusted one Issuer
 
         ValidateAudience = true,
-        ValidAudience = builder.Configuration["SSO:Audience"],
+        ValidAudiences = builder.Configuration
+    .GetSection("SSO:ValidAudiences")
+    .Get<string[]>(),
 
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
