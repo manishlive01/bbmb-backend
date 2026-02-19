@@ -7,9 +7,8 @@ namespace BBMB.BudgetService.Features.CEManagements.Entities
     public class CEManagement
     {
         [Key]
-        [MaxLength(3)]
         [Column("id")]
-        public string Id { get; set; } = string.Empty;
+        public int Id { get; set; }
 
         [Required]
         [MaxLength(15)]

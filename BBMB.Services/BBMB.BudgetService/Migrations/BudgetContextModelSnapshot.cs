@@ -306,10 +306,12 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime?>("Date")
                         .HasColumnType("timestamp with time zone")

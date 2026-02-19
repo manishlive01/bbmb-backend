@@ -22,7 +22,7 @@ namespace BBMB.BudgetService.Features.CEManagements.Create
                 return Results.Created($"/api/ce-management", response);
             })
             .WithName("CreateCEManagement")
-            .WithTags("CE Management")
+            .WithTags("CEManagement")
             .WithSummary("Create a new CE record")
             .WithDescription("Creates a new Chief Engineer record")
             .Produces(StatusCodes.Status201Created)

@@ -21,6 +21,18 @@ namespace BBMB.BudgetService.Features.CEManagements.Create
             // ✅ Map DTO to Entity
             var ce = request.dto.Adapt<CEManagement>();
 
+            // 🔎 Optional: Check duplicate (if needed)
+            var exists = await _context.CEManagements
+                .AnyAsync(x => x.Name == request.dto.Name, ct);
+            if (exists)
+            {
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = "CE record already exists with this name."
+                };
+            }
+
             // ✅ Persist
             _context.CEManagements.Add(ce);
             await _context.SaveChangesAsync(ct);
