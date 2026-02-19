@@ -3,6 +3,7 @@ using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
 using BBMB.BudgetService.Features.Budgets.Entities;
+using BBMB.BudgetService.Features.CEManagements.Entities;
 using BBMB.BudgetService.Features.Classes.Entities;
 using BBMB.BudgetService.Features.Designations.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
@@ -54,6 +55,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<Region> Regions { get; set; }
         public DbSet<UnitMaster> Units { get; set; }
         public DbSet<Work> Works { get; set; }
+        public DbSet<CEManagement> CEManagements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -40,6 +40,10 @@
     <Folder Include="Features\Budgets\GetById\" />
     <Folder Include="Features\Budgets\Delete\" />
     <Folder Include="Features\Budgets\Update\" />
+    <Folder Include="Features\CEManagements\Delete\" />
+    <Folder Include="Features\CEManagements\GetById\" />
+    <Folder Include="Features\CEManagements\GetList\" />
+    <Folder Include="Features\CEManagements\Update\" />
     <Folder Include="Features\Classes\GetList\" />
     <Folder Include="Features\Classes\GetById\" />
     <Folder Include="Features\Classes\Delete\" />
