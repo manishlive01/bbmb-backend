@@ -1,4 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
+using BBMB.BudgetService.Features.CRManagements.Entities;
+using BBMB.BudgetService.Features.DetailHeads.Entities;
+using BBMB.BudgetService.Features.Projects.Entities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BBMB.BudgetService.Features.CEManagements.Entities
@@ -39,5 +43,11 @@ namespace BBMB.BudgetService.Features.CEManagements.Entities
         [MaxLength(6)]
         [Column("user_code")]
         public string UserCode { get; set; } = string.Empty;
+
+
+        [ForeignKey(nameof(ProjectCode))]
+        public virtual Project? Projects { get; set; }
+
+        public virtual ICollection<CRManagement> CRManagements { get; set; } = new List<CRManagement>();
     }
 }

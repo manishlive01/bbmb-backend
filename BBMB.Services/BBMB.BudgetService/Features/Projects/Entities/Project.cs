@@ -1,4 +1,6 @@
-﻿using BBMB.BudgetService.Features.Units.Entities;
+﻿using BBMB.BudgetService.Features.CEManagements.Entities;
+using BBMB.BudgetService.Features.DetailHeads.Entities;
+using BBMB.BudgetService.Features.Units.Entities;
 using MediatR;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -29,5 +31,6 @@ namespace BBMB.BudgetService.Features.Projects.Entities
 
         // Navigation property for related units
         public virtual ICollection<UnitMaster> UnitMasters { get; set; } = new List<UnitMaster>();
+        public virtual ICollection<CEManagement> CEManagements { get; set; } = new List<CEManagement>();
     }
 }

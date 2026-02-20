@@ -351,7 +351,59 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ProjectCode");
+
                     b.ToTable("ce_management", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CEId")
+                        .HasColumnType("integer")
+                        .HasColumnName("ce_id");
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("desc");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("location");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("name");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("status");
+
+                    b.Property<string>("UserCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("user_code");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CEId");
+
+                    b.ToTable("cr_management", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Classes.Entities.Class", b =>
@@ -1304,6 +1356,28 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("Work");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.Projects.Entities.Project", "Projects")
+                        .WithMany("CEManagements")
+                        .HasForeignKey("ProjectCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
+                        .WithMany("CRManagements")
+                        .HasForeignKey("CEId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CEManagement");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.Designations.Entities.Designation", b =>
                 {
                     b.HasOne("BBMB.BudgetService.Features.Classes.Entities.Class", "Class")
@@ -1503,6 +1577,11 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("DetailHeads");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
+                {
+                    b.Navigation("CRManagements");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.Geographical.States.Entities.StateMaster", b =>
                 {
                     b.Navigation("DistrictMasters");
@@ -1515,6 +1594,8 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Projects.Entities.Project", b =>
                 {
+                    b.Navigation("CEManagements");
+
                     b.Navigation("UnitMasters");
                 });
 #pragma warning restore 612, 618

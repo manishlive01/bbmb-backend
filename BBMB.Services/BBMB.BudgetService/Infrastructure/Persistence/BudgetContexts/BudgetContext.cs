@@ -5,6 +5,7 @@ using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
 using BBMB.BudgetService.Features.Budgets.Entities;
 using BBMB.BudgetService.Features.CEManagements.Entities;
 using BBMB.BudgetService.Features.Classes.Entities;
+using BBMB.BudgetService.Features.CRManagements.Entities;
 using BBMB.BudgetService.Features.Designations.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
 using BBMB.BudgetService.Features.Divisions.Entities;
@@ -56,6 +57,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<UnitMaster> Units { get; set; }
         public DbSet<Work> Works { get; set; }
         public DbSet<CEManagement> CEManagements { get; set; }
+        public DbSet<CRManagement> CRManagements { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
