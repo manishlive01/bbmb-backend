@@ -50,9 +50,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-             .AllowAnyOrigin() 
+            .AllowAnyOrigin()
             .AllowAnyHeader()
-            .AllowAnyMethod() ;  
+            .AllowAnyMethod();
     });
 });
 
@@ -75,7 +75,7 @@ builder.Services.AddTransient(
 // ===================================================================
 TypeAdapterConfig.GlobalSettings.Scan(typeof(Program).Assembly);
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
-builder.Services.AddScoped<IMapper, ServiceMapper>(); 
+builder.Services.AddScoped<IMapper, ServiceMapper>();
 
 // ===================================================================
 // SWAGGER / OPENAPI
@@ -85,18 +85,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAuthentication("Bearer")
 .AddJwtBearer("Bearer", options =>
 {
-    options.Authority = builder.Configuration["SSO:Authority"];   // IMPORTANT
-    options.RequireHttpsMetadata = false; // because your SSO is HTTP
+    options.Authority = builder.Configuration["SSO:Authority"];
+    options.RequireHttpsMetadata = false;
 
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
-        //ValidIssuer = builder.Configuration["SSO:Issuer"],//use this in case of only trusted one Issuer
 
         ValidateAudience = true,
         ValidAudiences = builder.Configuration
-    .GetSection("SSO:ValidAudiences")
-    .Get<string[]>(),
+            .GetSection("SSO:ValidAudiences")
+            .Get<string[]>(),
 
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
@@ -116,7 +115,6 @@ builder.Services.AddAuthentication("Bearer")
     };
 });
 
-
 // ======================================================
 // 🔐 CUSTOM PROJECT ROLE AUTHORIZATION
 // ======================================================
@@ -127,18 +125,18 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        document.Components.SecuritySchemes ??=
+            new Dictionary<string, IOpenApiSecurityScheme>();
 
-        // Add Bearer Security Scheme
-        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
-        {
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            Description = "Enter JWT token"
-        };
+        document.Components.SecuritySchemes["Bearer"] =
+            new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "Enter JWT token"
+            };
 
-        // Apply globally
         document.Security =
         [
             new OpenApiSecurityRequirement
@@ -155,10 +153,12 @@ builder.Services.AddOpenApi(options =>
         return Task.CompletedTask;
     });
 });
+
 builder.Services.AddHealthChecks()
     .AddNpgSql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        name: "postgres-db"); 
+        name: "postgres-db");
+
 builder.Services.AddAuthorization();
 
 // ===================================================================
@@ -172,32 +172,33 @@ var app = builder.Build();
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // ===================================================================
-// CORS (MUST BE BEFORE ROUTING)
+// MIDDLEWARE PIPELINE (FIXED ORDER)
 // ===================================================================
+
+// IMPORTANT: HTTPS FIRST
+app.UseHttpsRedirection();
+
+app.UseRouting();
+
+// CORS MUST BE AFTER ROUTING & BEFORE AUTH
 app.UseCors("AllowFrontend");
 
-// ===================================================================
-// CORE MIDDLEWARE
-// ===================================================================
-app.UseRouting();
 app.UseStaticFiles();
- app.UseAuthentication();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
-
 app.MapOpenApi();
+
 // ======================================================
 // SWAGGER UI
 // ======================================================
 app.UseSwaggerUI(options =>
 {
-    options.DocumentTitle = $"Environment: {app.Environment.EnvironmentName} - Auth API's";
+    options.DocumentTitle =
+        $"Environment: {app.Environment.EnvironmentName} - Auth API's";
     options.SwaggerEndpoint("/openapi/v1.json", "API v1");
 });
-// ===================================================================
-// SECURITY
-// ===================================================================
-app.UseHttpsRedirection();
 
 // ===================================================================
 // GLOBAL EXCEPTION HANDLER
@@ -209,7 +210,6 @@ app.UseExceptionHandler(appBuilder =>
         var exception = context.Features
             .Get<IExceptionHandlerFeature>()?.Error;
 
-        // FluentValidation errors
         if (exception is ValidationException validationException)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -227,7 +227,6 @@ app.UseExceptionHandler(appBuilder =>
             return;
         }
 
-        // Invalid JSON
         if (exception is BadHttpRequestException badRequest &&
             badRequest.InnerException is System.Text.Json.JsonException jsonEx)
         {
@@ -242,8 +241,9 @@ app.UseExceptionHandler(appBuilder =>
             return;
         }
 
-        // Fallback
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.StatusCode =
+            StatusCodes.Status500InternalServerError;
+
         await context.Response.WriteAsJsonAsync(new
         {
             message = "An unexpected error occurred"
