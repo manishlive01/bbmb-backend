@@ -29,6 +29,18 @@ namespace BBMB.BudgetService.Features.CEManagements.Delete
                 };
             }
 
+            // Example: If CR is referenced somewhere else
+            var isUsed = await _context.Divisions
+                .AnyAsync(x => x.CEId == request.Id, ct);
+            if (isUsed)
+            {
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = "CE cannot be deleted because it is use in Division."
+                };
+            }
+
             _context.CEManagements.Remove(ce);
             await _context.SaveChangesAsync(ct);
 

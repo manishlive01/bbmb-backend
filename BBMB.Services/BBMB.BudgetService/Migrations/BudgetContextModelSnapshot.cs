@@ -525,6 +525,14 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<string>("AccountOfficeAccOffice")
                         .HasColumnType("character varying(2)");
 
+                    b.Property<int>("CEId")
+                        .HasColumnType("integer")
+                        .HasColumnName("ce_id");
+
+                    b.Property<int>("CRId")
+                        .HasColumnType("integer")
+                        .HasColumnName("cr_id");
+
                     b.Property<int?>("CtrlOffice1")
                         .HasColumnType("integer")
                         .HasColumnName("ctrl_office1");
@@ -610,6 +618,10 @@ namespace BBMB.BudgetService.Migrations
                     b.HasKey("DivisionCode");
 
                     b.HasIndex("AccountOfficeAccOffice");
+
+                    b.HasIndex("CEId");
+
+                    b.HasIndex("CRId");
 
                     b.HasIndex("MajorHeadMajorAccCode");
 
@@ -1402,6 +1414,18 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("AccountOfficeAccOffice");
 
+                    b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
+                        .WithMany("Divisions")
+                        .HasForeignKey("CEId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", "CRManagement")
+                        .WithMany("Divisions")
+                        .HasForeignKey("CRId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
                         .WithMany()
                         .HasForeignKey("MajorHeadMajorAccCode");
@@ -1423,6 +1447,10 @@ namespace BBMB.BudgetService.Migrations
                         .HasForeignKey("UnitMastersUnitCode");
 
                     b.Navigation("AccountOffice");
+
+                    b.Navigation("CEManagement");
+
+                    b.Navigation("CRManagement");
 
                     b.Navigation("MajorHead");
 
@@ -1580,6 +1608,13 @@ namespace BBMB.BudgetService.Migrations
             modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
                 {
                     b.Navigation("CRManagements");
+
+                    b.Navigation("Divisions");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
+                {
+                    b.Navigation("Divisions");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Geographical.States.Entities.StateMaster", b =>

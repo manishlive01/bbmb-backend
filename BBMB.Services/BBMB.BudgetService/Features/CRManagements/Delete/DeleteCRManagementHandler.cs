@@ -31,18 +31,17 @@ namespace BBMB.BudgetService.Features.CRManagements.Delete
                 };
             }
 
-            // 🔎 Optional: Check if dependent records exist
             // Example: If CR is referenced somewhere else
-            // var isUsed = await _context.SomeOtherTable
-            //     .AnyAsync(x => x.CRId == request.Id, ct);
-            // if (isUsed)
-            // {
-            //     return new Response
-            //     {
-            //         IsSucced = false,
-            //         Message = "CR cannot be deleted because it is in use"
-            //     };
-            // }
+            var isUsed = await _context.Divisions
+                .AnyAsync(x => x.CRId == request.Id, ct);
+            if (isUsed)
+            {
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = "CR cannot be deleted because it is use in Division."
+                };
+            }
 
             // ✅ Hard Delete
             _context.CRManagements.Remove(cr);

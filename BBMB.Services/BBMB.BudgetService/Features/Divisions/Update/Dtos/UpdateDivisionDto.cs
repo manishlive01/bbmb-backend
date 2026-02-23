@@ -15,6 +15,8 @@ namespace BBMB.BudgetService.Features.Divisions.Update.Dtos
         public string? RegionCode { get; set; }
         public string? DdoTds { get; set; }
         public int? ParentDivisionCode { get; set; }
+        public int CRId { get; set; }
+        public int CEId { get; set; }
         public string UserCode { get; set; } = "123";
     }
 }

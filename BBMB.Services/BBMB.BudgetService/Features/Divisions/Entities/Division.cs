@@ -1,4 +1,6 @@
 ﻿using BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities;
+using BBMB.BudgetService.Features.CEManagements.Entities;
+using BBMB.BudgetService.Features.CRManagements.Entities;
 using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
 using BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities;
 using BBMB.BudgetService.Features.Pools.Entities;
@@ -72,6 +74,15 @@ namespace BBMB.BudgetService.Features.Divisions.Entities
         [Column("parent_division_code")]
         public int? ParentDivisionCode { get; set; }
 
+
+        [Required]
+        [Column("ce_id")]
+        public int CEId { get; set; }
+
+        [Required]
+        [Column("cr_id")]
+        public int CRId { get; set; }
+
         [Required]
         [MaxLength(6)]
         [Column("user_code")]
@@ -84,5 +95,11 @@ namespace BBMB.BudgetService.Features.Divisions.Entities
         public virtual UnitMaster? UnitMasters { get; set; }
         public virtual Pool? Pool { get; set; }
         public virtual Region? Region { get; set; }
+
+        [ForeignKey(nameof(CEId))]
+        public virtual CEManagement? CEManagement { get; set; }
+
+        [ForeignKey(nameof(CRId))]
+        public virtual CRManagement? CRManagement { get; set; }
     }
 }

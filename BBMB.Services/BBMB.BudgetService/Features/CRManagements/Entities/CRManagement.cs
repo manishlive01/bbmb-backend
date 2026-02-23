@@ -1,6 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BBMB.BudgetService.Features.CEManagements.Entities;
+using BBMB.BudgetService.Features.Divisions.Entities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using BBMB.BudgetService.Features.CEManagements.Entities;
 
 namespace BBMB.BudgetService.Features.CRManagements.Entities
 {
@@ -43,5 +44,6 @@ namespace BBMB.BudgetService.Features.CRManagements.Entities
 
         [ForeignKey(nameof(CEId))]
         public virtual CEManagement? CEManagement { get; set; }
+        public virtual ICollection<Division> Divisions { get; set; } = new List<Division>();
     }
 }
