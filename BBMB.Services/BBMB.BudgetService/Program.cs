@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using OfficeOpenXml;
 using System.Security.Cryptography;
 
 // =======================
@@ -160,6 +161,12 @@ builder.Services.AddHealthChecks()
         builder.Configuration.GetConnectionString("DefaultConnection"),
         name: "postgres-db"); 
 builder.Services.AddAuthorization();
+
+// ===================================================================
+// For excel
+// ===================================================================
+ExcelPackage.License.SetNonCommercialOrganization("BBMB");
+
 
 // ===================================================================
 // BUILD APP

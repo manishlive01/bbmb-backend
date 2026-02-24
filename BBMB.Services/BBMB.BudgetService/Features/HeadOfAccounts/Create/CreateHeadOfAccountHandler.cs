@@ -42,7 +42,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Create
             var headOfAccount = dto.Adapt<HeadOfAccount>();
             headOfAccount.ModificationDate = DateTime.UtcNow;
 
-            _context.HeadOfAccounts.Add(headOfAccount);
+           await _context.HeadOfAccounts.AddAsync(headOfAccount);
             await _context.SaveChangesAsync(ct);
 
             return new Response
