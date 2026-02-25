@@ -12,6 +12,9 @@ namespace BBMB.BudgetService.Features.CEManagements.Create
                 .NotEmpty().WithMessage("Name is required")
                 .MaximumLength(15).WithMessage("Name must not exceed 15 characters");
 
+            RuleFor(x => x.dto.CECode)
+               .NotEmpty().WithMessage("CE code is required");
+
             RuleFor(x => x.dto.ProjectCode)
                 .NotEmpty().WithMessage("Project code is required")
                 .MaximumLength(2).WithMessage("Project code must not exceed 2 characters");
@@ -23,15 +26,6 @@ namespace BBMB.BudgetService.Features.CEManagements.Create
             RuleFor(x => x.dto.Location)
                 .MaximumLength(100).WithMessage("Location must not exceed 100 characters")
                 .When(x => !string.IsNullOrEmpty(x.dto.Location));
-
-            RuleFor(x => x.dto.Date)
-                .LessThanOrEqualTo(DateTime.Now)
-                .When(x => x.dto.Date.HasValue)
-                .WithMessage("Date cannot be in the future");
-
-            RuleFor(x => x.dto.UserCode)
-                .NotEmpty().WithMessage("User code is required")
-                .MaximumLength(6).WithMessage("User code must not exceed 6 characters");
         }
     }
 }

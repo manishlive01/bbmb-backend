@@ -26,8 +26,10 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
                 .AsQueryable();
 
             // 🔎 Apply Filters
-            if (request.CEId.HasValue)
-                query = query.Where(x => x.CEId == request.CEId.Value);
+            if (!string.IsNullOrWhiteSpace(request.ceCode))
+            {
+                query = query.Where(x => x.CECode == request.ceCode);
+            }
 
             if (request.Status.HasValue)
                 query = query.Where(x => x.Status == request.Status.Value);
@@ -48,8 +50,8 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
 
             var items = crList.Select(x => new GetCRManagementListResponseDto
             {
-                CRId = x.Id,
-                CEId = x.CEId,
+                CRCode = x.CRCode,
+                CECode = x.CECode,
                 Name = x.Name,
                 Description = x.Description,
                 Location = x.Location,
@@ -82,16 +84,16 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
             bool sortDescending)
         {
             if (string.IsNullOrEmpty(sortBy))
-                return query.OrderBy(x => x.Id);
+                return query.OrderBy(x => x.CRCode);
 
             return sortBy.ToLower() switch
             {
-                "id" => sortDescending ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id),
                 "name" => sortDescending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
-                "ceid" => sortDescending ? query.OrderByDescending(x => x.CEId) : query.OrderBy(x => x.CEId),
+                "ceCode" => sortDescending ? query.OrderByDescending(x => x.CECode) : query.OrderBy(x => x.CECode),
+                "crCode" => sortDescending ? query.OrderByDescending(x => x.CRCode) : query.OrderBy(x => x.CRCode),
                 "date" => sortDescending ? query.OrderByDescending(x => x.Date) : query.OrderBy(x => x.Date),
                 "status" => sortDescending ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status),
-                _ => query.OrderBy(x => x.Id)
+                _ => query.OrderBy(x => x.CRCode)
             };
         }
     }

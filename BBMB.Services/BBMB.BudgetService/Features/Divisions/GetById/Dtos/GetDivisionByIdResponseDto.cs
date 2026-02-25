@@ -17,8 +17,8 @@ namespace BBMB.BudgetService.Features.Divisions.GetById.Dtos
         public string? DdoTds { get; set; }
         public DateTime ModificationDate { get; set; }
         public int? ParentDivisionCode { get; set; }
-        public int CRId { get; set; }
-        public int CEId { get; set; }
+        public string CRCode { get; set; } = string.Empty;
+        public string CECode { get; set; } = string.Empty;
         public string UserCode { get; set; } = string.Empty;
     }
 }

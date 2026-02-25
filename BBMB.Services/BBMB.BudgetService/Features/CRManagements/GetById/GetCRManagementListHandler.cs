@@ -23,17 +23,18 @@ namespace BBMB.BudgetService.Features.CRManagements.GetById
         {
             var cr = await _context.CRManagements
                 .Include(x => x.CEManagement)
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.CRCode == request.crCode, ct);
 
             if (cr == null)
             {
                 throw new KeyNotFoundException(
-                    $"CR Management record with ID '{request.Id}' not found");
+                    $"CR Management record with code '{request.crCode}' not found");
             }
 
             return new GetCRManagementByIdResponseDto
             {
-                CEId = cr.CEId,
+                CRCode = cr.CRCode,
+                CECode = cr.CECode,
                 Name = cr.Name,
                 Description = cr.Description,
                 Location = cr.Location,

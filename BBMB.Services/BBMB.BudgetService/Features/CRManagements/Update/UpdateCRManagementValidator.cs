@@ -7,13 +7,6 @@ namespace BBMB.BudgetService.Features.CRManagements.Update
     {
         public UpdateCRManagementValidator()
         {
-            RuleFor(x => x.Id)
-                .GreaterThan(0)
-                .WithMessage("Valid CR Id is required");
-
-            RuleFor(x => x.Dto.CEId)
-                .GreaterThan(0)
-                .WithMessage("Valid CE Id is required");
 
             RuleFor(x => x.Dto.Name)
                 .NotEmpty()

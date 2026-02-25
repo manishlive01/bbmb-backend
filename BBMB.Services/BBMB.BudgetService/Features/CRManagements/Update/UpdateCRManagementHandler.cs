@@ -20,32 +20,32 @@ namespace BBMB.BudgetService.Features.CRManagements.Update
         public async Task<Response> Handle(UpdateCRManagementCommand request, CancellationToken ct)
         {
             var cr = await _context.CRManagements
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.CRCode == request.crCode, ct);
 
             if (cr == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CR Management record with ID '{request.Id}' not found"
+                    Message = $"CR Management record with ID '{request.crCode}' not found"
                 };
             }
 
             // ✅ Validate CE exists
             var ceExists = await _context.CEManagements
-                .AnyAsync(x => x.Id == request.Dto.CEId, ct);
+                .AnyAsync(x => x.CECode == request.Dto.CECode, ct);
 
             if (!ceExists)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CE with ID '{request.Dto.CEId}' not found"
+                    Message = $"CE with ID '{request.Dto.CECode}' not found"
                 };
             }
 
             // 🔄 Update fields
-            cr.CEId = request.Dto.CEId;
+            cr.CECode = request.Dto.CECode;
             cr.Name = request.Dto.Name;
             cr.Description = request.Dto.Description;
             cr.Location = request.Dto.Location;

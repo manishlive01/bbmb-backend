@@ -7,11 +7,11 @@ namespace BBMB.BudgetService.Features.CRManagements.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/cr-management/{id:int}", async (
-                int id,
+            app.MapDelete("/api/cr-management/{crCode}", async (
+                string crCode,
                 IMediator mediator) =>
             {
-                var command = new DeleteCRManagementCommand(id);
+                var command = new DeleteCRManagementCommand(crCode);
                 var response = await mediator.Send(command);
 
                 if (!response.IsSucced)

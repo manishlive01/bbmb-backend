@@ -9,7 +9,8 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
         int PageSize,
         string? SortBy,
         bool SortDescending,
-        int? CEId,
+        string? crCode,
+        string? ceCode,
         bool? Status
     ) : IRequest<PagedResponse<GetCRManagementListResponseDto>>;
 }

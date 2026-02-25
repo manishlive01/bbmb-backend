@@ -61,8 +61,8 @@ namespace BBMB.BudgetService.Features.Divisions.GetList
                     RegionCode = d.RegionCode,
                     PoolCode = d.PoolCode,
                     ModificationDate = d.ModificationDate,
-                    CEId = d.CEId,
-                    CRId = d.CRId,
+                    CECode = d.CECode,
+                    CRCode = d.CRCode,
                     UserCode = d.UserCode
                 })
                 .ToListAsync(ct);

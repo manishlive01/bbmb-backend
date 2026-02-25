@@ -3,6 +3,6 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.CRManagements.GetById
 {
-    public sealed record GetCRManagementByIdQuery(int Id)
+    public sealed record GetCRManagementByIdQuery(string crCode)
         : IRequest<GetCRManagementByIdResponseDto>;
 }

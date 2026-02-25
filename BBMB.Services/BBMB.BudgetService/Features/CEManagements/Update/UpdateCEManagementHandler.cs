@@ -20,20 +20,20 @@ namespace BBMB.BudgetService.Features.CEManagements.Update
         public async Task<Response> Handle(UpdateCEManagementCommand request, CancellationToken ct)
         {
             var ce = await _context.CEManagements
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.CECode == request.ceCode, ct);
 
             if (ce == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CE Management record with ID '{request.Id}' not found"
+                    Message = $"CE Management record with Code '{request.ceCode}' not found"
                 };
             }
 
             // 🔎 Optional: Check duplicate (if needed)
             var exists = await _context.CEManagements
-                .AnyAsync(x => x.Name == request.Dto.Name && x.Id != request.Id, ct);
+                .AnyAsync(x => x.Name == request.Dto.Name && x.CECode != request.ceCode, ct);
             if (exists)
             {
                 return new Response

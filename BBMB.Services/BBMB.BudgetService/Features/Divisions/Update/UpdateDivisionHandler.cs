@@ -42,8 +42,8 @@ namespace BBMB.BudgetService.Features.Divisions.Update
             division.RegionCode = request.dto.RegionCode;
             division.DdoTds = request.dto.DdoTds;
             division.ParentDivisionCode = request.dto.ParentDivisionCode;
-            division.CEId = request.dto.CEId;
-            division.CRId = request.dto.CRId;
+            division.CECode = request.dto.CECode;
+            division.CRCode = request.dto.CRCode;
             division.UserCode = request.dto.UserCode;
             division.ModificationDate = DateTime.UtcNow;
 

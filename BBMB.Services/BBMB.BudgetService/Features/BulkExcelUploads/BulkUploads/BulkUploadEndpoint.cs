@@ -13,24 +13,35 @@ namespace BBMB.BudgetService.Features.BulkUploads
             async (
                 [FromForm] IFormFile file,
                 [FromForm] string type,
-                IMediator mediator) =>
+                IMediator mediator,
+                CancellationToken cancellationToken) =>
             {
+                if (file == null || file.Length == 0)
+                {
+                    return Results.BadRequest(new Response
+                    {
+                        IsSucced = false,
+                        Message = "File is required."
+                    });
+                }
+
                 if (string.IsNullOrWhiteSpace(type))
                 {
                     return Results.BadRequest(new Response
                     {
                         IsSucced = false,
-                        Message = "Type is required."
+                        Message = "UploadType is required."
                     });
                 }
 
                 var command = new BulkUploadCommand(file, type);
-                var response = await mediator.Send(command);
+                var response = await mediator.Send(command, cancellationToken);
 
                 return response.IsSucced
                     ? Results.Ok(response)
                     : Results.BadRequest(response);
-            }).DisableAntiforgery()
+            })
+            .DisableAntiforgery()
             .Accepts<IFormFile>("multipart/form-data")
             .WithName("BulkUploads")
             .WithTags("BulkUploads")

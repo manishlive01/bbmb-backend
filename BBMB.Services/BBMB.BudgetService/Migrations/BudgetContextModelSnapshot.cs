@@ -306,12 +306,9 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<string>("CECode")
+                        .HasColumnType("text")
+                        .HasColumnName("ce_code");
 
                     b.Property<DateTime?>("Date")
                         .HasColumnType("timestamp with time zone")
@@ -349,7 +346,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(6)")
                         .HasColumnName("user_code");
 
-                    b.HasKey("Id");
+                    b.HasKey("CECode");
 
                     b.HasIndex("ProjectCode");
 
@@ -358,16 +355,14 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                    b.Property<string>("CRCode")
+                        .HasColumnType("text")
+                        .HasColumnName("cr_code");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CEId")
-                        .HasColumnType("integer")
-                        .HasColumnName("ce_id");
+                    b.Property<string>("CECode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ce_code");
 
                     b.Property<DateTime?>("Date")
                         .HasColumnType("timestamp with time zone")
@@ -399,9 +394,9 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(6)")
                         .HasColumnName("user_code");
 
-                    b.HasKey("Id");
+                    b.HasKey("CRCode");
 
-                    b.HasIndex("CEId");
+                    b.HasIndex("CECode");
 
                     b.ToTable("cr_management", "budget");
                 });
@@ -525,13 +520,15 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<string>("AccountOfficeAccOffice")
                         .HasColumnType("character varying(2)");
 
-                    b.Property<int>("CEId")
-                        .HasColumnType("integer")
-                        .HasColumnName("ce_id");
+                    b.Property<string>("CECode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ce_code");
 
-                    b.Property<int>("CRId")
-                        .HasColumnType("integer")
-                        .HasColumnName("cr_id");
+                    b.Property<string>("CRCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("cr_code");
 
                     b.Property<int?>("CtrlOffice1")
                         .HasColumnType("integer")
@@ -619,9 +616,9 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("AccountOfficeAccOffice");
 
-                    b.HasIndex("CEId");
+                    b.HasIndex("CECode");
 
-                    b.HasIndex("CRId");
+                    b.HasIndex("CRCode");
 
                     b.HasIndex("MajorHeadMajorAccCode");
 
@@ -1383,7 +1380,7 @@ namespace BBMB.BudgetService.Migrations
                 {
                     b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
                         .WithMany("CRManagements")
-                        .HasForeignKey("CEId")
+                        .HasForeignKey("CECode")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1416,13 +1413,13 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
                         .WithMany("Divisions")
-                        .HasForeignKey("CEId")
+                        .HasForeignKey("CECode")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", "CRManagement")
                         .WithMany("Divisions")
-                        .HasForeignKey("CRId")
+                        .HasForeignKey("CRCode")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

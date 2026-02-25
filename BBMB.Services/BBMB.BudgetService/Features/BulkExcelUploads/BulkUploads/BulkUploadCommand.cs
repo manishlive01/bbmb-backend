@@ -1,11 +1,11 @@
-﻿using BBMB.BudgetService.Shared.ResponseDTOs;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Http;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 
 namespace BBMB.BudgetService.Features.BulkUploads
 {
     public sealed record BulkUploadCommand(
         IFormFile File,
-        string Type
+        string uploadType
     ) : IRequest<Response>;
 }

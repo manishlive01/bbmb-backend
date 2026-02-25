@@ -9,13 +9,14 @@ namespace BBMB.BudgetService.Features.CRManagements.Entities
     public class CRManagement
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Column("id")]
-        public int Id { get; set; }
+        [Required]
+        [Column("cr_code")]
+        public string CRCode { get; set; } = string.Empty;
+
 
         [Required]
-        [Column("ce_id")]
-        public int CEId { get; set; }
+        [Column("ce_code")]
+        public string CECode { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(15)]
@@ -42,7 +43,7 @@ namespace BBMB.BudgetService.Features.CRManagements.Entities
         [Column("user_code")]
         public string UserCode { get; set; } = string.Empty;
 
-        [ForeignKey(nameof(CEId))]
+        [ForeignKey(nameof(CECode))]
         public virtual CEManagement? CEManagement { get; set; }
         public virtual ICollection<Division> Divisions { get; set; } = new List<Division>();
     }

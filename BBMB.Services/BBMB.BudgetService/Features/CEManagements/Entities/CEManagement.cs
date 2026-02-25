@@ -12,8 +12,9 @@ namespace BBMB.BudgetService.Features.CEManagements.Entities
     public class CEManagement
     {
         [Key]
-        [Column("id")]
-        public int Id { get; set; }
+        [Required]
+        [Column("ce_code")]
+        public string CECode { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(15)]

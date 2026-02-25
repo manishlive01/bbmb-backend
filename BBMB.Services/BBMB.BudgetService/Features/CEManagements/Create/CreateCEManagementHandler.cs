@@ -23,13 +23,13 @@ namespace BBMB.BudgetService.Features.CEManagements.Create
 
             // 🔎 Optional: Check duplicate (if needed)
             var exists = await _context.CEManagements
-                .AnyAsync(x => x.Name == request.dto.Name, ct);
+                .AnyAsync(x => x.CECode == request.dto.CECode, ct);
             if (exists)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = "CE record already exists with this name."
+                    Message = "CE Code already exists with this name."
                 };
             }
 

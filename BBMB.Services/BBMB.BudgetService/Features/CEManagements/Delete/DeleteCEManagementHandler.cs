@@ -18,20 +18,20 @@ namespace BBMB.BudgetService.Features.CEManagements.Delete
         public async Task<Response> Handle(DeleteCEManagementCommand request, CancellationToken ct)
         {
             var ce = await _context.CEManagements
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.CECode == request.ceCode, ct);
 
             if (ce == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CE Management record with ID '{request.Id}' not found"
+                    Message = $"CE Management record with code '{request.ceCode}' not found"
                 };
             }
 
             // Example: If CR is referenced somewhere else
             var isUsed = await _context.Divisions
-                .AnyAsync(x => x.CEId == request.Id, ct);
+                .AnyAsync(x => x.CECode == request.ceCode, ct);
             if (isUsed)
             {
                 return new Response

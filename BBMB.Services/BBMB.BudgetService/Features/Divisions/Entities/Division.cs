@@ -76,12 +76,12 @@ namespace BBMB.BudgetService.Features.Divisions.Entities
 
 
         [Required]
-        [Column("ce_id")]
-        public int CEId { get; set; }
+        [Column("ce_code")]
+        public string CECode { get; set; } = string.Empty;
 
         [Required]
-        [Column("cr_id")]
-        public int CRId { get; set; }
+        [Column("cr_code")]
+        public string CRCode { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(6)]
@@ -96,10 +96,10 @@ namespace BBMB.BudgetService.Features.Divisions.Entities
         public virtual Pool? Pool { get; set; }
         public virtual Region? Region { get; set; }
 
-        [ForeignKey(nameof(CEId))]
+        [ForeignKey(nameof(CECode))]
         public virtual CEManagement? CEManagement { get; set; }
 
-        [ForeignKey(nameof(CRId))]
+        [ForeignKey(nameof(CRCode))]
         public virtual CRManagement? CRManagement { get; set; }
     }
 }

@@ -46,7 +46,7 @@ namespace BBMB.BudgetService.Features.CEManagements.GetList
 
             var items = ceList.Select(x => new GetCEManagementListResponseDto
             {
-                Id = x.Id,
+                CECode = x.CECode,
                 Name = x.Name,
                 ProjectCode = x.ProjectCode,
                 Description = x.Description,
@@ -80,16 +80,15 @@ namespace BBMB.BudgetService.Features.CEManagements.GetList
             bool sortDescending)
         {
             if (string.IsNullOrEmpty(sortBy))
-                return query.OrderBy(x => x.Id);
+                return query.OrderBy(x => x.CECode);
 
             return sortBy.ToLower() switch
             {
-                "id" => sortDescending ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id),
                 "name" => sortDescending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
                 "projectcode" => sortDescending ? query.OrderByDescending(x => x.ProjectCode) : query.OrderBy(x => x.ProjectCode),
                 "date" => sortDescending ? query.OrderByDescending(x => x.Date) : query.OrderBy(x => x.Date),
                 "status" => sortDescending ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status),
-                _ => query.OrderBy(x => x.Id)
+                _ => query.OrderBy(x => x.CECode)
             };
         }
     }

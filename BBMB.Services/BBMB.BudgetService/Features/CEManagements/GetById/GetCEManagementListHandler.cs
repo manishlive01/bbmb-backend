@@ -1,6 +1,6 @@
-﻿using BBMB.BudgetService.Features.CEManagements.Entities;
-using BBMB.BudgetService.Features.CEManagements.GetById.Dtos;
+﻿using BBMB.BudgetService.Features.CEManagements.GetById.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BBMB.BudgetService.Features.CEManagements.GetById
 {
     public class GetCEManagementByIdHandler
-        : IRequestHandler<GetCEManagementByIdQuery, GetCEManagementByIdResponseDto>
+        : IRequestHandler<GetCEManagementByIdQuery, Response<GetCEManagementByIdResponseDto>>
     {
         private readonly BudgetContext _context;
 
@@ -17,21 +17,30 @@ namespace BBMB.BudgetService.Features.CEManagements.GetById
             _context = context;
         }
 
-        public async Task<GetCEManagementByIdResponseDto> Handle(
+        public async Task<Response<GetCEManagementByIdResponseDto>> Handle(
             GetCEManagementByIdQuery request,
-            CancellationToken ct)
+            CancellationToken cancellationToken)
         {
-            var ce = await _context.CEManagements
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+            var entity = await _context.CEManagements
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.CECode == request.ceCode, cancellationToken);
 
-            if (ce == null)
+            if (entity == null)
             {
-                throw new KeyNotFoundException(
-                    $"CE Management record with ID '{request.Id}' not found");
+                return new Response<GetCEManagementByIdResponseDto>
+                {
+                    IsSucced = false,
+                    Message = "CE Management record not found"
+                };
             }
 
-            // Map using Mapster
-            return ce.Adapt<GetCEManagementByIdResponseDto>();
+            var dto = entity.Adapt<GetCEManagementByIdResponseDto>();
+
+            return new Response<GetCEManagementByIdResponseDto>
+            {
+                IsSucced = true,
+                Data = dto
+            };
         }
     }
 }

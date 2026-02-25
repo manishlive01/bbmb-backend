@@ -3,5 +3,5 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.CEManagements.Delete
 {
-    public sealed record DeleteCEManagementCommand(int Id) : IRequest<Response>;
+    public sealed record DeleteCEManagementCommand(string ceCode) : IRequest<Response>;
 }

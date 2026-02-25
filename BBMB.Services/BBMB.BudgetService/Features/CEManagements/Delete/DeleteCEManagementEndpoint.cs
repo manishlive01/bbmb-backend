@@ -1,4 +1,5 @@
 ﻿using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 
 namespace BBMB.BudgetService.Features.CEManagements.Delete
@@ -7,24 +8,35 @@ namespace BBMB.BudgetService.Features.CEManagements.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/ce-management/{id:int}", async (
-                int id,
-                IMediator mediator) =>
-            {
-                var command = new DeleteCEManagementCommand(id);
-                var response = await mediator.Send(command);
+            app.MapDelete("/api/ce-management/{ceCode}",
+                async (
+                    string ceCode,
+                    IMediator mediator) =>
+                {
+                    if (string.IsNullOrWhiteSpace(ceCode))
+                    {
+                        return Results.BadRequest(new Response
+                        {
+                            IsSucced = false,
+                            Message = "CE Code is required"
+                        });
+                    }
 
-                if (!response.IsSucced)
-                    return Results.NotFound(response);
+                    var command = new DeleteCEManagementCommand(ceCode);
+                    var response = await mediator.Send(command);
 
-                return Results.Ok(response);
-            })
-            .WithName("DeleteCEManagement")
-            .WithTags("CEManagement")
-            .WithSummary("Delete CE Management record")
-            .WithDescription("Deletes a CE Management record by ID")
-            .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound);
+                    if (!response.IsSucced)
+                        return Results.NotFound(response);
+
+                    return Results.Ok(response);
+                })
+                .WithName("DeleteCEManagement")
+                .WithTags("CEManagement")
+                .WithSummary("Delete CE Management record")
+                .WithDescription("Deletes a CE Management record by CE Code")
+                .Produces<Response>(StatusCodes.Status200OK)
+                .Produces<Response>(StatusCodes.Status404NotFound)
+                .Produces<Response>(StatusCodes.Status400BadRequest);
         }
     }
 }

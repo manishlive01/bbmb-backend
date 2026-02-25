@@ -16,7 +16,8 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
                 IMediator mediator,
                 [FromQuery] string? sortBy = null,
                 [FromQuery] bool sortDescending = false,
-                [FromQuery] int? ceId = null,
+                [FromQuery] string? crCode = null,
+                [FromQuery] string? ceCode = null,
                 [FromQuery] bool? status = null) =>
             {
                 var query = new GetCRManagementListQuery(
@@ -24,7 +25,8 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
                     pageSize ?? 10,
                     sortBy,
                     sortDescending,
-                    ceId,
+                    crCode,
+                    ceCode,
                     status);
 
                 var result = await mediator.Send(query);

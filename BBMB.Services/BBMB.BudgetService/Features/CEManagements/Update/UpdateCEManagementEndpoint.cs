@@ -1,5 +1,6 @@
 ﻿using BBMB.BudgetService.Features.CEManagements.Update.Dtos;
 using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 
 namespace BBMB.BudgetService.Features.CEManagements.Update
@@ -8,25 +9,36 @@ namespace BBMB.BudgetService.Features.CEManagements.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/ce-management/{id:int}", async (
-                int id,
-                UpdateCEManagementDto dto,
-                IMediator mediator) =>
-            {
-                var command = new UpdateCEManagementCommand(id, dto);
-                var response = await mediator.Send(command);
+            app.MapPut("/api/ce-management/{ceCode}",
+                    async (
+                        string ceCode,
+                        UpdateCEManagementDto dto,
+                        IMediator mediator) =>
+                    {
+                        if (string.IsNullOrWhiteSpace(ceCode))
+                        {
+                            return Results.BadRequest(new Response
+                            {
+                                IsSucced = false,
+                                Message = "CE Code is required"
+                            });
+                        }
 
-                if (!response.IsSucced)
-                    return Results.NotFound(response);
+                        var command = new UpdateCEManagementCommand(ceCode, dto);
+                        var response = await mediator.Send(command);
 
-                return Results.Ok(response);
-            })
-            .WithName("UpdateCEManagement")
-            .WithTags("CEManagement")
-            .WithSummary("Update CE Management record")
-            .WithDescription("Updates an existing CE Management record by ID")
-            .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound);
+                        if (!response.IsSucced)
+                            return Results.NotFound(response);
+
+                        return Results.Ok(response);
+                    })
+                    .WithName("UpdateCEManagement")
+                    .WithTags("CEManagement")
+                    .WithSummary("Update CE Management record")
+                    .WithDescription("Updates an existing CE Management record by CE Code")
+                    .Produces<Response>(StatusCodes.Status200OK)
+                    .Produces<Response>(StatusCodes.Status404NotFound)
+                    .Produces<Response>(StatusCodes.Status400BadRequest);
         }
     }
 }

@@ -2,8 +2,8 @@
 {
     public class GetCRManagementListResponseDto
     {
-        public int CRId { get; set; }
-        public int CEId { get; set; }
+        public string CRCode { get; set; } = string.Empty;
+        public string CECode { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Location { get; set; }

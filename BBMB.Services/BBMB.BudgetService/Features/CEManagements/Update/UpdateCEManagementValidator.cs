@@ -7,9 +7,6 @@ namespace BBMB.BudgetService.Features.CEManagements.Update
     {
         public UpdateCEManagementValidator()
         {
-            RuleFor(x => x.Id)
-                .GreaterThan(0).WithMessage("Valid ID is required");
-
             RuleFor(x => x.Dto.Name)
                 .NotEmpty().WithMessage("Name is required")
                 .MaximumLength(15).WithMessage("Name must not exceed 15 characters");

@@ -7,11 +7,11 @@ namespace BBMB.BudgetService.Features.CRManagements.GetById
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/cr-management/{id:int}", async (int id, IMediator mediator) =>
+            app.MapGet("/api/cr-management/{crCode}", async (string crCode, IMediator mediator) =>
             {
                 try
                 {
-                    var query = new GetCRManagementByIdQuery(id);
+                    var query = new GetCRManagementByIdQuery(crCode);
                     var response = await mediator.Send(query);
                     return Results.Ok(response);
                 }

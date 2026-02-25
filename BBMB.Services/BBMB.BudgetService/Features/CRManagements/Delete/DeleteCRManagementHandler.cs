@@ -20,20 +20,20 @@ namespace BBMB.BudgetService.Features.CRManagements.Delete
         {
             // 🔎 Check if CR exists
             var cr = await _context.CRManagements
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.CRCode == request.crCode, ct);
 
             if (cr == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CR Management record with ID '{request.Id}' not found"
+                    Message = $"CR Management record with Code '{request.crCode}' not found"
                 };
             }
 
             // Example: If CR is referenced somewhere else
             var isUsed = await _context.Divisions
-                .AnyAsync(x => x.CRId == request.Id, ct);
+                .AnyAsync(x => x.CRCode == request.crCode, ct);
             if (isUsed)
             {
                 return new Response
