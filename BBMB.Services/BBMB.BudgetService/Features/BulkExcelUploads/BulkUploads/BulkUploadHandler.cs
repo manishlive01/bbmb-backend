@@ -2,11 +2,19 @@
 using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
+using BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads;
+using BBMB.BudgetService.Features.CEManagements.Entities;
+using BBMB.BudgetService.Features.CRManagements.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
 using BBMB.BudgetService.Features.Divisions.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
 using BBMB.BudgetService.Features.ObjectClassifications.Entities;
-using BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads;
+using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
+using BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities;
+using BBMB.BudgetService.Features.Pools.Entities;
+using BBMB.BudgetService.Features.Projects.Entities;
+using BBMB.BudgetService.Features.Regions.Entities;
+using BBMB.BudgetService.Features.Units.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
@@ -87,6 +95,23 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     case "headofaccountmaster":
                         result = await UploadHeadOfAccountMaster(worksheet, rowCount, cancellationToken);
                         break;
+
+                    case "ceMaster":
+                        result = await UploadCEManagementMaster(worksheet, rowCount, cancellationToken);
+                        break;
+
+                    case "circleMaster":
+                        result = await UploadCRManagementMaster(worksheet, rowCount, cancellationToken);
+                        break;
+
+                    case "divisionMaster":
+                        result = await UploadDivisionMaster(worksheet, rowCount, cancellationToken);
+                        break;
+
+                    //case "divisionMaster":
+                    //    result = await UploadDivisionMaster(worksheet, rowCount, cancellationToken);
+                    //    break;
+
 
                     default:
                         return new Response
@@ -575,6 +600,452 @@ namespace BBMB.BudgetService.Features.BulkUploads
             };
         }
 
+        // ============================================================
+        // CE MANAGEMENT MASTER
+        // ============================================================
+        private async Task<Response> UploadCEManagementMaster(
+    ExcelWorksheet worksheet,
+    int rowCount,
+    CancellationToken cancellationToken)
+        {
+            var list = new List<CEManagement>();
+            var duplicateExcelCheck = new HashSet<string>();
+
+            // 🔥 Load existing CE codes once
+            var existingCECodes = await _context.Set<CEManagement>()
+                .Select(x => x.CECode)
+                .ToListAsync(cancellationToken);
+
+            var existingSet = new HashSet<string>(existingCECodes);
+
+            // 🔥 Load existing Project codes once (FK validation)
+            var existingProjects = await _context.Set<Project>()
+                .Select(x => x.ProjCode)
+                .ToListAsync(cancellationToken);
+
+            var projectSet = new HashSet<string>(existingProjects);
+
+            for (int row = 2; row <= rowCount; row++)
+            {
+                var ceCode = worksheet.Cells[row, 1].Text?.Trim();
+                var name = worksheet.Cells[row, 2].Text?.Trim();
+                var projectCode = worksheet.Cells[row, 3].Text?.Trim();
+                var desc = worksheet.Cells[row, 4].Text?.Trim();
+                var location = worksheet.Cells[row, 5].Text?.Trim();
+
+                // ================= EMPTY CHECK =================
+                if (string.IsNullOrWhiteSpace(ceCode) ||
+                    string.IsNullOrWhiteSpace(name) ||
+                    string.IsNullOrWhiteSpace(projectCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Required fields missing at row {row}"
+                    };
+                }
+
+                // ================= DUPLICATE CHECK (EXCEL) =================
+                if (!duplicateExcelCheck.Add(ceCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Duplicate CECode in Excel: {ceCode}"
+                    };
+                }
+
+                // ================= DUPLICATE CHECK (DATABASE) =================
+                if (existingSet.Contains(ceCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"CECode already exists in database: {ceCode}"
+                    };
+                }
+
+                // ================= FK CHECK =================
+                if (!projectSet.Contains(projectCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"ProjectCode does not exist: {projectCode}"
+                    };
+                }
+
+                list.Add(new CEManagement
+                {
+                    CECode = ceCode,
+                    Name = name,
+                    ProjectCode = projectCode,
+                    Description = desc,
+                    Location = location,
+                    Date = DateTime.UtcNow,
+                    Status = true,
+                    UserCode = "SYSTEM"
+                });
+            }
+
+            // ================= BULK INSERT =================
+            await _context.Set<CEManagement>().AddRangeAsync(list, cancellationToken);
+
+            return new Response
+            {
+                IsSucced = true,
+                Message = $"{list.Count} CEManagement records uploaded successfully"
+            };
+        }
+
+
+        // ============================================================
+        // CR MANAGEMENT MASTER
+        // ============================================================
+        private async Task<Response> UploadCRManagementMaster(
+    ExcelWorksheet worksheet,
+    int rowCount,
+    CancellationToken cancellationToken)
+        {
+            var list = new List<CRManagement>();
+            var duplicateExcelCheck = new HashSet<string>();
+
+            // 🔥 Load existing CR codes (DB duplicate check)
+            var existingCRCodes = await _context.Set<CRManagement>()
+                .Select(x => x.CRCode)
+                .ToListAsync(cancellationToken);
+
+            var crSet = new HashSet<string>(existingCRCodes);
+
+            // 🔥 Load existing CE codes (FK validation)
+            var existingCECodes = await _context.Set<CEManagement>()
+                .Select(x => x.CECode)
+                .ToListAsync(cancellationToken);
+
+            var ceSet = new HashSet<string>(existingCECodes);
+
+            for (int row = 2; row <= rowCount; row++)
+            {
+                var ceCode = worksheet.Cells[row, 1].Text?.Trim();
+                var crCode = worksheet.Cells[row, 2].Text?.Trim();
+                var name = worksheet.Cells[row, 3].Text?.Trim();
+                var desc = worksheet.Cells[row, 4].Text?.Trim();
+                var location = worksheet.Cells[row, 5].Text?.Trim();
+
+                // ================= REQUIRED FIELD CHECK =================
+                if (string.IsNullOrWhiteSpace(ceCode) ||
+                    string.IsNullOrWhiteSpace(crCode) ||
+                    string.IsNullOrWhiteSpace(name))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Required fields missing at row {row}"
+                    };
+                }
+
+                // ================= DUPLICATE CHECK (EXCEL) =================
+                if (!duplicateExcelCheck.Add(crCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Duplicate CRCode in Excel: {crCode}"
+                    };
+                }
+
+                // ================= DUPLICATE CHECK (DATABASE) =================
+                if (crSet.Contains(crCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"CRCode already exists in database: {crCode}"
+                    };
+                }
+
+                // ================= FK CHECK (CECode must exist) =================
+                if (!ceSet.Contains(ceCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"CECode does not exist: {ceCode}"
+                    };
+                }
+
+                list.Add(new CRManagement
+                {
+                    CECode = ceCode,
+                    CRCode = crCode,
+                    Name = name,
+                    Description = desc,
+                    Location = location,
+                    Date = DateTime.UtcNow,
+                    Status = true,
+                    UserCode = "SYSTEM"
+                });
+            }
+
+            // ================= BULK INSERT =================
+            await _context.Set<CRManagement>().AddRangeAsync(list, cancellationToken);
+
+            return new Response
+            {
+                IsSucced = true,
+                Message = $"{list.Count} CRManagement records uploaded successfully"
+            };
+        }
+
+
+        private async Task<Response> UploadDivisionMaster(
+    ExcelWorksheet worksheet,
+    int rowCount,
+    CancellationToken cancellationToken)
+        {
+            var list = new List<Division>();
+            var excelDuplicateCheck = new HashSet<int>();
+
+            // 🔥 Load existing DivisionCodes (DB duplicate check)
+            var existingDivisions = await _context.Set<Division>()
+                .Select(x => x.DivisionCode)
+                .ToListAsync(cancellationToken);
+
+            var divisionSet = new HashSet<int>(existingDivisions);
+
+            // 🔥 Load Dependencies (FK tables)
+
+            var ceSet = new HashSet<string>(
+                await _context.Set<CEManagement>()
+                    .Select(x => x.CECode)
+                    .ToListAsync(cancellationToken));
+
+            var crSet = new HashSet<string>(
+                await _context.Set<CRManagement>()
+                    .Select(x => x.CRCode)
+                    .ToListAsync(cancellationToken));
+
+            var majorSet = new HashSet<string>(
+                await _context.Set<MajorHead>()
+                    .Select(x => x.MajorAccCode)
+                    .ToListAsync(cancellationToken));
+
+            var roSet = new HashSet<string>(
+                await _context.Set<RemittanceOffice>()
+                    .Select(x => x.RoCode)
+                    .ToListAsync(cancellationToken));
+
+            var accOfficeSet = new HashSet<string>(
+                await _context.Set<AccountOffice>()
+                    .Select(x => x.AccOffice)
+                    .ToListAsync(cancellationToken));
+
+            var unitSet = new HashSet<string>(
+                await _context.Set<UnitMaster>()
+                    .Select(x => x.UnitCode)
+                    .ToListAsync(cancellationToken));
+
+            var poolSet = new HashSet<string>(
+                await _context.Set<Pool>()
+                    .Select(x => x.PoolCode)
+                    .ToListAsync(cancellationToken));
+
+            var regionSet = new HashSet<string>(
+                await _context.Set<Region>()
+                    .Select(x => x.RegionCode)
+                    .ToListAsync(cancellationToken));
+
+            for (int row = 2; row <= rowCount; row++)
+            {
+                var divisionCodeText = worksheet.Cells[row, 1].Text?.Trim();
+                var divSectionText = worksheet.Cells[row, 2].Text?.Trim();
+                var divisionDesc = worksheet.Cells[row, 3].Text?.Trim();
+                var ceCode = worksheet.Cells[row, 4].Text?.Trim();
+                var crCode = worksheet.Cells[row, 5].Text?.Trim();
+                var majorAccCode = worksheet.Cells[row, 6].Text?.Trim();
+                var roCode = worksheet.Cells[row, 7].Text?.Trim();
+                var accOffice = worksheet.Cells[row, 8].Text?.Trim();
+                var unitCode = worksheet.Cells[row, 9].Text?.Trim();
+                var poolCode = worksheet.Cells[row, 10].Text?.Trim();
+                var regionCode = worksheet.Cells[row, 11].Text?.Trim();
+                var parentDivisionText = worksheet.Cells[row, 12].Text?.Trim();
+
+                // ================= REQUIRED FIELD CHECK =================
+                if (string.IsNullOrWhiteSpace(divisionCodeText) ||
+                    string.IsNullOrWhiteSpace(divSectionText) ||
+                    string.IsNullOrWhiteSpace(divisionDesc) ||
+                    string.IsNullOrWhiteSpace(ceCode) ||
+                    string.IsNullOrWhiteSpace(crCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Required fields missing at row {row}"
+                    };
+                }
+
+                // ================= PARSE INT VALUES =================
+                if (!int.TryParse(divisionCodeText, out var divisionCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Invalid DivisionCode '{divisionCodeText}' at row {row}"
+                    };
+                }
+
+                if (!int.TryParse(divSectionText, out var divSection))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Invalid DivSection '{divSectionText}' at row {row}"
+                    };
+                }
+
+                int? parentDivision = null;
+                if (!string.IsNullOrWhiteSpace(parentDivisionText))
+                {
+                    if (!int.TryParse(parentDivisionText, out var parent))
+                    {
+                        return new Response
+                        {
+                            IsSucced = false,
+                            Message = $"Invalid ParentDivisionCode '{parentDivisionText}' at row {row}"
+                        };
+                    }
+                    parentDivision = parent;
+                }
+
+                // ================= DUPLICATE CHECK (EXCEL) =================
+                if (!excelDuplicateCheck.Add(divisionCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Duplicate DivisionCode '{divisionCode}' found in Excel (row {row})"
+                    };
+                }
+
+                // ================= DUPLICATE CHECK (DATABASE) =================
+                if (divisionSet.Contains(divisionCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"DivisionCode '{divisionCode}' already exists in database (row {row})"
+                    };
+                }
+
+                // ================= FK VALIDATIONS =================
+
+                if (!ceSet.Contains(ceCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"CECode '{ceCode}' does not exist in CEManagement table (row {row})"
+                    };
+                }
+
+                if (!crSet.Contains(crCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"CRCode '{crCode}' does not exist in CRManagement table (row {row})"
+                    };
+                }
+
+                if (!string.IsNullOrWhiteSpace(majorAccCode) &&
+                    !majorSet.Contains(majorAccCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"MajorAccCode '{majorAccCode}' does not exist in MajorHead table (row {row})"
+                    };
+                }
+
+                if (!string.IsNullOrWhiteSpace(roCode) &&
+                    !roSet.Contains(roCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"RoCode '{roCode}' does not exist in RemittanceOffice table (row {row})"
+                    };
+                }
+
+                if (!string.IsNullOrWhiteSpace(accOffice) &&
+                    !accOfficeSet.Contains(accOffice))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"AccOffice '{accOffice}' does not exist in AccountOffice table (row {row})"
+                    };
+                }
+
+                if (!string.IsNullOrWhiteSpace(unitCode) &&
+                    !unitSet.Contains(unitCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"UnitCode '{unitCode}' does not exist in UnitMaster table (row {row})"
+                    };
+                }
+
+                if (!string.IsNullOrWhiteSpace(poolCode) &&
+                    !poolSet.Contains(poolCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"PoolCode '{poolCode}' does not exist in Pool table (row {row})"
+                    };
+                }
+
+                if (!string.IsNullOrWhiteSpace(regionCode) &&
+                    !regionSet.Contains(regionCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"RegionCode '{regionCode}' does not exist in Region table (row {row})"
+                    };
+                }
+
+                // ================= ADD ENTITY =================
+                list.Add(new Division
+                {
+                    DivisionCode = divisionCode,
+                    DivSection = divSection,
+                    DivisionDesc = divisionDesc,
+                    CECode = ceCode,
+                    CRCode = crCode,
+                    MajorAccCode = majorAccCode,
+                    RoCode = roCode,
+                    AccOffice = accOffice,
+                    UnitCode = unitCode,
+                    PoolCode = poolCode,
+                    RegionCode = regionCode,
+                    ParentDivisionCode = parentDivision,
+                    ModificationDate = DateTime.UtcNow,
+                    UserCode = "SYSTEM"
+                });
+            }
+
+            // ================= BULK INSERT =================
+            await _context.Set<Division>().AddRangeAsync(list, cancellationToken);
+
+            return new Response
+            {
+                IsSucced = true,
+                Message = $"{list.Count} Division records uploaded successfully"
+            };
+        }
 
         //    // ============================================================
         //    // HEAD OF ACCOUNT - FULL SAFE INSERT
