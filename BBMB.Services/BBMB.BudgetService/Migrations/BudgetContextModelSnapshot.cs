@@ -315,19 +315,19 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("date");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("desc");
 
                     b.Property<string>("Location")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("location");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<string>("ProjectCode")
@@ -369,19 +369,19 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("date");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("desc");
 
                     b.Property<string>("Location")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("location");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<bool>("Status")
@@ -549,8 +549,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("DivisionDesc")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("division_desc");
 
                     b.Property<string>("MajorAccCode")

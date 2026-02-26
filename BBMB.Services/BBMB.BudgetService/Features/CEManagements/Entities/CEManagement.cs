@@ -17,7 +17,7 @@ namespace BBMB.BudgetService.Features.CEManagements.Entities
         public string CECode { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(15)]
+        [MaxLength(200)]
         [Column("name")]
         public string Name { get; set; } = string.Empty;
 
@@ -26,11 +26,11 @@ namespace BBMB.BudgetService.Features.CEManagements.Entities
         [Column("project_code")]
         public string ProjectCode { get; set; } = string.Empty;
 
-        [MaxLength(100)]
+        [MaxLength(200)]
         [Column("desc")]
         public string? Description { get; set; }
 
-        [MaxLength(100)]
+        [MaxLength(200)]
         [Column("location")]
         public string? Location { get; set; }
 

@@ -25,7 +25,7 @@ namespace BBMB.BudgetService.Features.Divisions.Entities
         public int DivSection { get; set; }
 
         [Required]
-        [MaxLength(50)]
+        [MaxLength(200)]
         [Column("division_desc")]
         public string DivisionDesc { get; set; } = string.Empty;
 
