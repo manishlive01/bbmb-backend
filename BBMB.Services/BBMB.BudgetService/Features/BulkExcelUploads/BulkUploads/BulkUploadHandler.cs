@@ -259,7 +259,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
             }
 
             await _context.SubMajorHeads.AddRangeAsync(list, cancellationToken);
-
+            await _context.SaveChangesAsync(cancellationToken);
             return new Response
             {
                 IsSucced = true,
@@ -313,7 +313,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
             }
 
             await _context.MinorHeads.AddRangeAsync(list, cancellationToken);
-
+            await _context.SaveChangesAsync(cancellationToken);
             return new Response
             {
                 IsSucced = true,
@@ -379,7 +379,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
             }
 
             await _context.SubMinorHeads.AddRangeAsync(list, cancellationToken);
-
+            await _context.SaveChangesAsync(cancellationToken);
             return new Response
             {
                 IsSucced = true,
@@ -592,7 +592,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
             }
 
             await _context.HeadOfAccounts.AddRangeAsync(list, cancellationToken);
-
+            await _context.SaveChangesAsync(cancellationToken);
             return new Response
             {
                 IsSucced = true,
@@ -690,7 +690,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
             // ================= BULK INSERT =================
             await _context.Set<CEManagement>().AddRangeAsync(list, cancellationToken);
-
+            await _context.SaveChangesAsync(cancellationToken);
             return new Response
             {
                 IsSucced = true,
@@ -789,7 +789,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
             // ================= BULK INSERT =================
             await _context.Set<CRManagement>().AddRangeAsync(list, cancellationToken);
-
+            await _context.SaveChangesAsync(cancellationToken);
             return new Response
             {
                 IsSucced = true,
@@ -1039,7 +1039,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
             // ================= BULK INSERT =================
             await _context.Set<Division>().AddRangeAsync(list, cancellationToken);
-
+            await _context.SaveChangesAsync(cancellationToken);
             return new Response
             {
                 IsSucced = true,
