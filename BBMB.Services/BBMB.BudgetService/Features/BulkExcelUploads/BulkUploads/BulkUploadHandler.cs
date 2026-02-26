@@ -96,15 +96,15 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         result = await UploadHeadOfAccountMaster(worksheet, rowCount, cancellationToken);
                         break;
 
-                    case "ceMaster":
+                    case "cemaster":
                         result = await UploadCEManagementMaster(worksheet, rowCount, cancellationToken);
                         break;
 
-                    case "circleMaster":
+                    case "circlemaster":
                         result = await UploadCRManagementMaster(worksheet, rowCount, cancellationToken);
                         break;
 
-                    case "divisionMaster":
+                    case "divisionmaster":
                         result = await UploadDivisionMaster(worksheet, rowCount, cancellationToken);
                         break;
 
@@ -173,7 +173,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         Message = $"Duplicate Major code in Excel: {code}"
                     };
 
-                if (await _context.MajorHeads
+                if (await _context.MajorHeads.AsNoTracking()
                     .AnyAsync(x => x.MajorAccCode == code, cancellationToken))
                     return new Response
                     {
@@ -212,14 +212,14 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var excelDuplicateCheck = new HashSet<string>();
 
             // 🔥 Load existing Major codes
-            var existingMajors = await _context.MajorHeads
+            var existingMajors = await _context.MajorHeads.AsNoTracking()
                 .Select(x => x.MajorAccCode)
                 .ToListAsync(cancellationToken);
 
             var majorSet = new HashSet<string>(existingMajors);
 
             // 🔥 Load existing SubMajor composite keys
-            var existingSubMajors = await _context.SubMajorHeads
+            var existingSubMajors = await _context.SubMajorHeads.AsNoTracking()
                 .Select(x => new { x.MajorAccCode, x.SubMajorAccCode })
                 .ToListAsync(cancellationToken);
 
@@ -284,7 +284,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var list = new List<MinorHead>();
             var excelDuplicateCheck = new HashSet<string>();
 
-            var existingMinors = await _context.MinorHeads
+            var existingMinors = await _context.MinorHeads.AsNoTracking()
                 .Select(x => x.MinorAccCode)
                 .ToListAsync(cancellationToken);
 
@@ -338,14 +338,14 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var excelDuplicateCheck = new HashSet<string>();
 
             // 🔥 Load existing Minor codes
-            var existingMinors = await _context.MinorHeads
+            var existingMinors = await _context.MinorHeads.AsNoTracking()
                 .Select(x => x.MinorAccCode)
                 .ToListAsync(cancellationToken);
 
             var minorSet = new HashSet<string>(existingMinors);
 
             // 🔥 Load existing SubMinor composite keys
-            var existingSubMinors = await _context.SubMinorHeads
+            var existingSubMinors = await _context.SubMinorHeads.AsNoTracking()
                 .Select(x => new { x.MinorAccCode, x.SubMinorAccCode })
                 .ToListAsync(cancellationToken);
 
@@ -417,7 +417,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 if (code.Length != 3)
                     return new Response { IsSucced = false, Message = $"Invalid Detail code at row {row}" };
 
-                if (await _context.DetailHeads.AnyAsync(x => x.DetailAccCode == code, cancellationToken))
+                if (await _context.DetailHeads.AsNoTracking().AnyAsync(x => x.DetailAccCode == code, cancellationToken))
                     return new Response { IsSucced = false, Message = $"Detail already exists: {code}" };
 
                 list.Add(new DetailHead
@@ -448,7 +448,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var duplicateExcelCheck = new HashSet<string>();
 
             // 🔥 Load existing object codes once (Performance optimized)
-            var existingCodes = await _context.ObjectClassifications
+            var existingCodes = await _context.ObjectClassifications.AsNoTracking()
                 .Select(x => x.ObjectAccCode)
                 .ToListAsync(cancellationToken);
 
@@ -532,26 +532,26 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var excelDuplicateCheck = new HashSet<string>();
 
             var majors = new HashSet<string>(
-                await _context.MajorHeads.Select(x => x.MajorAccCode).ToListAsync(cancellationToken));
+                await _context.MajorHeads.AsNoTracking().Select(x => x.MajorAccCode).ToListAsync(cancellationToken));
 
             var subMajors = new HashSet<string>(
-                await _context.SubMajorHeads
+                await _context.SubMajorHeads.AsNoTracking()
                     .Select(x => x.MajorAccCode + x.SubMajorAccCode)
                     .ToListAsync(cancellationToken));
 
             var minors = new HashSet<string>(
-                await _context.MinorHeads.Select(x => x.MinorAccCode).ToListAsync(cancellationToken));
+                await _context.MinorHeads.AsNoTracking().Select(x => x.MinorAccCode).ToListAsync(cancellationToken));
 
             var subMinors = new HashSet<string>(
-                await _context.SubMinorHeads
+                await _context.SubMinorHeads.AsNoTracking()
                     .Select(x => x.MinorAccCode + x.SubMinorAccCode)
                     .ToListAsync(cancellationToken));
 
             var details = new HashSet<string>(
-                await _context.DetailHeads.Select(x => x.DetailAccCode).ToListAsync(cancellationToken));
+                await _context.DetailHeads.AsNoTracking().Select(x => x.DetailAccCode).ToListAsync(cancellationToken));
 
             var objects = new HashSet<string>(
-                await _context.ObjectClassifications.Select(x => x.ObjectAccCode).ToListAsync(cancellationToken));
+                await _context.ObjectClassifications.AsNoTracking().Select(x => x.ObjectAccCode).ToListAsync(cancellationToken));
 
             for (int row = 2; row <= rowCount; row++)
             {
@@ -623,14 +623,14 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var duplicateExcelCheck = new HashSet<string>();
 
             // 🔥 Load existing CE codes once
-            var existingCECodes = await _context.Set<CEManagement>()
+            var existingCECodes = await _context.Set<CEManagement>().AsNoTracking()
                 .Select(x => x.CECode)
                 .ToListAsync(cancellationToken);
 
             var existingSet = new HashSet<string>(existingCECodes);
 
             // 🔥 Load existing Project codes once (FK validation)
-            var existingProjects = await _context.Set<Project>()
+            var existingProjects = await _context.Set<Project>().AsNoTracking()
                 .Select(x => x.ProjCode)
                 .ToListAsync(cancellationToken);
 
@@ -722,14 +722,14 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var duplicateExcelCheck = new HashSet<string>();
 
             // 🔥 Load existing CR codes (DB duplicate check)
-            var existingCRCodes = await _context.Set<CRManagement>()
+            var existingCRCodes = await _context.Set<CRManagement>().AsNoTracking()
                 .Select(x => x.CRCode)
                 .ToListAsync(cancellationToken);
 
             var crSet = new HashSet<string>(existingCRCodes);
 
             // 🔥 Load existing CE codes (FK validation)
-            var existingCECodes = await _context.Set<CEManagement>()
+            var existingCECodes = await _context.Set<CEManagement>().AsNoTracking()
                 .Select(x => x.CECode)
                 .ToListAsync(cancellationToken);
 
@@ -818,7 +818,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var excelDuplicateCheck = new HashSet<int>();
 
             // 🔥 Load existing DivisionCodes (DB duplicate check)
-            var existingDivisions = await _context.Set<Division>()
+            var existingDivisions = await _context.Set<Division>().AsNoTracking()
                 .Select(x => x.DivisionCode)
                 .ToListAsync(cancellationToken);
 
@@ -827,42 +827,42 @@ namespace BBMB.BudgetService.Features.BulkUploads
             // 🔥 Load Dependencies (FK tables)
 
             var ceSet = new HashSet<string>(
-                await _context.Set<CEManagement>()
+                await _context.Set<CEManagement>().AsNoTracking()
                     .Select(x => x.CECode)
                     .ToListAsync(cancellationToken));
 
             var crSet = new HashSet<string>(
-                await _context.Set<CRManagement>()
+                await _context.Set<CRManagement>().AsNoTracking()
                     .Select(x => x.CRCode)
                     .ToListAsync(cancellationToken));
 
             var majorSet = new HashSet<string>(
-                await _context.Set<MajorHead>()
+                await _context.Set<MajorHead>().AsNoTracking()
                     .Select(x => x.MajorAccCode)
                     .ToListAsync(cancellationToken));
 
             var roSet = new HashSet<string>(
-                await _context.Set<RemittanceOffice>()
+                await _context.Set<RemittanceOffice>().AsNoTracking()
                     .Select(x => x.RoCode)
                     .ToListAsync(cancellationToken));
 
             var accOfficeSet = new HashSet<string>(
-                await _context.Set<AccountOffice>()
+                await _context.Set<AccountOffice>().AsNoTracking()
                     .Select(x => x.AccOffice)
                     .ToListAsync(cancellationToken));
 
             var unitSet = new HashSet<string>(
-                await _context.Set<UnitMaster>()
+                await _context.Set<UnitMaster>().AsNoTracking()
                     .Select(x => x.UnitCode)
                     .ToListAsync(cancellationToken));
 
             var poolSet = new HashSet<string>(
-                await _context.Set<Pool>()
+                await _context.Set<Pool>().AsNoTracking()
                     .Select(x => x.PoolCode)
                     .ToListAsync(cancellationToken));
 
             var regionSet = new HashSet<string>(
-                await _context.Set<Region>()
+                await _context.Set<Region>().AsNoTracking()
                     .Select(x => x.RegionCode)
                     .ToListAsync(cancellationToken));
 
