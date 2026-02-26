@@ -32,16 +32,16 @@ Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 // Budget
 builder.Services.AddDbContextPool<BudgetContext>(options =>
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddScoped<BudgetDContext>();
+        builder.Configuration.GetConnectionString("DefaultConnection")),
+    poolSize: 5);
+ 
 
 // Finance
 builder.Services.AddDbContextPool<FinanceContext>(options =>
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddScoped<FinanceDContext>();
+        builder.Configuration.GetConnectionString("DefaultConnection")),
+    poolSize: 5);
+ 
 
 // ===================================================================
 // CORS CONFIGURATION
