@@ -41,6 +41,9 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 using var stream = new MemoryStream();
                 await request.File.CopyToAsync(stream, cancellationToken);
 
+                // Required for EPPlus (.NET 8/9/10)
+                ExcelPackage.License.SetNonCommercialPersonal("BBMB");
+
                 using var package = new ExcelPackage(stream);
                 var worksheet = package.Workbook.Worksheets.FirstOrDefault();
 
@@ -53,28 +56,37 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 var type = request.uploadType.Trim().ToLower();
 
+                Response result;
+
                 switch (type)
                 {
                     case "majormaster":
-                        return await UploadMajorMaster(worksheet, rowCount, cancellationToken);
+                        result = await UploadMajorMaster(worksheet, rowCount, cancellationToken);
+                        break;
 
                     case "submajormaster":
-                        return await UploadSubMajorMaster(worksheet, rowCount, cancellationToken);
+                        result = await UploadSubMajorMaster(worksheet, rowCount, cancellationToken);
+                        break;
 
                     case "minormaster":
-                        return await UploadMinorMaster(worksheet, rowCount, cancellationToken);
+                        result = await UploadMinorMaster(worksheet, rowCount, cancellationToken);
+                        break;
 
                     case "subminormaster":
-                        return await UploadSubMinorMaster(worksheet, rowCount, cancellationToken);
+                        result = await UploadSubMinorMaster(worksheet, rowCount, cancellationToken);
+                        break;
 
                     case "detailmaster":
-                        return await UploadDetailMaster(worksheet, rowCount, cancellationToken);
+                        result = await UploadDetailMaster(worksheet, rowCount, cancellationToken);
+                        break;
 
                     case "objectmaster":
-                        return await UploadObjectMaster(worksheet, rowCount, cancellationToken);
+                        result = await UploadObjectMaster(worksheet, rowCount, cancellationToken);
+                        break;
 
                     case "headofaccountmaster":
-                        return await UploadHeadOfAccountMaster(worksheet, rowCount, cancellationToken);
+                        result = await UploadHeadOfAccountMaster(worksheet, rowCount, cancellationToken);
+                        break;
 
                     default:
                         return new Response
@@ -83,22 +95,36 @@ namespace BBMB.BudgetService.Features.BulkUploads
                             Message = "Invalid UploadType"
                         };
                 }
+
+                if (!result.IsSucced)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return result;
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+
+                return result;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return new Response { IsSucced = false, Message = ex.Message };
+
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = ex.InnerException?.Message ?? ex.Message
+                };
             }
         }
-
 
         // ============================================================
         // MAJOR HEAD
         // ============================================================
         private async Task<Response> UploadMajorMaster(
-     ExcelWorksheet worksheet,
-     int rowCount,
-     CancellationToken cancellationToken)
+    ExcelWorksheet worksheet,
+    int rowCount,
+    CancellationToken cancellationToken)
         {
             var list = new List<MajorHead>();
             var duplicateCheck = new HashSet<string>();
@@ -109,13 +135,26 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 var desc = worksheet.Cells[row, 2].Text.Trim();
 
                 if (code.Length != 4)
-                    return new Response { IsSucced = false, Message = $"Invalid Major code at row {row}" };
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Invalid Major code at row {row}"
+                    };
 
                 if (!duplicateCheck.Add(code))
-                    return new Response { IsSucced = false, Message = $"Duplicate Major code in Excel: {code}" };
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Duplicate Major code in Excel: {code}"
+                    };
 
-                if (await _context.MajorHeads.AnyAsync(x => x.MajorAccCode == code, cancellationToken))
-                    return new Response { IsSucced = false, Message = $"Major already exists: {code}" };
+                if (await _context.MajorHeads
+                    .AnyAsync(x => x.MajorAccCode == code, cancellationToken))
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Major already exists: {code}"
+                    };
 
                 list.Add(new MajorHead
                 {
@@ -129,36 +168,60 @@ namespace BBMB.BudgetService.Features.BulkUploads
             await _context.MajorHeads.AddRangeAsync(list, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response { IsSucced = true, Message = "Major master uploaded successfully" };
+            return new Response
+            {
+                IsSucced = true,
+                Message = "Major master uploaded successfully"
+            };
         }
 
         // ============================================================
         // SUB MAJOR HEAD
         // ============================================================
         private async Task<Response> UploadSubMajorMaster(
-     ExcelWorksheet worksheet,
-     int rowCount,
-     CancellationToken cancellationToken)
+    ExcelWorksheet worksheet,
+    int rowCount,
+    CancellationToken cancellationToken)
         {
             var list = new List<SubMajorHead>();
+            var excelDuplicateCheck = new HashSet<string>();
+
+            // 🔥 Load existing data once
+            var existingMajors = await _context.MajorHeads
+                .Select(x => x.MajorAccCode)
+                .ToListAsync(cancellationToken);
+
+            var existingSubMajors = await _context.SubMajorHeads
+                .Select(x => x.MajorAccCode + x.SubMajorAccCode)
+                .ToListAsync(cancellationToken);
+
+            var majorSet = new HashSet<string>(existingMajors);
+            var subMajorSet = new HashSet<string>(existingSubMajors);
 
             for (int row = 2; row <= rowCount; row++)
             {
-                var major = worksheet.Cells[row, 1].Text.Trim();
-                var subMajor = worksheet.Cells[row, 2].Text.Trim();
-                var desc = worksheet.Cells[row, 3].Text.Trim();
+                var major = worksheet.Cells[row, 1].Text?.Trim();
+                var subMajor = worksheet.Cells[row, 2].Text?.Trim();
+                var desc = worksheet.Cells[row, 3].Text?.Trim();
+
+                if (string.IsNullOrWhiteSpace(major) ||
+                    string.IsNullOrWhiteSpace(subMajor) ||
+                    string.IsNullOrWhiteSpace(desc))
+                    return new Response { IsSucced = false, Message = $"Empty data at row {row}" };
 
                 if (major.Length != 4 || subMajor.Length != 2)
                     return new Response { IsSucced = false, Message = $"Invalid SubMajor format at row {row}" };
 
-                // FK CHECK
-                if (!await _context.MajorHeads.AnyAsync(x => x.MajorAccCode == major, cancellationToken))
+                var key = major + subMajor;
+
+                if (!excelDuplicateCheck.Add(key))
+                    return new Response { IsSucced = false, Message = $"Duplicate SubMajor in Excel: {key}" };
+
+                if (!majorSet.Contains(major))
                     return new Response { IsSucced = false, Message = $"Major does not exist: {major}" };
 
-                if (await _context.SubMajorHeads.AnyAsync(x =>
-                    x.MajorAccCode == major &&
-                    x.SubMajorAccCode == subMajor, cancellationToken))
-                    return new Response { IsSucced = false, Message = $"SubMajor already exists: {major}{subMajor}" };
+                if (subMajorSet.Contains(key))
+                    return new Response { IsSucced = false, Message = $"SubMajor already exists: {key}" };
 
                 list.Add(new SubMajorHead
                 {
@@ -171,9 +234,12 @@ namespace BBMB.BudgetService.Features.BulkUploads
             }
 
             await _context.SubMajorHeads.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response { IsSucced = true, Message = "SubMajor master uploaded successfully" };
+            return new Response
+            {
+                IsSucced = true,
+                Message = $"{list.Count} SubMajor records uploaded successfully"
+            };
         }
 
 
@@ -186,54 +252,31 @@ namespace BBMB.BudgetService.Features.BulkUploads
      CancellationToken cancellationToken)
         {
             var list = new List<MinorHead>();
-            var duplicateExcelCheck = new HashSet<string>();
+            var excelDuplicateCheck = new HashSet<string>();
+
+            var existingMinors = await _context.MinorHeads
+                .Select(x => x.MinorAccCode)
+                .ToListAsync(cancellationToken);
+
+            var existingSet = new HashSet<string>(existingMinors);
 
             for (int row = 2; row <= rowCount; row++)
             {
                 var code = worksheet.Cells[row, 1].Text?.Trim();
                 var desc = worksheet.Cells[row, 2].Text?.Trim();
 
-                // ================= EMPTY CHECK =================
                 if (string.IsNullOrWhiteSpace(code) ||
                     string.IsNullOrWhiteSpace(desc))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"Minor code or description is empty at row {row}"
-                    };
-                }
+                    return new Response { IsSucced = false, Message = $"Empty Minor at row {row}" };
 
-                // ================= LENGTH CHECK =================
                 if (code.Length != 3 || !code.All(char.IsDigit))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"Invalid Minor code at row {row}. Must be 3 digits."
-                    };
-                }
+                    return new Response { IsSucced = false, Message = $"Invalid Minor at row {row}" };
 
-                // ================= DUPLICATE CHECK (EXCEL) =================
-                if (!duplicateExcelCheck.Add(code))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"Duplicate Minor code in Excel: {code}"
-                    };
-                }
+                if (!excelDuplicateCheck.Add(code))
+                    return new Response { IsSucced = false, Message = $"Duplicate Minor in Excel: {code}" };
 
-                // ================= DUPLICATE CHECK (DATABASE) =================
-                if (await _context.MinorHeads
-                    .AnyAsync(x => x.MinorAccCode == code, cancellationToken))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"Minor already exists in database: {code}"
-                    };
-                }
+                if (existingSet.Contains(code))
+                    return new Response { IsSucced = false, Message = $"Minor already exists: {code}" };
 
                 list.Add(new MinorHead
                 {
@@ -244,9 +287,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            // ================= BULK INSERT =================
             await _context.MinorHeads.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
 
             return new Response
             {
@@ -255,34 +296,52 @@ namespace BBMB.BudgetService.Features.BulkUploads
             };
         }
 
-
         // ============================================================
         // SUB MINOR HEAD
         // ============================================================
         private async Task<Response> UploadSubMinorMaster(
-    ExcelWorksheet worksheet,
-    int rowCount,
-    CancellationToken cancellationToken)
+     ExcelWorksheet worksheet,
+     int rowCount,
+     CancellationToken cancellationToken)
         {
             var list = new List<SubMinorHead>();
+            var excelDuplicateCheck = new HashSet<string>();
+
+            var existingMinors = await _context.MinorHeads
+                .Select(x => x.MinorAccCode)
+                .ToListAsync(cancellationToken);
+
+            var existingSubMinors = await _context.SubMinorHeads
+                .Select(x => x.MinorAccCode + x.SubMinorAccCode)
+                .ToListAsync(cancellationToken);
+
+            var minorSet = new HashSet<string>(existingMinors);
+            var subMinorSet = new HashSet<string>(existingSubMinors);
 
             for (int row = 2; row <= rowCount; row++)
             {
-                var minor = worksheet.Cells[row, 1].Text.Trim();
-                var subMinor = worksheet.Cells[row, 2].Text.Trim();
-                var desc = worksheet.Cells[row, 3].Text.Trim();
+                var minor = worksheet.Cells[row, 1].Text?.Trim();
+                var subMinor = worksheet.Cells[row, 2].Text?.Trim();
+                var desc = worksheet.Cells[row, 3].Text?.Trim();
+
+                if (string.IsNullOrWhiteSpace(minor) ||
+                    string.IsNullOrWhiteSpace(subMinor) ||
+                    string.IsNullOrWhiteSpace(desc))
+                    return new Response { IsSucced = false, Message = $"Empty SubMinor at row {row}" };
 
                 if (minor.Length != 3 || subMinor.Length != 2)
                     return new Response { IsSucced = false, Message = $"Invalid SubMinor format at row {row}" };
 
-                // FK CHECK
-                if (!await _context.MinorHeads.AnyAsync(x => x.MinorAccCode == minor, cancellationToken))
+                var key = minor + subMinor;
+
+                if (!excelDuplicateCheck.Add(key))
+                    return new Response { IsSucced = false, Message = $"Duplicate SubMinor in Excel: {key}" };
+
+                if (!minorSet.Contains(minor))
                     return new Response { IsSucced = false, Message = $"Minor does not exist: {minor}" };
 
-                if (await _context.SubMinorHeads.AnyAsync(x =>
-                    x.MinorAccCode == minor &&
-                    x.SubMinorAccCode == subMinor, cancellationToken))
-                    return new Response { IsSucced = false, Message = $"SubMinor already exists: {minor}{subMinor}" };
+                if (subMinorSet.Contains(key))
+                    return new Response { IsSucced = false, Message = $"SubMinor already exists: {key}" };
 
                 list.Add(new SubMinorHead
                 {
@@ -295,9 +354,12 @@ namespace BBMB.BudgetService.Features.BulkUploads
             }
 
             await _context.SubMinorHeads.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response { IsSucced = true, Message = "SubMinor master uploaded successfully" };
+            return new Response
+            {
+                IsSucced = true,
+                Message = $"{list.Count} SubMinor records uploaded successfully"
+            };
         }
 
 
@@ -426,19 +488,49 @@ namespace BBMB.BudgetService.Features.BulkUploads
         // HEAD OF ACCOUNT MASTER
         // ============================================================
         private async Task<Response> UploadHeadOfAccountMaster(
-    ExcelWorksheet worksheet,
-    int rowCount,
-    CancellationToken cancellationToken)
+     ExcelWorksheet worksheet,
+     int rowCount,
+     CancellationToken cancellationToken)
         {
             var list = new List<HeadOfAccount>();
+            var excelDuplicateCheck = new HashSet<string>();
+
+            var majors = new HashSet<string>(
+                await _context.MajorHeads.Select(x => x.MajorAccCode).ToListAsync(cancellationToken));
+
+            var subMajors = new HashSet<string>(
+                await _context.SubMajorHeads
+                    .Select(x => x.MajorAccCode + x.SubMajorAccCode)
+                    .ToListAsync(cancellationToken));
+
+            var minors = new HashSet<string>(
+                await _context.MinorHeads.Select(x => x.MinorAccCode).ToListAsync(cancellationToken));
+
+            var subMinors = new HashSet<string>(
+                await _context.SubMinorHeads
+                    .Select(x => x.MinorAccCode + x.SubMinorAccCode)
+                    .ToListAsync(cancellationToken));
+
+            var details = new HashSet<string>(
+                await _context.DetailHeads.Select(x => x.DetailAccCode).ToListAsync(cancellationToken));
+
+            var objects = new HashSet<string>(
+                await _context.ObjectClassifications.Select(x => x.ObjectAccCode).ToListAsync(cancellationToken));
 
             for (int row = 2; row <= rowCount; row++)
             {
-                var fullCode = worksheet.Cells[row, 1].Text.Trim();
-                var desc = worksheet.Cells[row, 2].Text.Trim();
+                var fullCode = worksheet.Cells[row, 1].Text?.Trim();
+                var desc = worksheet.Cells[row, 2].Text?.Trim();
 
-                if (fullCode.Length != 17)
+                if (string.IsNullOrWhiteSpace(fullCode) ||
+                    string.IsNullOrWhiteSpace(desc))
+                    return new Response { IsSucced = false, Message = $"Empty HeadOfAccount at row {row}" };
+
+                if (fullCode.Length != 17 || !fullCode.All(char.IsDigit))
                     return new Response { IsSucced = false, Message = $"Invalid 17 digit code at row {row}" };
+
+                if (!excelDuplicateCheck.Add(fullCode))
+                    return new Response { IsSucced = false, Message = $"Duplicate in Excel: {fullCode}" };
 
                 var major = fullCode.Substring(0, 4);
                 var subMajor = fullCode.Substring(4, 2);
@@ -447,28 +539,12 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 var detail = fullCode.Substring(11, 3);
                 var obj = fullCode.Substring(14, 3);
 
-                // FK CHECKS
-                if (!await _context.MajorHeads.AnyAsync(x => x.MajorAccCode == major))
-                    return new Response { IsSucced = false, Message = $"Major missing: {major}" };
-
-                if (!await _context.SubMajorHeads.AnyAsync(x =>
-                    x.MajorAccCode == major &&
-                    x.SubMajorAccCode == subMajor))
-                    return new Response { IsSucced = false, Message = $"SubMajor missing: {major}{subMajor}" };
-
-                if (!await _context.MinorHeads.AnyAsync(x => x.MinorAccCode == minor))
-                    return new Response { IsSucced = false, Message = $"Minor missing: {minor}" };
-
-                if (!await _context.SubMinorHeads.AnyAsync(x =>
-                    x.MinorAccCode == minor &&
-                    x.SubMinorAccCode == subMinor))
-                    return new Response { IsSucced = false, Message = $"SubMinor missing: {minor}{subMinor}" };
-
-                if (!await _context.DetailHeads.AnyAsync(x => x.DetailAccCode == detail))
-                    return new Response { IsSucced = false, Message = $"Detail missing: {detail}" };
-
-                if (!await _context.ObjectClassifications.AnyAsync(x => x.ObjectAccCode == obj))
-                    return new Response { IsSucced = false, Message = $"Object missing: {obj}" };
+                if (!majors.Contains(major)) return new Response { IsSucced = false, Message = $"Major missing: {major}" };
+                if (!subMajors.Contains(major + subMajor)) return new Response { IsSucced = false, Message = $"SubMajor missing: {major}{subMajor}" };
+                if (!minors.Contains(minor)) return new Response { IsSucced = false, Message = $"Minor missing: {minor}" };
+                if (!subMinors.Contains(minor + subMinor)) return new Response { IsSucced = false, Message = $"SubMinor missing: {minor}{subMinor}" };
+                if (!details.Contains(detail)) return new Response { IsSucced = false, Message = $"Detail missing: {detail}" };
+                if (!objects.Contains(obj)) return new Response { IsSucced = false, Message = $"Object missing: {obj}" };
 
                 list.Add(new HeadOfAccount
                 {
@@ -491,9 +567,12 @@ namespace BBMB.BudgetService.Features.BulkUploads
             }
 
             await _context.HeadOfAccounts.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
 
-            return new Response { IsSucced = true, Message = "HeadOfAccount master uploaded successfully" };
+            return new Response
+            {
+                IsSucced = true,
+                Message = $"{list.Count} HeadOfAccount records uploaded successfully"
+            };
         }
 
 
