@@ -902,8 +902,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("ObjectAccDesc")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
                         .HasColumnName("object_acc_desc");
 
                     b.Property<string>("UserCode")

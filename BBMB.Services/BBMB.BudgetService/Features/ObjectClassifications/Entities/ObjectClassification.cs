@@ -12,7 +12,7 @@ namespace BBMB.BudgetService.Features.ObjectClassifications.Entities
         public string ObjectAccCode { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(100)]
+        [MaxLength(300)]
         [Column("object_acc_desc")]
         public string ObjectAccDesc { get; set; } = string.Empty;
 
