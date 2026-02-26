@@ -23,10 +23,10 @@ namespace BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads
                 .GreaterThan(0)
                 .WithMessage("Uploaded file is empty.");
 
-            // Validate Excel extension
             RuleFor(x => x.File.FileName)
-                .Must(BeValidExcelFile)
-                .WithMessage("Only .xlsx Excel files are allowed.");
+             .Must(BeValidExcelFile)
+             .WithMessage("Only .xlsx, .xls or .csv files are allowed.");
+
         }
 
         private bool BeValidExcelFile(string fileName)
@@ -34,8 +34,11 @@ namespace BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads
             if (string.IsNullOrWhiteSpace(fileName))
                 return false;
 
-            return Path.GetExtension(fileName)
-                .Equals(".xlsx", StringComparison.OrdinalIgnoreCase);
+            var extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+            return extension == ".xlsx"
+                || extension == ".xls"
+                || extension == ".csv";
         }
     }
 }
