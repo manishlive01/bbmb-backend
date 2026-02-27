@@ -58,7 +58,7 @@ namespace BBMB.BudgetService.Features.Works.GetList.Dtos
         public string UserCode { get; set; } = string.Empty;
 
         public string AccountCode { get; set; } = string.Empty;
-
+        public string CECode { get; set; }
         public string CRCode { get; set; }
         public string OriginalBudget { get; set; } = string.Empty;
         public string RevisedBudget { get; set; } = string.Empty;

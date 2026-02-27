@@ -60,6 +60,10 @@ namespace BBMB.BudgetService.Features.Works.Entities
         public string ObjectAccCode { get; set; }
 
         [Required]
+        [Column("ce_code")]
+        public string CECode { get; set; } = string.Empty;
+
+        [Required]
         [Column("cr_code")]
         public string CRCode { get; set; } = string.Empty;
 

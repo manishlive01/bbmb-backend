@@ -1136,6 +1136,11 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(8)")
                         .HasColumnName("work_code");
 
+                    b.Property<string>("CECode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("ce_code");
+
                     b.Property<string>("CRCode")
                         .IsRequired()
                         .HasColumnType("text")

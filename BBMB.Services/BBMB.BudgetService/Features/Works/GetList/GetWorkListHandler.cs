@@ -99,6 +99,7 @@ namespace BBMB.BudgetService.Features.Works.GetList
                     RefWorkCode = w.RefWorkCode,
 
                     UserCode = w.UserCode,
+                    CECode = w.CECode,
                     CRCode = w.CRCode,
                     OriginalBudget = w.OriginalBudget,
                     RevisedBudget = w.RevisedBudget,
