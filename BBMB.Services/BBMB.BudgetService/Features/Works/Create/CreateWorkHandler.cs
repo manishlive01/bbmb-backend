@@ -19,7 +19,7 @@ namespace BBMB.BudgetService.Features.Works.Create
         public async Task<Response> Handle(CreateWorkCommand request, CancellationToken ct)
         {
             // Check for duplicate work code
-            var exists = await _context.Works
+            var exists = await _context.Works.AsNoTracking()
                 .AnyAsync(w => w.WorkCode == request.dto.WorkCode, ct);
 
             if (exists)
@@ -30,7 +30,7 @@ namespace BBMB.BudgetService.Features.Works.Create
                 };
 
             // Validate division exists
-            var divisionExists = await _context.Divisions
+            var divisionExists = await _context.Divisions.AsNoTracking()
                 .AnyAsync(d => d.DivisionCode == request.dto.DivisionCode, ct);
 
             if (!divisionExists)
@@ -41,7 +41,7 @@ namespace BBMB.BudgetService.Features.Works.Create
                 };
 
             // Validate major head exists
-            var majorHeadExists = await _context.MajorHeads
+            var majorHeadExists = await _context.MajorHeads.AsNoTracking()
                 .AnyAsync(m => m.MajorAccCode == request.dto.MajorAccCode, ct);
 
             if (!majorHeadExists)
@@ -52,7 +52,7 @@ namespace BBMB.BudgetService.Features.Works.Create
                 };
 
             // Validate sub-major head exists
-            var subMajorHeadExists = await _context.SubMajorHeads
+            var subMajorHeadExists = await _context.SubMajorHeads.AsNoTracking()
                 .AnyAsync(s => s.MajorAccCode == request.dto.MajorAccCode &&
                               s.SubMajorAccCode == request.dto.SubMajorAccCode, ct);
 
@@ -64,7 +64,7 @@ namespace BBMB.BudgetService.Features.Works.Create
                 };
 
             // Validate minor head exists
-            var minorHeadExists = await _context.MinorHeads
+            var minorHeadExists = await _context.MinorHeads.AsNoTracking()
                 .AnyAsync(m => 
                 //m.MajorAccCode == request.dto.MajorAccCode &&
                 //              m.SubMajorAccCode == request.dto.SubMajorAccCode &&
@@ -78,7 +78,7 @@ namespace BBMB.BudgetService.Features.Works.Create
                 };
 
             // Validate sub-minor head exists
-            var subMinorHeadExists = await _context.SubMinorHeads
+            var subMinorHeadExists = await _context.SubMinorHeads.AsNoTracking()
                 .AnyAsync(s => 
                               //  s.MajorAccCode == request.dto.MajorAccCode &&
                               //s.SubMajorAccCode == request.dto.SubMajorAccCode &&
@@ -108,7 +108,7 @@ namespace BBMB.BudgetService.Features.Works.Create
             //    };
 
             // Validate object classification exists
-            var objectClassExists = await _context.ObjectClassifications
+            var objectClassExists = await _context.ObjectClassifications.AsNoTracking()
                 .AnyAsync(o => o.ObjectAccCode == request.dto.ObjectAccCode, ct);
 
             if (!objectClassExists)
@@ -121,7 +121,7 @@ namespace BBMB.BudgetService.Features.Works.Create
             // Validate designation if provided
             if (!string.IsNullOrEmpty(request.dto.DesignationCode))
             {
-                var designationExists = await _context.Designations
+                var designationExists = await _context.Designations.AsNoTracking()
                     .AnyAsync(d => d.DesignationCode == request.dto.DesignationCode, ct);
 
                 if (!designationExists)
@@ -135,7 +135,7 @@ namespace BBMB.BudgetService.Features.Works.Create
             // Map DTO to entity and create
             var work = request.dto.Adapt<Work>();
 
-            _context.Works.Add(work);
+           await _context.Works.AddAsync(work);
             await _context.SaveChangesAsync(ct);
 
             return new Response

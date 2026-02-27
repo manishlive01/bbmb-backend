@@ -5,6 +5,7 @@ using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
 using BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads;
 using BBMB.BudgetService.Features.CEManagements.Entities;
 using BBMB.BudgetService.Features.CRManagements.Entities;
+using BBMB.BudgetService.Features.Designations.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
 using BBMB.BudgetService.Features.Divisions.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
@@ -15,6 +16,7 @@ using BBMB.BudgetService.Features.Pools.Entities;
 using BBMB.BudgetService.Features.Projects.Entities;
 using BBMB.BudgetService.Features.Regions.Entities;
 using BBMB.BudgetService.Features.Units.Entities;
+using BBMB.BudgetService.Features.Works.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
@@ -106,6 +108,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     case "divisionmaster":
                         result = await UploadDivisionMaster(worksheet, rowCount, cancellationToken);
+                        break;
+
+                    case "divisionMaster":
+                        result = await UploadWorkMaster(worksheet, rowCount, cancellationToken);
                         break;
 
                     //case "divisionMaster":
@@ -1055,6 +1061,201 @@ namespace BBMB.BudgetService.Features.BulkUploads
             {
                 IsSucced = true,
                 Message = $"{list.Count} Division records uploaded successfully"
+            };
+        }
+
+
+        private async Task<Response> UploadWorkMaster(
+    ExcelWorksheet worksheet,
+    int rowCount,
+    CancellationToken cancellationToken)
+        {
+            var list = new List<Work>();
+            var duplicateExcelCheck = new HashSet<string>();
+
+            // ================= LOAD EXISTING DATA =================
+
+            var workSet = new HashSet<string>(
+                await _context.Set<Work>()
+                .Select(x => x.WorkCode)
+                .ToListAsync(cancellationToken));
+
+            var divisionSet = new HashSet<int>(
+                await _context.Set<Division>()
+                .Select(x => x.DivisionCode)
+                .ToListAsync(cancellationToken));
+
+            var majorSet = new HashSet<string>(
+                await _context.Set<MajorHead>()
+                .Select(x => x.MajorAccCode)
+                .ToListAsync(cancellationToken));
+
+            var subMajorSet = new HashSet<string>(
+                await _context.Set<SubMajorHead>()
+                .Select(x => x.SubMajorAccCode)
+                .ToListAsync(cancellationToken));
+
+            var minorSet = new HashSet<string>(
+                await _context.Set<MinorHead>()
+                .Select(x => x.MinorAccCode)
+                .ToListAsync(cancellationToken));
+
+            var subMinorSet = new HashSet<string>(
+                await _context.Set<SubMinorHead>()
+                .Select(x => x.SubMinorAccCode)
+                .ToListAsync(cancellationToken));
+
+            var detailSet = new HashSet<string>(
+                await _context.Set<DetailHead>()
+                .Select(x => x.DetailAccCode)
+                .ToListAsync(cancellationToken));
+
+            var objectSet = new HashSet<string>(
+                await _context.Set<ObjectClassification>()
+                .Select(x => x.ObjectAccCode)
+                .ToListAsync(cancellationToken));
+
+            var designationSet = new HashSet<string>(
+                await _context.Set<Designation>()
+                .Select(x => x.DesignationCode)
+                .ToListAsync(cancellationToken));
+
+            for (int row = 2; row <= rowCount; row++)
+            {
+                // ================= READ CELLS =================
+
+                var workCode = worksheet.Cells[row, 1].Text?.Trim();
+                var divisionText = worksheet.Cells[row, 2].Text?.Trim();
+                var divSectionText = worksheet.Cells[row, 3].Text?.Trim();
+                var majorCode = worksheet.Cells[row, 4].Text?.Trim();
+                var subMajorCode = worksheet.Cells[row, 5].Text?.Trim();
+                var minorCode = worksheet.Cells[row, 6].Text?.Trim();
+                var subMinorCode = worksheet.Cells[row, 7].Text?.Trim();
+                var detailCode = worksheet.Cells[row, 8].Text?.Trim();
+                var objectCode = worksheet.Cells[row, 9].Text?.Trim();
+                var finYrStart = worksheet.Cells[row, 10].Text?.Trim();
+                var finYrEnd = worksheet.Cells[row, 11].Text?.Trim();
+                var sanctionNo = worksheet.Cells[row, 12].Text?.Trim();
+                var sanctionDate = worksheet.Cells[row, 13].Text?.Trim();
+                var designationCode = worksheet.Cells[row, 14].Text?.Trim();
+                var estimatedCostText = worksheet.Cells[row, 15].Text?.Trim();
+                var status = worksheet.Cells[row, 16].Text?.Trim();
+                var workDesc = worksheet.Cells[row, 17].Text?.Trim();
+                var nature = worksheet.Cells[row, 18].Text?.Trim();
+                var refWorkCode = worksheet.Cells[row, 19].Text?.Trim();
+
+                // ================= REQUIRED CHECK =================
+
+                if (string.IsNullOrWhiteSpace(workCode) ||
+                    string.IsNullOrWhiteSpace(divisionText) ||
+                    string.IsNullOrWhiteSpace(divSectionText) ||
+                    string.IsNullOrWhiteSpace(majorCode) ||
+                    string.IsNullOrWhiteSpace(subMajorCode) ||
+                    string.IsNullOrWhiteSpace(minorCode) ||
+                    string.IsNullOrWhiteSpace(subMinorCode) ||
+                    string.IsNullOrWhiteSpace(detailCode) ||
+                    string.IsNullOrWhiteSpace(objectCode) ||
+                    string.IsNullOrWhiteSpace(workDesc))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Required fields missing at row {row}"
+                    };
+                }
+
+                // ================= TYPE CONVERSION =================
+
+                if (!int.TryParse(divisionText, out int divisionCode))
+                    return new Response { IsSucced = false, Message = $"Invalid DivisionCode at row {row}" };
+
+                if (!int.TryParse(divSectionText, out int divSection))
+                    return new Response { IsSucced = false, Message = $"Invalid DivSection at row {row}" };
+
+                decimal? estimatedCost = null;
+                if (!string.IsNullOrWhiteSpace(estimatedCostText))
+                {
+                    if (!decimal.TryParse(estimatedCostText, out decimal cost))
+                        return new Response { IsSucced = false, Message = $"Invalid EstimatedCost at row {row}" };
+
+                    estimatedCost = cost;
+                }
+
+                // ================= DUPLICATE CHECK =================
+
+                if (!duplicateExcelCheck.Add(workCode))
+                    return new Response { IsSucced = false, Message = $"Duplicate WorkCode in Excel: {workCode}" };
+
+                if (workSet.Contains(workCode))
+                    return new Response { IsSucced = false, Message = $"WorkCode already exists: {workCode}" };
+
+                // ================= FK VALIDATION =================
+
+                if (!divisionSet.Contains(divisionCode))
+                    return new Response { IsSucced = false, Message = $"Invalid DivisionCode at row {row}" };
+
+                if (!majorSet.Contains(majorCode))
+                    return new Response { IsSucced = false, Message = $"Invalid MajorAccCode at row {row}" };
+
+                if (!subMajorSet.Contains(subMajorCode))
+                    return new Response { IsSucced = false, Message = $"Invalid SubMajorAccCode at row {row}" };
+
+                if (!minorSet.Contains(minorCode))
+                    return new Response { IsSucced = false, Message = $"Invalid MinorAccCode at row {row}" };
+
+                if (!subMinorSet.Contains(subMinorCode))
+                    return new Response { IsSucced = false, Message = $"Invalid SubMinorAccCode at row {row}" };
+
+                if (!detailSet.Contains(detailCode))
+                    return new Response { IsSucced = false, Message = $"Invalid DetailAccCode at row {row}" };
+
+                if (!objectSet.Contains(objectCode))
+                    return new Response { IsSucced = false, Message = $"Invalid ObjectAccCode at row {row}" };
+
+                if (!string.IsNullOrWhiteSpace(designationCode) &&
+                    !designationSet.Contains(designationCode))
+                    return new Response { IsSucced = false, Message = $"Invalid DesignationCode at row {row}" };
+
+                if (!string.IsNullOrWhiteSpace(refWorkCode) &&
+                    !workSet.Contains(refWorkCode))
+                    return new Response { IsSucced = false, Message = $"Invalid RefWorkCode at row {row}" };
+
+                // ================= ADD ENTITY =================
+
+                list.Add(new Work
+                {
+                    WorkCode = workCode,
+                    DivisionCode = divisionCode,
+                    DivSection = divSection,
+                    MajorAccCode = majorCode,
+                    SubMajorAccCode = subMajorCode,
+                    MinorAccCode = minorCode,
+                    SubMinorAccCode = subMinorCode,
+                    DetailAccCode = detailCode,
+                    ObjectAccCode = objectCode,
+                    FinYrStart = finYrStart,
+                    FinYrEnd = finYrEnd,
+                    SanctionNo = sanctionNo,
+                    SanctionDate = sanctionDate,
+                    DesignationCode = designationCode,
+                    EstimatedCost = estimatedCost,
+                    Status = string.IsNullOrWhiteSpace(status) ? "P" : status,
+                    WorkDesc = workDesc,
+                    Nature = nature,
+                    RefWorkCode = refWorkCode,
+                    UserCode = "System"
+                });
+            }
+
+            // ================= BULK INSERT =================
+
+            await _context.Set<Work>().AddRangeAsync(list, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return new Response
+            {
+                IsSucced = true,
+                Message = $"{list.Count} Work records uploaded successfully"
             };
         }
 

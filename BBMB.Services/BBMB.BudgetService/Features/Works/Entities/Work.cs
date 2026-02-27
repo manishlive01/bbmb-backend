@@ -19,7 +19,7 @@ namespace BBMB.BudgetService.Features.Works.Entities
         [Required]
         [MaxLength(8)]
         [Column("work_code")]
-        public string WorkCode { get; set; } = string.Empty;
+        public string WorkCode { get; set; }
 
         [Required]
         [Column("division_code")]
@@ -32,32 +32,32 @@ namespace BBMB.BudgetService.Features.Works.Entities
         [Required]
         [MaxLength(4)]
         [Column("major_acc_code")]
-        public string MajorAccCode { get; set; } = string.Empty;
+        public string MajorAccCode { get; set; }
 
         [Required]
         [MaxLength(2)]
         [Column("sub_major_acc_code")]
-        public string SubMajorAccCode { get; set; } = string.Empty;
+        public string SubMajorAccCode { get; set; }
 
         [Required]
         [MaxLength(3)]
         [Column("minor_acc_code")]
-        public string MinorAccCode { get; set; } = string.Empty;
+        public string MinorAccCode { get; set; }
 
         [Required]
         [MaxLength(2)]
         [Column("sub_minor_acc_code")]
-        public string SubMinorAccCode { get; set; } = string.Empty;
+        public string SubMinorAccCode { get; set; }
 
         [Required]
         [MaxLength(3)]
         [Column("detail_acc_code")]
-        public string DetailAccCode { get; set; } = string.Empty;
+        public string DetailAccCode { get; set; }
 
         [Required]
         [MaxLength(3)]
         [Column("object_acc_code")]
-        public string ObjectAccCode { get; set; } = string.Empty;
+        public string ObjectAccCode { get; set; }
 
         [MaxLength(4)]
         [Column("fin_yr_start")]
