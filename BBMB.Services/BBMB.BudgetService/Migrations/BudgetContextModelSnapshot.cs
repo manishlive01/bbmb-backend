@@ -1136,6 +1136,11 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(8)")
                         .HasColumnName("work_code");
 
+                    b.Property<string>("CRCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("cr_code");
+
                     b.Property<string>("DesignationCode")
                         .HasMaxLength(6)
                         .HasColumnType("character varying(6)")
@@ -1211,10 +1216,30 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<string>("ObjectClassificationObjectAccCode")
                         .HasColumnType("character varying(3)");
 
+                    b.Property<string>("OriginalBudget")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("original_budget");
+
+                    b.Property<string>("ProposedBudget")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("proposed_budget");
+
                     b.Property<string>("RefWorkCode")
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)")
                         .HasColumnName("ref_work_code");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("remarks");
+
+                    b.Property<string>("RevisedBudget")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("revised_budget");
 
                     b.Property<string>("SanctionDate")
                         .HasMaxLength(11)

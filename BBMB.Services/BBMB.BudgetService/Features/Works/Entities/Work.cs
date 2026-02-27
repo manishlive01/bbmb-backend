@@ -59,6 +59,22 @@ namespace BBMB.BudgetService.Features.Works.Entities
         [Column("object_acc_code")]
         public string ObjectAccCode { get; set; }
 
+        [Required]
+        [Column("cr_code")]
+        public string CRCode { get; set; } = string.Empty;
+
+        [Column("original_budget")]
+        public string OriginalBudget { get; set; } = string.Empty;
+
+        [Column("revised_budget")]
+        public string RevisedBudget { get; set; } = string.Empty;
+
+        [Column("proposed_budget")]
+        public string ProposedBudget { get; set; } = string.Empty;
+
+        [Column("remarks")]
+        public string Remarks { get; set; } = string.Empty;
+
         [MaxLength(4)]
         [Column("fin_yr_start")]
         public string? FinYrStart { get; set; }

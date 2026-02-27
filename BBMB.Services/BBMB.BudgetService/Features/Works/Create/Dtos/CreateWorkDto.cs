@@ -22,5 +22,10 @@ namespace BBMB.BudgetService.Features.Works.Create.Dtos
         public string? Status { get; set; }
         public string? Nature { get; set; }
         public string? RefWorkCode { get; set; }
+        public string CRCode { get; set; }
+        public string OriginalBudget { get; set; } = string.Empty;
+        public string RevisedBudget { get; set; } = string.Empty;
+        public string ProposedBudget { get; set; } = string.Empty;
+        public string Remarks { get; set; } = string.Empty;
     }
 }
