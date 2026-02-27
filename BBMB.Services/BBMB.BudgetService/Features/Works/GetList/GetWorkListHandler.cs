@@ -15,36 +15,43 @@ namespace BBMB.BudgetService.Features.Works.GetList
             _context = context;
         }
 
-        public async Task<PagedResponse<GetWorkListResponseDto>> Handle(GetWorkListQuery request, CancellationToken ct)
+        public async Task<PagedResponse<GetWorkListResponseDto>> Handle(
+    GetWorkListQuery request,
+    CancellationToken ct)
         {
             var query = _context.Works
-                .Include(w => w.Division)
+                .AsNoTracking()
                 .AsQueryable();
 
-            // Apply filters
-            if (!string.IsNullOrEmpty(request.WorkCode))
+            // ================= FILTERS =================
+
+            if (!string.IsNullOrWhiteSpace(request.WorkCode))
                 query = query.Where(w => w.WorkCode.Contains(request.WorkCode));
 
-            if (!string.IsNullOrEmpty(request.WorkDesc))
+            if (!string.IsNullOrWhiteSpace(request.WorkDesc))
                 query = query.Where(w => w.WorkDesc.Contains(request.WorkDesc));
 
             if (request.DivisionCode.HasValue)
                 query = query.Where(w => w.DivisionCode == request.DivisionCode.Value);
 
-            if (!string.IsNullOrEmpty(request.Status))
+            if (!string.IsNullOrWhiteSpace(request.Status))
                 query = query.Where(w => w.Status == request.Status);
 
-            if (!string.IsNullOrEmpty(request.Nature))
+            if (!string.IsNullOrWhiteSpace(request.Nature))
                 query = query.Where(w => w.Nature == request.Nature);
 
-            // Get total count
+            // ================= TOTAL COUNT =================
+
             var totalCount = await query.CountAsync(ct);
 
-            // Apply sorting
+            // ================= SORTING =================
+
             query = ApplySorting(query, request.SortBy, request.SortDescending);
 
-            // Apply pagination
-            var pageSize = Math.Min(request.PageSize, 100);
+            // ================= PAGINATION =================
+
+            var pageSize = Math.Min(request.PageSize <= 0 ? 10 : request.PageSize, 100);
+
             var items = await query
                 .Skip((request.PageNumber - 1) * pageSize)
                 .Take(pageSize)
@@ -52,12 +59,54 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 {
                     WorkCode = w.WorkCode,
                     WorkDesc = w.WorkDesc,
+
                     DivisionCode = w.DivisionCode,
                     DivisionDesc = w.Division != null ? w.Division.DivisionDesc : null,
-                    AccountCode = $"{w.MajorAccCode}-{w.SubMajorAccCode}-{w.MinorAccCode}-{w.SubMinorAccCode}-{w.DetailAccCode}-{w.ObjectAccCode}",
+
+                    DivSection = w.DivSection,
+
+                    MajorAccCode = w.MajorAccCode,
+                    MajorAccDesc = w.MajorHead != null ? w.MajorHead.MajorAccDesc : null,
+
+                    SubMajorAccCode = w.SubMajorAccCode,
+                    SubMajorAccDesc = w.SubMajorHead != null ? w.SubMajorHead.SubMajorAccDesc : null,
+
+                    MinorAccCode = w.MinorAccCode,
+                    MinorAccDesc = w.MinorHead != null ? w.MinorHead.MinorAccDesc : null,
+
+                    SubMinorAccCode = w.SubMinorAccCode,
+                    SubMinorAccDesc = w.SubMinorHead != null ? w.SubMinorHead.SubMinorAccDesc : null,
+
+                    DetailAccCode = w.DetailAccCode,
+                    DetailAccDesc = w.DetailHead != null ? w.DetailHead.DetailAccDesc : null,
+
+                    ObjectAccCode = w.ObjectAccCode,
+                    ObjectAccDesc = w.ObjectClassification != null ? w.ObjectClassification.ObjectAccDesc : null,
+
+                    FinYrStart = w.FinYrStart,
+                    FinYrEnd = w.FinYrEnd,
+
+                    SanctionNo = w.SanctionNo,
+                    SanctionDate = w.SanctionDate,
+
+                    DesignationCode = w.DesignationCode,
+                    //DesignationName = w.Designation != null ? w.Designation.DesignationName : null,
+
+                    EstimatedCost = w.EstimatedCost,
+
                     Status = w.Status,
                     Nature = w.Nature,
-                    UserCode = w.UserCode
+                    RefWorkCode = w.RefWorkCode,
+
+                    UserCode = w.UserCode,
+
+                    AccountCode =
+                        w.MajorAccCode + "-" +
+                        w.SubMajorAccCode + "-" +
+                        w.MinorAccCode + "-" +
+                        w.SubMinorAccCode + "-" +
+                        w.DetailAccCode + "-" +
+                        w.ObjectAccCode
                 })
                 .ToListAsync(ct);
 
