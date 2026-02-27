@@ -19,100 +19,150 @@ namespace BBMB.BudgetService.Features.Works.GetList
     GetWorkListQuery request,
     CancellationToken ct)
         {
-            var query = _context.Works
-                .AsNoTracking()
-                .AsQueryable();
+            var query =
+                from w in _context.Works.AsNoTracking()
+
+                join d in _context.Divisions.AsNoTracking()
+                    on w.DivisionCode equals d.DivisionCode into divJoin
+                from d in divJoin.DefaultIfEmpty()
+
+                join mh in _context.MajorHeads.AsNoTracking()
+                    on w.MajorAccCode equals mh.MajorAccCode into majorJoin
+                from mh in majorJoin.DefaultIfEmpty()
+
+                join smh in _context.SubMajorHeads.AsNoTracking()
+                    on new { w.MajorAccCode, w.SubMajorAccCode }
+                    equals new { smh.MajorAccCode, smh.SubMajorAccCode }
+                    into subMajorJoin
+                from smh in subMajorJoin.DefaultIfEmpty()
+
+                join mn in _context.MinorHeads.AsNoTracking()
+                    on w.MinorAccCode equals mn.MinorAccCode into minorJoin
+                from mn in minorJoin.DefaultIfEmpty()
+
+                join smn in _context.SubMinorHeads.AsNoTracking()
+                    on new { w.MinorAccCode, w.SubMinorAccCode }
+                    equals new { smn.MinorAccCode, smn.SubMinorAccCode }
+                    into subMinorJoin
+                from smn in subMinorJoin.DefaultIfEmpty()
+
+                join dh in _context.DetailHeads.AsNoTracking()
+                    on w.DetailAccCode equals dh.DetailAccCode into detailJoin
+                from dh in detailJoin.DefaultIfEmpty()
+
+                join obj in _context.ObjectClassifications.AsNoTracking()
+                    on w.ObjectAccCode equals obj.ObjectAccCode into objJoin
+                from obj in objJoin.DefaultIfEmpty()
+
+                join ce in _context.CEManagements.AsNoTracking()
+                    on w.CECode equals ce.CECode into ceJoin
+                from ce in ceJoin.DefaultIfEmpty()
+
+                join cr in _context.CRManagements.AsNoTracking()
+                    on w.CRCode equals cr.CRCode into crJoin
+                from cr in crJoin.DefaultIfEmpty()
+
+                select new
+                {
+                    w,
+                    d,
+                    mh,
+                    smh,
+                    mn,
+                    smn,
+                    dh,
+                    obj,
+                    ce,
+                    cr
+                };
 
             // ================= FILTERS =================
 
             if (!string.IsNullOrWhiteSpace(request.WorkCode))
-                query = query.Where(w => w.WorkCode.Contains(request.WorkCode));
+                query = query.Where(x => x.w.WorkCode.Contains(request.WorkCode));
 
             if (!string.IsNullOrWhiteSpace(request.WorkDesc))
-                query = query.Where(w => w.WorkDesc.Contains(request.WorkDesc));
+                query = query.Where(x => x.w.WorkDesc.Contains(request.WorkDesc));
 
             if (request.DivisionCode.HasValue)
-                query = query.Where(w => w.DivisionCode == request.DivisionCode.Value);
+                query = query.Where(x => x.w.DivisionCode == request.DivisionCode);
 
             if (!string.IsNullOrWhiteSpace(request.Status))
-                query = query.Where(w => w.Status == request.Status);
+                query = query.Where(x => x.w.Status == request.Status);
 
             if (!string.IsNullOrWhiteSpace(request.Nature))
-                query = query.Where(w => w.Nature == request.Nature);
+                query = query.Where(x => x.w.Nature == request.Nature);
 
             // ================= TOTAL COUNT =================
 
             var totalCount = await query.CountAsync(ct);
-
-            // ================= SORTING =================
-
-            query = ApplySorting(query, request.SortBy, request.SortDescending);
 
             // ================= PAGINATION =================
 
             var pageSize = Math.Min(request.PageSize <= 0 ? 10 : request.PageSize, 100);
 
             var items = await query
+                .OrderBy(x => x.w.WorkCode)
                 .Skip((request.PageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .Select(w => new GetWorkListResponseDto
+                .Select(x => new GetWorkListResponseDto
                 {
-                    WorkCode = w.WorkCode,
-                    WorkDesc = w.WorkDesc,
+                    WorkCode = x.w.WorkCode,
+                    WorkDesc = x.w.WorkDesc,
 
-                    DivisionCode = w.DivisionCode,
-                    DivisionDesc = w.Division != null ? w.Division.DivisionDesc : null,
+                    DivisionCode = x.w.DivisionCode,
+                    DivisionDesc = x.d != null ? x.d.DivisionDesc : null,
+                    DivSection = x.w.DivSection,
 
-                    DivSection = w.DivSection,
+                    MajorAccCode = x.w.MajorAccCode,
+                    MajorAccDesc = x.mh != null ? x.mh.MajorAccDesc : null,
 
-                    MajorAccCode = w.MajorAccCode,
-                    MajorAccDesc = w.MajorHead != null ? w.MajorHead.MajorAccDesc : null,
+                    SubMajorAccCode = x.w.SubMajorAccCode,
+                    SubMajorAccDesc = x.smh != null ? x.smh.SubMajorAccDesc : null,
 
-                    SubMajorAccCode = w.SubMajorAccCode,
-                    SubMajorAccDesc = w.SubMajorHead != null ? w.SubMajorHead.SubMajorAccDesc : null,
+                    MinorAccCode = x.w.MinorAccCode,
+                    MinorAccDesc = x.mn != null ? x.mn.MinorAccDesc : null,
 
-                    MinorAccCode = w.MinorAccCode,
-                    MinorAccDesc = w.MinorHead != null ? w.MinorHead.MinorAccDesc : null,
+                    SubMinorAccCode = x.w.SubMinorAccCode,
+                    SubMinorAccDesc = x.smn != null ? x.smn.SubMinorAccDesc : null,
 
-                    SubMinorAccCode = w.SubMinorAccCode,
-                    SubMinorAccDesc = w.SubMinorHead != null ? w.SubMinorHead.SubMinorAccDesc : null,
+                    DetailAccCode = x.w.DetailAccCode,
+                    DetailAccDesc = x.dh != null ? x.dh.DetailAccDesc : null,
 
-                    DetailAccCode = w.DetailAccCode,
-                    DetailAccDesc = w.DetailHead != null ? w.DetailHead.DetailAccDesc : null,
+                    ObjectAccCode = x.w.ObjectAccCode,
+                    ObjectAccDesc = x.obj != null ? x.obj.ObjectAccDesc : null,
 
-                    ObjectAccCode = w.ObjectAccCode,
-                    ObjectAccDesc = w.ObjectClassification != null ? w.ObjectClassification.ObjectAccDesc : null,
+                    FinYrStart = x.w.FinYrStart,
+                    FinYrEnd = x.w.FinYrEnd,
+                    SanctionNo = x.w.SanctionNo,
+                    SanctionDate = x.w.SanctionDate,
+                    DesignationCode = x.w.DesignationCode,
+                    EstimatedCost = x.w.EstimatedCost,
 
-                    FinYrStart = w.FinYrStart,
-                    FinYrEnd = w.FinYrEnd,
+                    Status = x.w.Status,
+                    Nature = x.w.Nature,
+                    RefWorkCode = x.w.RefWorkCode,
 
-                    SanctionNo = w.SanctionNo,
-                    SanctionDate = w.SanctionDate,
+                    UserCode = x.w.UserCode,
 
-                    DesignationCode = w.DesignationCode,
-                    //DesignationName = w.Designation != null ? w.Designation.DesignationName : null,
+                    CECode = x.w.CECode,
+                    CEName = x.ce != null ? x.ce.Name : null,
 
-                    EstimatedCost = w.EstimatedCost,
+                    CRCode = x.w.CRCode,
+                    CRName = x.cr != null ? x.cr.Name : null,
 
-                    Status = w.Status,
-                    Nature = w.Nature,
-                    RefWorkCode = w.RefWorkCode,
-
-                    UserCode = w.UserCode,
-                    CECode = w.CECode,
-                    CRCode = w.CRCode,
-                    OriginalBudget = w.OriginalBudget,
-                    RevisedBudget = w.RevisedBudget,
-                    ProposedBudget = w.ProposedBudget,
-                    Remarks = w.Remarks,
+                    OriginalBudget = x.w.OriginalBudget,
+                    RevisedBudget = x.w.RevisedBudget,
+                    ProposedBudget = x.w.ProposedBudget,
+                    Remarks = x.w.Remarks,
 
                     AccountCode =
-                        w.MajorAccCode + "-" +
-                        w.SubMajorAccCode + "-" +
-                        w.MinorAccCode + "-" +
-                        w.SubMinorAccCode + "-" +
-                        w.DetailAccCode + "-" +
-                        w.ObjectAccCode
+                        x.w.MajorAccCode + "-" +
+                        x.w.SubMajorAccCode + "-" +
+                        x.w.MinorAccCode + "-" +
+                        x.w.SubMinorAccCode + "-" +
+                        x.w.DetailAccCode + "-" +
+                        x.w.ObjectAccCode
                 })
                 .ToListAsync(ct);
 
@@ -127,7 +177,8 @@ namespace BBMB.BudgetService.Features.Works.GetList
                     PageSize = pageSize,
                     TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
                     HasPreviousPage = request.PageNumber > 1,
-                    HasNextPage = request.PageNumber < (int)Math.Ceiling(totalCount / (double)pageSize)
+                    HasNextPage = request.PageNumber <
+                                  (int)Math.Ceiling(totalCount / (double)pageSize)
                 }
             };
         }
