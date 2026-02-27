@@ -18,29 +18,47 @@ namespace BBMB.BudgetService.Features.Works.Create
 
         public async Task<Response> Handle(CreateWorkCommand request, CancellationToken ct)
         {
-            // Check for duplicate work code
-            var exists = await _context.Works.AsNoTracking()
-                .AnyAsync(w => w.WorkCode == request.dto.WorkCode, ct);
+            // ================= AUTO GENERATE WORK CODE =================
 
-            if (exists)
-                return new Response
+            var divisionCode = request.dto.DivisionCode;
+
+            // Get last work for this division
+            var lastWorkCode = await _context.Works
+                .Where(w => w.DivisionCode == divisionCode)
+                .OrderByDescending(w => w.WorkCode)
+                .Select(w => w.WorkCode)
+                .FirstOrDefaultAsync(ct);
+
+            int nextNumber = 1;
+
+            if (!string.IsNullOrEmpty(lastWorkCode))
+            {
+                // Extract numeric suffix (after division code)
+                var numericPart = lastWorkCode.Substring(divisionCode.ToString().Length);
+
+                if (int.TryParse(numericPart, out int lastNumber))
                 {
-                    IsSucced = false,
-                    Message = $"Work with code '{request.dto.WorkCode}' already exists"
-                };
+                    nextNumber = lastNumber + 1;
+                }
+            }
 
-            // Validate division exists
+            // Generate new WorkCode
+            var newWorkCode = $"{divisionCode}{nextNumber.ToString("D5")}";
+
+            request.dto.WorkCode = newWorkCode;
+
+            // ================= VALIDATIONS =================
+
             var divisionExists = await _context.Divisions.AsNoTracking()
-                .AnyAsync(d => d.DivisionCode == request.dto.DivisionCode, ct);
+                .AnyAsync(d => d.DivisionCode == divisionCode, ct);
 
             if (!divisionExists)
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Division with code '{request.dto.DivisionCode}' not found"
+                    Message = $"Division with code '{divisionCode}' not found"
                 };
 
-            // Validate major head exists
             var majorHeadExists = await _context.MajorHeads.AsNoTracking()
                 .AnyAsync(m => m.MajorAccCode == request.dto.MajorAccCode, ct);
 
@@ -51,7 +69,6 @@ namespace BBMB.BudgetService.Features.Works.Create
                     Message = $"Major account code '{request.dto.MajorAccCode}' not found"
                 };
 
-            // Validate sub-major head exists
             var subMajorHeadExists = await _context.SubMajorHeads.AsNoTracking()
                 .AnyAsync(s => s.MajorAccCode == request.dto.MajorAccCode &&
                               s.SubMajorAccCode == request.dto.SubMajorAccCode, ct);
@@ -60,15 +77,11 @@ namespace BBMB.BudgetService.Features.Works.Create
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Sub-major account code '{request.dto.SubMajorAccCode}' not found for major code '{request.dto.MajorAccCode}'"
+                    Message = $"Sub-major account code '{request.dto.SubMajorAccCode}' not found"
                 };
 
-            // Validate minor head exists
             var minorHeadExists = await _context.MinorHeads.AsNoTracking()
-                .AnyAsync(m => 
-                //m.MajorAccCode == request.dto.MajorAccCode &&
-                //              m.SubMajorAccCode == request.dto.SubMajorAccCode &&
-                              m.MinorAccCode == request.dto.MinorAccCode, ct);
+                .AnyAsync(m => m.MinorAccCode == request.dto.MinorAccCode, ct);
 
             if (!minorHeadExists)
                 return new Response
@@ -77,13 +90,9 @@ namespace BBMB.BudgetService.Features.Works.Create
                     Message = $"Minor account code '{request.dto.MinorAccCode}' not found"
                 };
 
-            // Validate sub-minor head exists
             var subMinorHeadExists = await _context.SubMinorHeads.AsNoTracking()
-                .AnyAsync(s => 
-                              //  s.MajorAccCode == request.dto.MajorAccCode &&
-                              //s.SubMajorAccCode == request.dto.SubMajorAccCode &&
-                              s.MinorAccCode == request.dto.MinorAccCode &&
-                              s.SubMinorAccCode == request.dto.SubMinorAccCode, ct);
+                .AnyAsync(s => s.MinorAccCode == request.dto.MinorAccCode &&
+                               s.SubMinorAccCode == request.dto.SubMinorAccCode, ct);
 
             if (!subMinorHeadExists)
                 return new Response
@@ -92,22 +101,6 @@ namespace BBMB.BudgetService.Features.Works.Create
                     Message = $"Sub-minor account code '{request.dto.SubMinorAccCode}' not found"
                 };
 
-            //// Validate detail head exists
-            //var detailHeadExists = await _context.DetailHeads
-            //    .AnyAsync(d => d.MajorAccCode == request.dto.MajorAccCode &&
-            //                  d.SubMajorAccCode == request.dto.SubMajorAccCode &&
-            //                  d.MinorAccCode == request.dto.MinorAccCode &&
-            //                  d.SubMinorAccCode == request.dto.SubMinorAccCode &&
-            //                  d.DetailAccCode == request.dto.DetailAccCode, ct);
-
-            //if (!detailHeadExists)
-            //    return new Response
-            //    {
-            //        IsSucced = false,
-            //        Message = $"Detail account code '{request.dto.DetailAccCode}' not found"
-            //    };
-
-            // Validate object classification exists
             var objectClassExists = await _context.ObjectClassifications.AsNoTracking()
                 .AnyAsync(o => o.ObjectAccCode == request.dto.ObjectAccCode, ct);
 
@@ -118,7 +111,6 @@ namespace BBMB.BudgetService.Features.Works.Create
                     Message = $"Object account code '{request.dto.ObjectAccCode}' not found"
                 };
 
-            // Validate designation if provided
             if (!string.IsNullOrEmpty(request.dto.DesignationCode))
             {
                 var designationExists = await _context.Designations.AsNoTracking()
@@ -132,16 +124,17 @@ namespace BBMB.BudgetService.Features.Works.Create
                     };
             }
 
-            // Map DTO to entity and create
+            // ================= CREATE WORK =================
+
             var work = request.dto.Adapt<Work>();
 
-           await _context.Works.AddAsync(work);
+            await _context.Works.AddAsync(work, ct);
             await _context.SaveChangesAsync(ct);
 
             return new Response
             {
                 IsSucced = true,
-                Message = "Work created successfully"
+                Message = $"Work created successfully with WorkCode {newWorkCode}"
             };
         }
     }
