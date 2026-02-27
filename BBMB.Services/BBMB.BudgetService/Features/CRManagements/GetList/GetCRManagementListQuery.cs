@@ -1,4 +1,5 @@
 ﻿using BBMB.BudgetService.Features.CRManagements.GetList.Dtos;
+using BBMB.BudgetService.Shared.RequestDTOs;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 
@@ -13,4 +14,7 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
         string? ceCode,
         bool? Status
     ) : IRequest<PagedResponse<GetCRManagementListResponseDto>>;
+
+    public sealed record GetCRManagementListById(GetByStringIdRequestDto RequestDto
+    ) : IRequest<List<GetCRManagementListResponseDto>>;
 }

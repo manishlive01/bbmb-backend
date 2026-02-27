@@ -1,5 +1,6 @@
 ﻿using BBMB.BudgetService.Features.CRManagements.GetList.Dtos;
 using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.RequestDTOs;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +36,22 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
             .WithName("GetCRManagementList")
             .WithTags("CRManagement")
             .Produces<PagedResponse<GetCRManagementListResponseDto>>(StatusCodes.Status200OK);
+
+            app.MapPost("/api/List-By-CRCode", async ( 
+                IMediator mediator,
+                [FromBody]GetByStringIdRequestDto requestDto
+                 ) =>
+            {
+                var query = new GetCRManagementListById(requestDto
+                    );
+
+                var result = await mediator.Send(query);
+                return Results.Ok(result);
+            })
+            .WithName("GetCRManagementListById")
+            .WithDescription("Get CRManagement list by Circle code")
+            .WithTags("CRManagement")
+            .Produces<List<GetCRManagementListResponseDto>>(StatusCodes.Status200OK);
         }
     }
 }
