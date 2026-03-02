@@ -20,8 +20,8 @@ namespace BBMB.BudgetService.Features.Works.Create
             RuleFor(x => x.dto.DivisionCode)
                 .NotEmpty().WithMessage("Division code is required.");
 
-            RuleFor(x => x.dto.DivSection)
-                .NotEmpty().WithMessage("Division section is required.");
+            //RuleFor(x => x.dto.DivSection)
+            //    .NotEmpty().WithMessage("Division section is required.");
 
             RuleFor(x => x.dto.MajorAccCode)
                 .NotEmpty().WithMessage("Major account code is required.")
