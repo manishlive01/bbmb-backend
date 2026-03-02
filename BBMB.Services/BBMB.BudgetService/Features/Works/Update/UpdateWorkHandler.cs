@@ -129,7 +129,8 @@ namespace BBMB.BudgetService.Features.Works.Update
                     };
             }
 
-            // Update fields
+            // ================= UPDATE ALL FIELDS =================
+
             work.WorkDesc = request.dto.WorkDesc;
             work.DivisionCode = request.dto.DivisionCode;
             work.DivSection = request.dto.DivSection;
@@ -139,6 +140,15 @@ namespace BBMB.BudgetService.Features.Works.Update
             work.SubMinorAccCode = request.dto.SubMinorAccCode;
             work.DetailAccCode = request.dto.DetailAccCode;
             work.ObjectAccCode = request.dto.ObjectAccCode;
+
+            work.CECode = request.dto.CECode;
+            work.CRCode = request.dto.CRCode;
+
+            work.OriginalBudget = request.dto.OriginalBudget ?? string.Empty;
+            work.RevisedBudget = request.dto.RevisedBudget ?? string.Empty;
+            work.ProposedBudget = request.dto.ProposedBudget ?? string.Empty;
+            work.Remarks = request.dto.Remarks ?? string.Empty;
+
             work.UserCode = request.dto.UserCode;
             work.FinYrStart = request.dto.FinYrStart;
             work.FinYrEnd = request.dto.FinYrEnd;
@@ -149,6 +159,7 @@ namespace BBMB.BudgetService.Features.Works.Update
             work.Status = request.dto.Status;
             work.Nature = request.dto.Nature;
             work.RefWorkCode = request.dto.RefWorkCode;
+
 
             await _context.SaveChangesAsync(ct);
 

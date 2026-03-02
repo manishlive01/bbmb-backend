@@ -2,6 +2,7 @@ namespace BBMB.BudgetService.Features.Works.Update.Dtos
 {
     public class UpdateWorkDto
     {
+        public string WorkCode { get; set; } = string.Empty;
         public string WorkDesc { get; set; } = string.Empty;
         public int DivisionCode { get; set; }
         public int DivSection { get; set; }
@@ -21,5 +22,11 @@ namespace BBMB.BudgetService.Features.Works.Update.Dtos
         public string? Status { get; set; }
         public string? Nature { get; set; }
         public string? RefWorkCode { get; set; }
+        public string CECode { get; set; }
+        public string CRCode { get; set; }
+        public string OriginalBudget { get; set; } = string.Empty;
+        public string RevisedBudget { get; set; } = string.Empty;
+        public string ProposedBudget { get; set; } = string.Empty;
+        public string Remarks { get; set; } = string.Empty;
     }
 }

@@ -44,14 +44,11 @@ namespace BBMB.BudgetService.Features.BulkUploads
             if (string.IsNullOrWhiteSpace(request.uploadType))
                 return new Response { IsSucced = false, Message = "UploadType is required" };
 
-            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-
             try
             {
                 using var stream = new MemoryStream();
                 await request.File.CopyToAsync(stream, cancellationToken);
 
-                // Required for EPPlus (.NET 8/9/10)
                 ExcelPackage.License.SetNonCommercialPersonal("BBMB");
 
                 using var package = new ExcelPackage(stream);
@@ -66,66 +63,23 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 var type = request.uploadType.Trim().ToLower();
 
-                Response result;
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
-                switch (type)
+                Response result = type switch
                 {
-                    case "majormaster":
-                        result = await UploadMajorMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "submajormaster":
-                        result = await UploadSubMajorMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "minormaster":
-                        result = await UploadMinorMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "subminormaster":
-                        result = await UploadSubMinorMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "detailmaster":
-                        result = await UploadDetailMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "objectmaster":
-                        result = await UploadObjectMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "headofaccountmaster":
-                        result = await UploadHeadOfAccountMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "cemaster":
-                        result = await UploadCEManagementMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "circlemaster":
-                        result = await UploadCRManagementMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "divisionmaster":
-                        result = await UploadDivisionMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    case "divisionMaster":
-                        result = await UploadWorkMaster(worksheet, rowCount, cancellationToken);
-                        break;
-
-                    //case "divisionMaster":
-                    //    result = await UploadDivisionMaster(worksheet, rowCount, cancellationToken);
-                    //    break;
-
-
-                    default:
-                        return new Response
-                        {
-                            IsSucced = false,
-                            Message = "Invalid UploadType"
-                        };
-                }
+                    "majormaster" => await UploadMajorMaster(worksheet, rowCount, cancellationToken),
+                    "submajormaster" => await UploadSubMajorMaster(worksheet, rowCount, cancellationToken),
+                    "minormaster" => await UploadMinorMaster(worksheet, rowCount, cancellationToken),
+                    "subminormaster" => await UploadSubMinorMaster(worksheet, rowCount, cancellationToken),
+                    "detailmaster" => await UploadDetailMaster(worksheet, rowCount, cancellationToken),
+                    "objectmaster" => await UploadObjectMaster(worksheet, rowCount, cancellationToken),
+                    "headofaccountmaster" => await UploadHeadOfAccountMaster(worksheet, rowCount, cancellationToken),
+                    "cemaster" => await UploadCEManagementMaster(worksheet, rowCount, cancellationToken),
+                    "circlemaster" => await UploadCRManagementMaster(worksheet, rowCount, cancellationToken),
+                    "divisionmaster" => await UploadDivisionMaster(worksheet, rowCount, cancellationToken),
+                    "workmaster" => await UploadWorkMaster(worksheet, rowCount, cancellationToken),
+                    _ => new Response { IsSucced = false, Message = "Invalid UploadType" }
+                };
 
                 if (!result.IsSucced)
                 {
@@ -134,13 +88,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 }
 
                 await transaction.CommitAsync(cancellationToken);
-
                 return result;
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync(cancellationToken);
-
                 return new Response
                 {
                     IsSucced = false,
@@ -152,35 +103,98 @@ namespace BBMB.BudgetService.Features.BulkUploads
         // ============================================================
         // MAJOR HEAD
         // ============================================================
+        //    private async Task<Response> UploadMajorMaster(
+        //ExcelWorksheet worksheet,
+        //int rowCount,
+        //CancellationToken cancellationToken)
+        //    {
+        //        var list = new List<MajorHead>();
+        //        var duplicateCheck = new HashSet<string>();
+
+        //        for (int row = 2; row <= rowCount; row++)
+        //        {
+        //            var code = worksheet.Cells[row, 1].Text.Trim();
+        //            var desc = worksheet.Cells[row, 2].Text.Trim();
+
+        //            if (code.Length != 4)
+        //                return new Response
+        //                {
+        //                    IsSucced = false,
+        //                    Message = $"Invalid Major code at row {row}"
+        //                };
+
+        //            if (!duplicateCheck.Add(code))
+        //                return new Response
+        //                {
+        //                    IsSucced = false,
+        //                    Message = $"Duplicate Major code in Excel: {code}"
+        //                };
+
+        //            if (await _context.MajorHeads.AsNoTracking()
+        //                .AnyAsync(x => x.MajorAccCode == code, cancellationToken))
+        //                return new Response
+        //                {
+        //                    IsSucced = false,
+        //                    Message = $"Major already exists: {code}"
+        //                };
+
+        //            list.Add(new MajorHead
+        //            {
+        //                MajorAccCode = code,
+        //                MajorAccDesc = desc,
+        //                ModificationDate = DateTime.UtcNow,
+        //                UserCode = "SYSTEM"
+        //            });
+        //        }
+
+        //        await _context.MajorHeads.AddRangeAsync(list, cancellationToken);
+        //        await _context.SaveChangesAsync(cancellationToken);
+
+        //        return new Response
+        //        {
+        //            IsSucced = true,
+        //            Message = "Major master uploaded successfully"
+        //        };
+        //    }
+
         private async Task<Response> UploadMajorMaster(
     ExcelWorksheet worksheet,
     int rowCount,
     CancellationToken cancellationToken)
         {
             var list = new List<MajorHead>();
-            var duplicateCheck = new HashSet<string>();
+            var excelDuplicateCheck = new HashSet<string>();
+
+            // 🔥 ONE DB HIT ONLY
+            var existingCodes = await _context.MajorHeads
+                .AsNoTracking()
+                .Select(x => x.MajorAccCode)
+                .ToListAsync(cancellationToken);
+
+            var dbSet = new HashSet<string>(existingCodes);
 
             for (int row = 2; row <= rowCount; row++)
             {
                 var code = worksheet.Cells[row, 1].Text.Trim();
                 var desc = worksheet.Cells[row, 2].Text.Trim();
 
-                if (code.Length != 4)
+                if (string.IsNullOrWhiteSpace(code) || code.Length != 4)
                     return new Response
                     {
                         IsSucced = false,
                         Message = $"Invalid Major code at row {row}"
                     };
 
-                if (!duplicateCheck.Add(code))
+                // Excel duplicate check
+                if (!excelDuplicateCheck.Add(code))
                     return new Response
                     {
                         IsSucced = false,
                         Message = $"Duplicate Major code in Excel: {code}"
                     };
 
-                if (await _context.MajorHeads.AsNoTracking()
-                    .AnyAsync(x => x.MajorAccCode == code, cancellationToken))
+                // DB duplicate check (memory)
+                if (dbSet.Contains(code))
                     return new Response
                     {
                         IsSucced = false,
@@ -196,13 +210,27 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            await _context.MajorHeads.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 BATCH INSERT (Safe for Lakhs)
+            const int batchSize = 5000;
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.MajorHeads.AddRangeAsync(batch, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
             return new Response
             {
                 IsSucced = true,
-                Message = "Major master uploaded successfully"
+                Message = $"{list.Count} Major records uploaded successfully"
             };
         }
 
@@ -210,27 +238,27 @@ namespace BBMB.BudgetService.Features.BulkUploads
         // SUB MAJOR HEAD
         // ============================================================
         private async Task<Response> UploadSubMajorMaster(
-     ExcelWorksheet worksheet,
-     int rowCount,
-     CancellationToken cancellationToken)
+    ExcelWorksheet worksheet,
+    int rowCount,
+    CancellationToken cancellationToken)
         {
             var list = new List<SubMajorHead>();
             var excelDuplicateCheck = new HashSet<string>();
 
-            // 🔥 Load existing Major codes
-            var existingMajors = await _context.MajorHeads.AsNoTracking()
-                .Select(x => x.MajorAccCode)
-                .ToListAsync(cancellationToken);
+            // 🔥 Load existing Major codes (ONE DB HIT)
+            var majorSet = new HashSet<string>(
+                await _context.MajorHeads
+                    .AsNoTracking()
+                    .Select(x => x.MajorAccCode)
+                    .ToListAsync(cancellationToken));
 
-            var majorSet = new HashSet<string>(existingMajors);
-
-            // 🔥 Load existing SubMajor composite keys
-            var existingSubMajors = await _context.SubMajorHeads.AsNoTracking()
-                .Select(x => new { x.MajorAccCode, x.SubMajorAccCode })
-                .ToListAsync(cancellationToken);
-
-            var subMajorSet = new HashSet<(string, string)>(
-                existingSubMajors.Select(x => (x.MajorAccCode, x.SubMajorAccCode)));
+            // 🔥 Load existing SubMajor composite keys (ONE DB HIT)
+            var subMajorSet = new HashSet<(string Major, string SubMajor)>(
+                (await _context.SubMajorHeads
+                    .AsNoTracking()
+                    .Select(x => new { x.MajorAccCode, x.SubMajorAccCode })
+                    .ToListAsync(cancellationToken))
+                .Select(x => (x.MajorAccCode, x.SubMajorAccCode)));
 
             for (int row = 2; row <= rowCount; row++)
             {
@@ -238,26 +266,60 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 var subMajor = worksheet.Cells[row, 2].Text?.Trim();
                 var desc = worksheet.Cells[row, 3].Text?.Trim();
 
+                // 🔹 Required check
                 if (string.IsNullOrWhiteSpace(major) ||
                     string.IsNullOrWhiteSpace(subMajor) ||
                     string.IsNullOrWhiteSpace(desc))
-                    return new Response { IsSucced = false, Message = $"Empty data at row {row}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Empty data at row {row}"
+                    };
+                }
 
+                // 🔹 Length validation
                 if (major.Length != 4 || subMajor.Length != 2)
-                    return new Response { IsSucced = false, Message = $"Invalid SubMajor format at row {row}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Invalid format at row {row}. Major must be 4 & SubMajor must be 2 characters."
+                    };
+                }
 
-                // Excel duplicate check
+                var compositeKey = (major, subMajor);
                 var excelKey = $"{major}-{subMajor}";
+
+                // 🔹 Excel duplicate check
                 if (!excelDuplicateCheck.Add(excelKey))
-                    return new Response { IsSucced = false, Message = $"Duplicate SubMajor in Excel: {excelKey}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Duplicate SubMajor in Excel: {excelKey}"
+                    };
+                }
 
-                // Major FK check
+                // 🔹 FK check
                 if (!majorSet.Contains(major))
-                    return new Response { IsSucced = false, Message = $"Major does not exist: {major}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Major does not exist: {major}"
+                    };
+                }
 
-                // DB duplicate check (composite)
-                if (subMajorSet.Contains((major, subMajor)))
-                    return new Response { IsSucced = false, Message = $"SubMajor already exists: {major}-{subMajor}" };
+                // 🔹 DB duplicate check
+                if (subMajorSet.Contains(compositeKey))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"SubMajor already exists: {excelKey}"
+                    };
+                }
 
                 list.Add(new SubMajorHead
                 {
@@ -269,8 +331,22 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            await _context.SubMajorHeads.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 BATCH INSERT (Scalable)
+            const int batchSize = 5000;
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.SubMajorHeads.AddRangeAsync(batch, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
             return new Response
             {
@@ -278,7 +354,6 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 Message = $"{list.Count} SubMajor records uploaded successfully"
             };
         }
-
         // ============================================================
         // MINOR HEAD
         // ============================================================
@@ -290,29 +365,58 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var list = new List<MinorHead>();
             var excelDuplicateCheck = new HashSet<string>();
 
-            var existingMinors = await _context.MinorHeads.AsNoTracking()
-                .Select(x => x.MinorAccCode)
-                .ToListAsync(cancellationToken);
-
-            var existingSet = new HashSet<string>(existingMinors);
+            // 🔥 ONE DB HIT
+            var existingSet = new HashSet<string>(
+                await _context.MinorHeads
+                    .AsNoTracking()
+                    .Select(x => x.MinorAccCode)
+                    .ToListAsync(cancellationToken));
 
             for (int row = 2; row <= rowCount; row++)
             {
                 var code = worksheet.Cells[row, 1].Text?.Trim();
                 var desc = worksheet.Cells[row, 2].Text?.Trim();
 
+                // 🔹 Required validation
                 if (string.IsNullOrWhiteSpace(code) ||
                     string.IsNullOrWhiteSpace(desc))
-                    return new Response { IsSucced = false, Message = $"Empty Minor at row {row}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Empty Minor at row {row}"
+                    };
+                }
 
+                // 🔹 Format validation
                 if (code.Length != 3 || !code.All(char.IsDigit))
-                    return new Response { IsSucced = false, Message = $"Invalid Minor at row {row}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Invalid Minor at row {row}. Must be 3 digit numeric."
+                    };
+                }
 
+                // 🔹 Excel duplicate check
                 if (!excelDuplicateCheck.Add(code))
-                    return new Response { IsSucced = false, Message = $"Duplicate Minor in Excel: {code}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Duplicate Minor in Excel: {code}"
+                    };
+                }
 
+                // 🔹 DB duplicate check
                 if (existingSet.Contains(code))
-                    return new Response { IsSucced = false, Message = $"Minor already exists: {code}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Minor already exists: {code}"
+                    };
+                }
 
                 list.Add(new MinorHead
                 {
@@ -323,15 +427,29 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            await _context.MinorHeads.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 BATCH INSERT (Scalable)
+            const int batchSize = 5000;
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.MinorHeads.AddRangeAsync(batch, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
             return new Response
             {
                 IsSucced = true,
                 Message = $"{list.Count} Minor records uploaded successfully"
             };
         }
-
         // ============================================================
         // SUB MINOR HEAD
         // ============================================================
@@ -343,20 +461,20 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var list = new List<SubMinorHead>();
             var excelDuplicateCheck = new HashSet<string>();
 
-            // 🔥 Load existing Minor codes
-            var existingMinors = await _context.MinorHeads.AsNoTracking()
-                .Select(x => x.MinorAccCode)
-                .ToListAsync(cancellationToken);
+            // 🔥 ONE DB HIT - Load existing Minor codes
+            var minorSet = new HashSet<string>(
+                await _context.MinorHeads
+                    .AsNoTracking()
+                    .Select(x => x.MinorAccCode)
+                    .ToListAsync(cancellationToken));
 
-            var minorSet = new HashSet<string>(existingMinors);
-
-            // 🔥 Load existing SubMinor composite keys
-            var existingSubMinors = await _context.SubMinorHeads.AsNoTracking()
-                .Select(x => new { x.MinorAccCode, x.SubMinorAccCode })
-                .ToListAsync(cancellationToken);
-
-            var subMinorSet = new HashSet<(string, string)>(
-                existingSubMinors.Select(x => (x.MinorAccCode, x.SubMinorAccCode)));
+            // 🔥 ONE DB HIT - Load existing SubMinor composite keys
+            var subMinorSet = new HashSet<(string Minor, string SubMinor)>(
+                (await _context.SubMinorHeads
+                    .AsNoTracking()
+                    .Select(x => new { x.MinorAccCode, x.SubMinorAccCode })
+                    .ToListAsync(cancellationToken))
+                .Select(x => (x.MinorAccCode, x.SubMinorAccCode)));
 
             for (int row = 2; row <= rowCount; row++)
             {
@@ -364,26 +482,61 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 var subMinor = worksheet.Cells[row, 2].Text?.Trim();
                 var desc = worksheet.Cells[row, 3].Text?.Trim();
 
+                // 🔹 Required validation
                 if (string.IsNullOrWhiteSpace(minor) ||
                     string.IsNullOrWhiteSpace(subMinor) ||
                     string.IsNullOrWhiteSpace(desc))
-                    return new Response { IsSucced = false, Message = $"Empty SubMinor at row {row}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Empty SubMinor at row {row}"
+                    };
+                }
 
-                if (minor.Length != 3 || subMinor.Length != 2)
-                    return new Response { IsSucced = false, Message = $"Invalid SubMinor format at row {row}" };
+                // 🔹 Format validation
+                if (minor.Length != 3 || !minor.All(char.IsDigit) ||
+                    subMinor.Length != 2 || !subMinor.All(char.IsDigit))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Invalid format at row {row}. Minor must be 3 digit & SubMinor must be 2 digit."
+                    };
+                }
 
-                // Excel duplicate check
+                var compositeKey = (minor, subMinor);
                 var excelKey = $"{minor}-{subMinor}";
+
+                // 🔹 Excel duplicate check
                 if (!excelDuplicateCheck.Add(excelKey))
-                    return new Response { IsSucced = false, Message = $"Duplicate SubMinor in Excel: {excelKey}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Duplicate SubMinor in Excel: {excelKey}"
+                    };
+                }
 
-                // FK check
+                // 🔹 FK check
                 if (!minorSet.Contains(minor))
-                    return new Response { IsSucced = false, Message = $"Minor does not exist: {minor}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Minor does not exist: {minor}"
+                    };
+                }
 
-                // DB duplicate check (composite safe)
-                if (subMinorSet.Contains((minor, subMinor)))
-                    return new Response { IsSucced = false, Message = $"SubMinor already exists: {minor}-{subMinor}" };
+                // 🔹 DB duplicate check
+                if (subMinorSet.Contains(compositeKey))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"SubMinor already exists: {excelKey}"
+                    };
+                }
 
                 list.Add(new SubMinorHead
                 {
@@ -395,8 +548,22 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            await _context.SubMinorHeads.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 BATCH INSERT (Scalable)
+            const int batchSize = 5000;
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.SubMinorHeads.AddRangeAsync(batch, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
             return new Response
             {
@@ -409,22 +576,65 @@ namespace BBMB.BudgetService.Features.BulkUploads
         // DETAIL HEAD
         // ============================================================
         private async Task<Response> UploadDetailMaster(
-    ExcelWorksheet worksheet,
-    int rowCount,
-    CancellationToken cancellationToken)
+      ExcelWorksheet worksheet,
+      int rowCount,
+      CancellationToken cancellationToken)
         {
             var list = new List<DetailHead>();
+            var excelDuplicateCheck = new HashSet<string>();
+
+            // 🔥 ONE DB HIT – Load existing Detail codes
+            var existingSet = new HashSet<string>(
+                await _context.DetailHeads
+                    .AsNoTracking()
+                    .Select(x => x.DetailAccCode)
+                    .ToListAsync(cancellationToken));
 
             for (int row = 2; row <= rowCount; row++)
             {
-                var code = worksheet.Cells[row, 1].Text.Trim();
-                var desc = worksheet.Cells[row, 2].Text.Trim();
+                var code = worksheet.Cells[row, 1].Text?.Trim();
+                var desc = worksheet.Cells[row, 2].Text?.Trim();
 
-                if (code.Length != 3)
-                    return new Response { IsSucced = false, Message = $"Invalid Detail code at row {row}" };
+                // 🔹 Required validation
+                if (string.IsNullOrWhiteSpace(code) ||
+                    string.IsNullOrWhiteSpace(desc))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Empty Detail at row {row}"
+                    };
+                }
 
-                if (await _context.DetailHeads.AsNoTracking().AnyAsync(x => x.DetailAccCode == code, cancellationToken))
-                    return new Response { IsSucced = false, Message = $"Detail already exists: {code}" };
+                // 🔹 Format validation
+                if (code.Length != 3 || !code.All(char.IsDigit))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Invalid Detail code at row {row}. Must be 3 digit numeric."
+                    };
+                }
+
+                // 🔹 Excel duplicate check
+                if (!excelDuplicateCheck.Add(code))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Duplicate Detail in Excel: {code}"
+                    };
+                }
+
+                // 🔹 DB duplicate check
+                if (existingSet.Contains(code))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Detail already exists: {code}"
+                    };
+                }
 
                 list.Add(new DetailHead
                 {
@@ -435,10 +645,28 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            await _context.DetailHeads.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 BATCH INSERT (Scalable for lakhs)
+            const int batchSize = 5000;
 
-            return new Response { IsSucced = true, Message = "Detail master uploaded successfully" };
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.DetailHeads.AddRangeAsync(batch, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
+            return new Response
+            {
+                IsSucced = true,
+                Message = $"{list.Count} Detail records uploaded successfully"
+            };
         }
 
 
@@ -451,21 +679,21 @@ namespace BBMB.BudgetService.Features.BulkUploads
     CancellationToken cancellationToken)
         {
             var list = new List<ObjectClassification>();
-            var duplicateExcelCheck = new HashSet<string>();
+            var excelDuplicateCheck = new HashSet<string>();
 
-            // 🔥 Load existing object codes once (Performance optimized)
-            var existingCodes = await _context.ObjectClassifications.AsNoTracking()
-                .Select(x => x.ObjectAccCode)
-                .ToListAsync(cancellationToken);
-
-            var existingSet = new HashSet<string>(existingCodes);
+            // 🔥 ONE DB HIT – Load existing object codes
+            var existingSet = new HashSet<string>(
+                await _context.ObjectClassifications
+                    .AsNoTracking()
+                    .Select(x => x.ObjectAccCode)
+                    .ToListAsync(cancellationToken));
 
             for (int row = 2; row <= rowCount; row++)
             {
                 var code = worksheet.Cells[row, 1].Text?.Trim();
                 var desc = worksheet.Cells[row, 2].Text?.Trim();
 
-                // ================= EMPTY CHECK =================
+                // 🔹 Required validation
                 if (string.IsNullOrWhiteSpace(code) ||
                     string.IsNullOrWhiteSpace(desc))
                 {
@@ -476,18 +704,18 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= LENGTH & NUMERIC CHECK =================
+                // 🔹 Format validation
                 if (code.Length != 3 || !code.All(char.IsDigit))
                 {
                     return new Response
                     {
                         IsSucced = false,
-                        Message = $"Invalid Object code at row {row}. Must be 3 digits."
+                        Message = $"Invalid Object code at row {row}. Must be 3 digit numeric."
                     };
                 }
 
-                // ================= DUPLICATE CHECK (EXCEL) =================
-                if (!duplicateExcelCheck.Add(code))
+                // 🔹 Excel duplicate check
+                if (!excelDuplicateCheck.Add(code))
                 {
                     return new Response
                     {
@@ -496,7 +724,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= DUPLICATE CHECK (DATABASE) =================
+                // 🔹 DB duplicate check
                 if (existingSet.Contains(code))
                 {
                     return new Response
@@ -515,9 +743,22 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            // ================= BULK INSERT =================
-            await _context.ObjectClassifications.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 BATCH INSERT (Scalable)
+            const int batchSize = 5000;
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.ObjectClassifications.AddRangeAsync(batch, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
             return new Response
             {
@@ -537,27 +778,50 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var list = new List<HeadOfAccount>();
             var excelDuplicateCheck = new HashSet<string>();
 
-            var majors = new HashSet<string>(
-                await _context.MajorHeads.AsNoTracking().Select(x => x.MajorAccCode).ToListAsync(cancellationToken));
+            // 🔥 Preload all required master data (single DB hits)
 
-            var subMajors = new HashSet<string>(
-                await _context.SubMajorHeads.AsNoTracking()
-                    .Select(x => x.MajorAccCode + x.SubMajorAccCode)
+            var majors = new HashSet<string>(
+                await _context.MajorHeads.AsNoTracking()
+                    .Select(x => x.MajorAccCode)
                     .ToListAsync(cancellationToken));
+
+            var subMajors = new HashSet<(string Major, string SubMajor)>(
+                (await _context.SubMajorHeads.AsNoTracking()
+                    .Select(x => new { x.MajorAccCode, x.SubMajorAccCode })
+                    .ToListAsync(cancellationToken))
+                .Select(x => (x.MajorAccCode, x.SubMajorAccCode)));
 
             var minors = new HashSet<string>(
-                await _context.MinorHeads.AsNoTracking().Select(x => x.MinorAccCode).ToListAsync(cancellationToken));
-
-            var subMinors = new HashSet<string>(
-                await _context.SubMinorHeads.AsNoTracking()
-                    .Select(x => x.MinorAccCode + x.SubMinorAccCode)
+                await _context.MinorHeads.AsNoTracking()
+                    .Select(x => x.MinorAccCode)
                     .ToListAsync(cancellationToken));
 
+            var subMinors = new HashSet<(string Minor, string SubMinor)>(
+                (await _context.SubMinorHeads.AsNoTracking()
+                    .Select(x => new { x.MinorAccCode, x.SubMinorAccCode })
+                    .ToListAsync(cancellationToken))
+                .Select(x => (x.MinorAccCode, x.SubMinorAccCode)));
+
             var details = new HashSet<string>(
-                await _context.DetailHeads.AsNoTracking().Select(x => x.DetailAccCode).ToListAsync(cancellationToken));
+                await _context.DetailHeads.AsNoTracking()
+                    .Select(x => x.DetailAccCode)
+                    .ToListAsync(cancellationToken));
 
             var objects = new HashSet<string>(
-                await _context.ObjectClassifications.AsNoTracking().Select(x => x.ObjectAccCode).ToListAsync(cancellationToken));
+                await _context.ObjectClassifications.AsNoTracking()
+                    .Select(x => x.ObjectAccCode)
+                    .ToListAsync(cancellationToken));
+
+            var existingHoaSet = new HashSet<string>(
+                await _context.HeadOfAccounts.AsNoTracking()
+                    .Select(x =>
+                        x.MajorAccCode +
+                        x.SubMajorAccCode +
+                        x.MinorAccCode +
+                        x.SubMinorAccCode +
+                        x.DetailAccCode +
+                        x.ObjectAccCode)
+                    .ToListAsync(cancellationToken));
 
             for (int row = 2; row <= rowCount; row++)
             {
@@ -566,13 +830,40 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 if (string.IsNullOrWhiteSpace(fullCode) ||
                     string.IsNullOrWhiteSpace(desc))
-                    return new Response { IsSucced = false, Message = $"Empty HeadOfAccount at row {row}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Empty HeadOfAccount at row {row}"
+                    };
+                }
 
                 if (fullCode.Length != 17 || !fullCode.All(char.IsDigit))
-                    return new Response { IsSucced = false, Message = $"Invalid 17 digit code at row {row}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Invalid 17 digit code at row {row}"
+                    };
+                }
 
                 if (!excelDuplicateCheck.Add(fullCode))
-                    return new Response { IsSucced = false, Message = $"Duplicate in Excel: {fullCode}" };
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Duplicate in Excel: {fullCode}"
+                    };
+                }
+
+                if (existingHoaSet.Contains(fullCode))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"HeadOfAccount already exists: {fullCode}"
+                    };
+                }
 
                 var major = fullCode.Substring(0, 4);
                 var subMajor = fullCode.Substring(4, 2);
@@ -581,12 +872,59 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 var detail = fullCode.Substring(11, 3);
                 var obj = fullCode.Substring(14, 3);
 
-                if (!majors.Contains(major)) return new Response { IsSucced = false, Message = $"Major missing: {major}" };
-                if (!subMajors.Contains(major + subMajor)) return new Response { IsSucced = false, Message = $"SubMajor missing: {major}{subMajor}" };
-                if (!minors.Contains(minor)) return new Response { IsSucced = false, Message = $"Minor missing: {minor}" };
-                if (!subMinors.Contains(minor + subMinor)) return new Response { IsSucced = false, Message = $"SubMinor missing: {minor}{subMinor}" };
-                if (!details.Contains(detail)) return new Response { IsSucced = false, Message = $"Detail missing: {detail}" };
-                if (!objects.Contains(obj)) return new Response { IsSucced = false, Message = $"Object missing: {obj}" };
+                if (!majors.Contains(major))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Major missing: {major}"
+                    };
+                }
+
+                if (!subMajors.Contains((major, subMajor)))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"SubMajor missing: {major}{subMajor}"
+                    };
+                }
+
+                if (!minors.Contains(minor))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Minor missing: {minor}"
+                    };
+                }
+
+                if (!subMinors.Contains((minor, subMinor)))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"SubMinor missing: {minor}{subMinor}"
+                    };
+                }
+
+                if (!details.Contains(detail))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Detail missing: {detail}"
+                    };
+                }
+
+                if (!objects.Contains(obj))
+                {
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = $"Object missing: {obj}"
+                    };
+                }
 
                 list.Add(new HeadOfAccount
                 {
@@ -608,8 +946,23 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            await _context.HeadOfAccounts.AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 Batch Insert
+            const int batchSize = 5000;
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.HeadOfAccounts.AddRangeAsync(batch, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
             return new Response
             {
                 IsSucced = true,
@@ -628,19 +981,19 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var list = new List<CEManagement>();
             var duplicateExcelCheck = new HashSet<string>();
 
-            // 🔥 Load existing CE codes once
-            var existingCECodes = await _context.Set<CEManagement>().AsNoTracking()
-                .Select(x => x.CECode)
-                .ToListAsync(cancellationToken);
+            // 🔥 ONE DB HIT – Existing CE Codes
+            var existingSet = new HashSet<string>(
+                await _context.Set<CEManagement>()
+                    .AsNoTracking()
+                    .Select(x => x.CECode)
+                    .ToListAsync(cancellationToken));
 
-            var existingSet = new HashSet<string>(existingCECodes);
-
-            // 🔥 Load existing Project codes once (FK validation)
-            var existingProjects = await _context.Set<Project>().AsNoTracking()
-                .Select(x => x.ProjCode)
-                .ToListAsync(cancellationToken);
-
-            var projectSet = new HashSet<string>(existingProjects);
+            // 🔥 ONE DB HIT – Existing Project Codes (FK validation)
+            var projectSet = new HashSet<string>(
+                await _context.Set<Project>()
+                    .AsNoTracking()
+                    .Select(x => x.ProjCode)
+                    .ToListAsync(cancellationToken));
 
             for (int row = 2; row <= rowCount; row++)
             {
@@ -650,7 +1003,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 var desc = worksheet.Cells[row, 4].Text?.Trim();
                 var location = worksheet.Cells[row, 5].Text?.Trim();
 
-                // ================= EMPTY CHECK =================
+                // 🔹 Required field validation
                 if (string.IsNullOrWhiteSpace(ceCode) ||
                     string.IsNullOrWhiteSpace(name) ||
                     string.IsNullOrWhiteSpace(projectCode))
@@ -662,7 +1015,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= DUPLICATE CHECK (EXCEL) =================
+                // 🔹 Excel duplicate check
                 if (!duplicateExcelCheck.Add(ceCode))
                 {
                     return new Response
@@ -672,7 +1025,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= DUPLICATE CHECK (DATABASE) =================
+                // 🔹 DB duplicate check
                 if (existingSet.Contains(ceCode))
                 {
                     return new Response
@@ -682,7 +1035,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= FK CHECK =================
+                // 🔹 FK check
                 if (!projectSet.Contains(projectCode))
                 {
                     return new Response
@@ -705,9 +1058,25 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            // ================= BULK INSERT =================
-            await _context.Set<CEManagement>().AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 BATCH INSERT (Scalable for lakhs)
+            const int batchSize = 5000;
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.Set<CEManagement>()
+                    .AddRangeAsync(batch, cancellationToken);
+
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
             return new Response
             {
                 IsSucced = true,
@@ -727,19 +1096,19 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var list = new List<CRManagement>();
             var duplicateExcelCheck = new HashSet<string>();
 
-            // 🔥 Load existing CR codes (DB duplicate check)
-            var existingCRCodes = await _context.Set<CRManagement>().AsNoTracking()
-                .Select(x => x.CRCode)
-                .ToListAsync(cancellationToken);
+            // 🔥 ONE DB HIT – Existing CR codes
+            var crSet = new HashSet<string>(
+                await _context.Set<CRManagement>()
+                    .AsNoTracking()
+                    .Select(x => x.CRCode)
+                    .ToListAsync(cancellationToken));
 
-            var crSet = new HashSet<string>(existingCRCodes);
-
-            // 🔥 Load existing CE codes (FK validation)
-            var existingCECodes = await _context.Set<CEManagement>().AsNoTracking()
-                .Select(x => x.CECode)
-                .ToListAsync(cancellationToken);
-
-            var ceSet = new HashSet<string>(existingCECodes);
+            // 🔥 ONE DB HIT – Existing CE codes (FK validation)
+            var ceSet = new HashSet<string>(
+                await _context.Set<CEManagement>()
+                    .AsNoTracking()
+                    .Select(x => x.CECode)
+                    .ToListAsync(cancellationToken));
 
             for (int row = 2; row <= rowCount; row++)
             {
@@ -749,7 +1118,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 var desc = worksheet.Cells[row, 4].Text?.Trim();
                 var location = worksheet.Cells[row, 5].Text?.Trim();
 
-                // ================= REQUIRED FIELD CHECK =================
+                // 🔹 Required field validation
                 if (string.IsNullOrWhiteSpace(ceCode) ||
                     string.IsNullOrWhiteSpace(crCode) ||
                     string.IsNullOrWhiteSpace(name))
@@ -761,7 +1130,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= DUPLICATE CHECK (EXCEL) =================
+                // 🔹 Excel duplicate check
                 if (!duplicateExcelCheck.Add(crCode))
                 {
                     return new Response
@@ -771,7 +1140,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= DUPLICATE CHECK (DATABASE) =================
+                // 🔹 DB duplicate check
                 if (crSet.Contains(crCode))
                 {
                     return new Response
@@ -781,7 +1150,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= FK CHECK (CECode must exist) =================
+                // 🔹 FK validation
                 if (!ceSet.Contains(ceCode))
                 {
                     return new Response
@@ -804,9 +1173,25 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            // ================= BULK INSERT =================
-            await _context.Set<CRManagement>().AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 BATCH INSERT (Scalable for lakhs)
+            const int batchSize = 5000;
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.Set<CRManagement>()
+                    .AddRangeAsync(batch, cancellationToken);
+
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
             return new Response
             {
                 IsSucced = true,
@@ -814,7 +1199,9 @@ namespace BBMB.BudgetService.Features.BulkUploads
             };
         }
 
-
+        // ============================================================
+        // DIVISION MASTER
+        // ============================================================
         private async Task<Response> UploadDivisionMaster(
     ExcelWorksheet worksheet,
     int rowCount,
@@ -823,52 +1210,59 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var list = new List<Division>();
             var excelDuplicateCheck = new HashSet<int>();
 
-            // 🔥 Load existing DivisionCodes (DB duplicate check)
-            var existingDivisions = await _context.Set<Division>().AsNoTracking()
-                .Select(x => x.DivisionCode)
-                .ToListAsync(cancellationToken);
+            // 🔥 ONE TIME DB LOADS
 
-            var divisionSet = new HashSet<int>(existingDivisions);
-
-            // 🔥 Load Dependencies (FK tables)
+            var divisionSet = new HashSet<int>(
+                await _context.Set<Division>()
+                    .AsNoTracking()
+                    .Select(x => x.DivisionCode)
+                    .ToListAsync(cancellationToken));
 
             var ceSet = new HashSet<string>(
-                await _context.Set<CEManagement>().AsNoTracking()
+                await _context.Set<CEManagement>()
+                    .AsNoTracking()
                     .Select(x => x.CECode)
                     .ToListAsync(cancellationToken));
 
             var crSet = new HashSet<string>(
-                await _context.Set<CRManagement>().AsNoTracking()
+                await _context.Set<CRManagement>()
+                    .AsNoTracking()
                     .Select(x => x.CRCode)
                     .ToListAsync(cancellationToken));
 
             var majorSet = new HashSet<string>(
-                await _context.Set<MajorHead>().AsNoTracking()
+                await _context.Set<MajorHead>()
+                    .AsNoTracking()
                     .Select(x => x.MajorAccCode)
                     .ToListAsync(cancellationToken));
 
             var roSet = new HashSet<string>(
-                await _context.Set<RemittanceOffice>().AsNoTracking()
+                await _context.Set<RemittanceOffice>()
+                    .AsNoTracking()
                     .Select(x => x.RoCode)
                     .ToListAsync(cancellationToken));
 
             var accOfficeSet = new HashSet<string>(
-                await _context.Set<AccountOffice>().AsNoTracking()
+                await _context.Set<AccountOffice>()
+                    .AsNoTracking()
                     .Select(x => x.AccOffice)
                     .ToListAsync(cancellationToken));
 
             var unitSet = new HashSet<string>(
-                await _context.Set<UnitMaster>().AsNoTracking()
+                await _context.Set<UnitMaster>()
+                    .AsNoTracking()
                     .Select(x => x.UnitCode)
                     .ToListAsync(cancellationToken));
 
             var poolSet = new HashSet<string>(
-                await _context.Set<Pool>().AsNoTracking()
+                await _context.Set<Pool>()
+                    .AsNoTracking()
                     .Select(x => x.PoolCode)
                     .ToListAsync(cancellationToken));
 
             var regionSet = new HashSet<string>(
-                await _context.Set<Region>().AsNoTracking()
+                await _context.Set<Region>()
+                    .AsNoTracking()
                     .Select(x => x.RegionCode)
                     .ToListAsync(cancellationToken));
 
@@ -887,7 +1281,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 var regionCode = worksheet.Cells[row, 11].Text?.Trim();
                 var parentDivisionText = worksheet.Cells[row, 12].Text?.Trim();
 
-                // ================= REQUIRED FIELD CHECK =================
+                // Required fields
                 if (string.IsNullOrWhiteSpace(divisionCodeText) ||
                     string.IsNullOrWhiteSpace(divSectionText) ||
                     string.IsNullOrWhiteSpace(divisionDesc) ||
@@ -901,7 +1295,6 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= PARSE INT VALUES =================
                 if (!int.TryParse(divisionCodeText, out var divisionCode))
                 {
                     return new Response
@@ -934,17 +1327,17 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     parentDivision = parent;
                 }
 
-                // ================= DUPLICATE CHECK (EXCEL) =================
+                // Excel duplicate
                 if (!excelDuplicateCheck.Add(divisionCode))
                 {
                     return new Response
                     {
                         IsSucced = false,
-                        Message = $"Duplicate DivisionCode '{divisionCode}' found in Excel (row {row})"
+                        Message = $"Duplicate DivisionCode '{divisionCode}' in Excel (row {row})"
                     };
                 }
 
-                // ================= DUPLICATE CHECK (DATABASE) =================
+                // DB duplicate
                 if (divisionSet.Contains(divisionCode))
                 {
                     return new Response
@@ -954,87 +1347,31 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= FK VALIDATIONS =================
-
+                // FK Validations
                 if (!ceSet.Contains(ceCode))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"CECode '{ceCode}' does not exist in CEManagement table (row {row})"
-                    };
-                }
+                    return new Response { IsSucced = false, Message = $"CECode '{ceCode}' not found (row {row})" };
 
                 if (!crSet.Contains(crCode))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"CRCode '{crCode}' does not exist in CRManagement table (row {row})"
-                    };
-                }
+                    return new Response { IsSucced = false, Message = $"CRCode '{crCode}' not found (row {row})" };
 
-                if (!string.IsNullOrWhiteSpace(majorAccCode) &&
-                    !majorSet.Contains(majorAccCode))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"MajorAccCode '{majorAccCode}' does not exist in MajorHead table (row {row})"
-                    };
-                }
+                if (!string.IsNullOrWhiteSpace(majorAccCode) && !majorSet.Contains(majorAccCode))
+                    return new Response { IsSucced = false, Message = $"MajorAccCode '{majorAccCode}' not found (row {row})" };
 
-                if (!string.IsNullOrWhiteSpace(roCode) &&
-                    !roSet.Contains(roCode))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"RoCode '{roCode}' does not exist in RemittanceOffice table (row {row})"
-                    };
-                }
+                if (!string.IsNullOrWhiteSpace(roCode) && !roSet.Contains(roCode))
+                    return new Response { IsSucced = false, Message = $"RoCode '{roCode}' not found (row {row})" };
 
-                if (!string.IsNullOrWhiteSpace(accOffice) &&
-                    !accOfficeSet.Contains(accOffice))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"AccOffice '{accOffice}' does not exist in AccountOffice table (row {row})"
-                    };
-                }
+                if (!string.IsNullOrWhiteSpace(accOffice) && !accOfficeSet.Contains(accOffice))
+                    return new Response { IsSucced = false, Message = $"AccOffice '{accOffice}' not found (row {row})" };
 
-                if (!string.IsNullOrWhiteSpace(unitCode) &&
-                    !unitSet.Contains(unitCode))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"UnitCode '{unitCode}' does not exist in UnitMaster table (row {row})"
-                    };
-                }
+                if (!string.IsNullOrWhiteSpace(unitCode) && !unitSet.Contains(unitCode))
+                    return new Response { IsSucced = false, Message = $"UnitCode '{unitCode}' not found (row {row})" };
 
-                if (!string.IsNullOrWhiteSpace(poolCode) &&
-                    !poolSet.Contains(poolCode))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"PoolCode '{poolCode}' does not exist in Pool table (row {row})"
-                    };
-                }
+                if (!string.IsNullOrWhiteSpace(poolCode) && !poolSet.Contains(poolCode))
+                    return new Response { IsSucced = false, Message = $"PoolCode '{poolCode}' not found (row {row})" };
 
-                if (!string.IsNullOrWhiteSpace(regionCode) &&
-                    !regionSet.Contains(regionCode))
-                {
-                    return new Response
-                    {
-                        IsSucced = false,
-                        Message = $"RegionCode '{regionCode}' does not exist in Region table (row {row})"
-                    };
-                }
+                if (!string.IsNullOrWhiteSpace(regionCode) && !regionSet.Contains(regionCode))
+                    return new Response { IsSucced = false, Message = $"RegionCode '{regionCode}' not found (row {row})" };
 
-                // ================= ADD ENTITY =================
                 list.Add(new Division
                 {
                     DivisionCode = divisionCode,
@@ -1054,9 +1391,23 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 });
             }
 
-            // ================= BULK INSERT =================
-            await _context.Set<Division>().AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            // 🔥 Batch Insert
+            const int batchSize = 5000;
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.Set<Division>().AddRangeAsync(batch, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
             return new Response
             {
                 IsSucced = true,
@@ -1064,7 +1415,9 @@ namespace BBMB.BudgetService.Features.BulkUploads
             };
         }
 
-
+        // ============================================================
+        // WORK MASTER
+        // ============================================================
         private async Task<Response> UploadWorkMaster(
     ExcelWorksheet worksheet,
     int rowCount,
@@ -1073,57 +1426,66 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var list = new List<Work>();
             var duplicateExcelCheck = new HashSet<string>();
 
-            // ================= LOAD EXISTING DATA =================
+            // 🔥 PRELOAD ALL REQUIRED DATA (ONE TIME DB HITS)
 
             var workSet = new HashSet<string>(
                 await _context.Set<Work>()
-                .Select(x => x.WorkCode)
-                .ToListAsync(cancellationToken));
+                    .AsNoTracking()
+                    .Select(x => x.WorkCode)
+                    .ToListAsync(cancellationToken));
 
             var divisionSet = new HashSet<int>(
                 await _context.Set<Division>()
-                .Select(x => x.DivisionCode)
-                .ToListAsync(cancellationToken));
+                    .AsNoTracking()
+                    .Select(x => x.DivisionCode)
+                    .ToListAsync(cancellationToken));
 
             var majorSet = new HashSet<string>(
                 await _context.Set<MajorHead>()
-                .Select(x => x.MajorAccCode)
-                .ToListAsync(cancellationToken));
+                    .AsNoTracking()
+                    .Select(x => x.MajorAccCode)
+                    .ToListAsync(cancellationToken));
 
-            var subMajorSet = new HashSet<string>(
-                await _context.Set<SubMajorHead>()
-                .Select(x => x.SubMajorAccCode)
-                .ToListAsync(cancellationToken));
+            var subMajorSet = new HashSet<(string Major, string SubMajor)>(
+                (await _context.Set<SubMajorHead>()
+                    .AsNoTracking()
+                    .Select(x => new { x.MajorAccCode, x.SubMajorAccCode })
+                    .ToListAsync(cancellationToken))
+                .Select(x => (x.MajorAccCode, x.SubMajorAccCode)));
 
             var minorSet = new HashSet<string>(
                 await _context.Set<MinorHead>()
-                .Select(x => x.MinorAccCode)
-                .ToListAsync(cancellationToken));
+                    .AsNoTracking()
+                    .Select(x => x.MinorAccCode)
+                    .ToListAsync(cancellationToken));
 
-            var subMinorSet = new HashSet<string>(
-                await _context.Set<SubMinorHead>()
-                .Select(x => x.SubMinorAccCode)
-                .ToListAsync(cancellationToken));
+            var subMinorSet = new HashSet<(string Minor, string SubMinor)>(
+                (await _context.Set<SubMinorHead>()
+                    .AsNoTracking()
+                    .Select(x => new { x.MinorAccCode, x.SubMinorAccCode })
+                    .ToListAsync(cancellationToken))
+                .Select(x => (x.MinorAccCode, x.SubMinorAccCode)));
 
             var detailSet = new HashSet<string>(
                 await _context.Set<DetailHead>()
-                .Select(x => x.DetailAccCode)
-                .ToListAsync(cancellationToken));
+                    .AsNoTracking()
+                    .Select(x => x.DetailAccCode)
+                    .ToListAsync(cancellationToken));
 
             var objectSet = new HashSet<string>(
                 await _context.Set<ObjectClassification>()
-                .Select(x => x.ObjectAccCode)
-                .ToListAsync(cancellationToken));
+                    .AsNoTracking()
+                    .Select(x => x.ObjectAccCode)
+                    .ToListAsync(cancellationToken));
 
             var designationSet = new HashSet<string>(
                 await _context.Set<Designation>()
-                .Select(x => x.DesignationCode)
-                .ToListAsync(cancellationToken));
+                    .AsNoTracking()
+                    .Select(x => x.DesignationCode)
+                    .ToListAsync(cancellationToken));
 
             for (int row = 2; row <= rowCount; row++)
             {
-                // ================= READ CELLS =================
-
                 var workCode = worksheet.Cells[row, 1].Text?.Trim();
                 var divisionText = worksheet.Cells[row, 2].Text?.Trim();
                 var divSectionText = worksheet.Cells[row, 3].Text?.Trim();
@@ -1144,8 +1506,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 var nature = worksheet.Cells[row, 18].Text?.Trim();
                 var refWorkCode = worksheet.Cells[row, 19].Text?.Trim();
 
-                // ================= REQUIRED CHECK =================
-
+                // Required validation
                 if (string.IsNullOrWhiteSpace(workCode) ||
                     string.IsNullOrWhiteSpace(divisionText) ||
                     string.IsNullOrWhiteSpace(divSectionText) ||
@@ -1164,8 +1525,6 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     };
                 }
 
-                // ================= TYPE CONVERSION =================
-
                 if (!int.TryParse(divisionText, out int divisionCode))
                     return new Response { IsSucced = false, Message = $"Invalid DivisionCode at row {row}" };
 
@@ -1181,29 +1540,26 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     estimatedCost = cost;
                 }
 
-                // ================= DUPLICATE CHECK =================
-
                 if (!duplicateExcelCheck.Add(workCode))
                     return new Response { IsSucced = false, Message = $"Duplicate WorkCode in Excel: {workCode}" };
 
                 if (workSet.Contains(workCode))
                     return new Response { IsSucced = false, Message = $"WorkCode already exists: {workCode}" };
 
-                // ================= FK VALIDATION =================
-
+                // FK validation
                 if (!divisionSet.Contains(divisionCode))
                     return new Response { IsSucced = false, Message = $"Invalid DivisionCode at row {row}" };
 
                 if (!majorSet.Contains(majorCode))
                     return new Response { IsSucced = false, Message = $"Invalid MajorAccCode at row {row}" };
 
-                if (!subMajorSet.Contains(subMajorCode))
+                if (!subMajorSet.Contains((majorCode, subMajorCode)))
                     return new Response { IsSucced = false, Message = $"Invalid SubMajorAccCode at row {row}" };
 
                 if (!minorSet.Contains(minorCode))
                     return new Response { IsSucced = false, Message = $"Invalid MinorAccCode at row {row}" };
 
-                if (!subMinorSet.Contains(subMinorCode))
+                if (!subMinorSet.Contains((minorCode, subMinorCode)))
                     return new Response { IsSucced = false, Message = $"Invalid SubMinorAccCode at row {row}" };
 
                 if (!detailSet.Contains(detailCode))
@@ -1219,8 +1575,6 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 if (!string.IsNullOrWhiteSpace(refWorkCode) &&
                     !workSet.Contains(refWorkCode))
                     return new Response { IsSucced = false, Message = $"Invalid RefWorkCode at row {row}" };
-
-                // ================= ADD ENTITY =================
 
                 list.Add(new Work
                 {
@@ -1243,14 +1597,26 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     WorkDesc = workDesc,
                     Nature = nature,
                     RefWorkCode = refWorkCode,
-                    UserCode = "System"
+                    UserCode = "SYSTEM"
                 });
             }
 
-            // ================= BULK INSERT =================
+            // 🔥 BATCH INSERT
+            const int batchSize = 5000;
 
-            await _context.Set<Work>().AddRangeAsync(list, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            _context.ChangeTracker.AutoDetectChangesEnabled = false;
+
+            for (int i = 0; i < list.Count; i += batchSize)
+            {
+                var batch = list.Skip(i).Take(batchSize).ToList();
+
+                await _context.Set<Work>().AddRangeAsync(batch, cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                _context.ChangeTracker.Clear();
+            }
+
+            _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
             return new Response
             {
