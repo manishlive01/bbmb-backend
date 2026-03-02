@@ -9,9 +9,9 @@ namespace BBMB.BudgetService.Features.Works.Create
         {
             // ================= REQUIRED FIELDS =================
 
-            RuleFor(x => x.dto.WorkCode)
-                .NotEmpty().WithMessage("Work code is required.")
-                .MaximumLength(8).WithMessage("Work code must not exceed 8 characters.");
+            //RuleFor(x => x.dto.WorkCode)
+            //    .NotEmpty().WithMessage("Work code is required.")
+            //    .MaximumLength(8).WithMessage("Work code must not exceed 8 characters.");
 
             RuleFor(x => x.dto.WorkDesc)
                 .NotEmpty().WithMessage("Work description is required.")
