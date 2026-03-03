@@ -2,7 +2,9 @@
 // USING STATEMENTS
 // =======================
 using BBMB.BudgetService.Authorization.Extension;
+using BBMB.BudgetService.Infrastructure.DependencyInjection;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
 using BBMB.BudgetService.Infrastructure.Persistence.FinanceContexts;
 using BBMB.BudgetService.Shared.Behaviors;
 using BBMB.BudgetService.Shared.Endpoints.EndpointExtensions;
@@ -29,19 +31,8 @@ Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 // DATABASE CONFIGURATION (Single DB, Multiple Schemas)
 // ===================================================================
 
-// Budget
-builder.Services.AddDbContextPool<BudgetContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")),
-    poolSize: 5);
- 
+builder.Services.AddDatabaseContexts(builder.Configuration);
 
-// Finance
-builder.Services.AddDbContextPool<FinanceContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")),
-    poolSize: 5);
- 
 
 // ===================================================================
 // CORS CONFIGURATION
