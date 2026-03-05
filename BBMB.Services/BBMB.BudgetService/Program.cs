@@ -8,6 +8,8 @@ using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
 using BBMB.BudgetService.Infrastructure.Persistence.FinanceContexts;
 using BBMB.BudgetService.Shared.Behaviors;
 using BBMB.BudgetService.Shared.Endpoints.EndpointExtensions;
+using BBMB.BudgetService.Shared.Services;
+using BBMB.BudgetService.Shared.Settings;
 using FluentValidation;
 using Mapster;
 using MapsterMapper;
@@ -32,7 +34,8 @@ Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 // ===================================================================
 
 builder.Services.AddDatabaseContexts(builder.Configuration);
-
+builder.Services.Configure<FileSettings>(
+    builder.Configuration.GetSection("File"));
 
 // ===================================================================
 // CORS CONFIGURATION
@@ -68,6 +71,7 @@ builder.Services.AddTransient(
 TypeAdapterConfig.GlobalSettings.Scan(typeof(Program).Assembly);
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 builder.Services.AddScoped<IMapper, ServiceMapper>(); 
+builder.Services.AddScoped<IFileStorageService,  FileStorageService>();
 
 // ===================================================================
 // SWAGGER / OPENAPI

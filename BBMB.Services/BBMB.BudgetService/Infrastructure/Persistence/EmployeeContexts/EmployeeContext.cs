@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BBMB.BudgetService.Features.Employees.Entities;
+using BBMB.BudgetService.Features.Geographical.States.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts
 {
@@ -20,8 +22,9 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts
         public EmployeeContext(DbContextOptions<EmployeeContext> options)
             : base(options)
         {
+           
         }
-
+        public DbSet<Employee> Employees { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // DEFAULT SCHEMA FOR EMPLOYEE
