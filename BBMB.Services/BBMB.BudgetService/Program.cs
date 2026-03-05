@@ -9,6 +9,7 @@ using BBMB.BudgetService.Infrastructure.Persistence.FinanceContexts;
 using BBMB.BudgetService.Shared.Behaviors;
 using BBMB.BudgetService.Shared.Endpoints.EndpointExtensions;
 using BBMB.BudgetService.Shared.Services;
+using BBMB.BudgetService.Shared.Services.EmployeeChargeServices;
 using BBMB.BudgetService.Shared.Settings;
 using FluentValidation;
 using Mapster;
@@ -72,7 +73,9 @@ TypeAdapterConfig.GlobalSettings.Scan(typeof(Program).Assembly);
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 builder.Services.AddScoped<IMapper, ServiceMapper>(); 
 builder.Services.AddScoped<IFileStorageService,  FileStorageService>();
+builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddScoped<IChargeResolver, ChargeResolver>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================

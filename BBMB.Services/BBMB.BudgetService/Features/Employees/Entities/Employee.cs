@@ -1,4 +1,6 @@
-﻿namespace BBMB.BudgetService.Features.Employees.Entities
+﻿using BBMB.BudgetService.Features.EmployeeCharges.Entities;
+
+namespace BBMB.BudgetService.Features.Employees.Entities
 {
     public class Employee
     {
@@ -20,6 +22,7 @@
 
         public EmploymentDetail EmploymentDetail { get; set; } = null!;
         public PhotoDocument PhotoDocument { get; set; } = null!;
+        public ICollection<EmployeeCharge> Charges { get; set; } = new List<EmployeeCharge>();
     }
     public class EmploymentDetail
     {
