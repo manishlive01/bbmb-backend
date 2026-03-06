@@ -8,8 +8,8 @@ namespace BBMB.BudgetService.Features.Employees.GetList
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/employees", async (
-                [AsParameters] GetEmployeeListRequestDto dto,
+            app.MapPost("/api/employees-list", async (
+                GetEmployeeListRequestDto dto,
                 IMediator mediator) =>
             {
                 var result = await mediator.Send(new GetEmployeeListQuery(dto));
