@@ -8,10 +8,7 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Create
         {
             RuleFor(x => x.dto.EmployeeId)
                 .NotEmpty();
-
-            RuleFor(x => x.dto.UserId)
-                .NotEmpty();
-
+             
             RuleFor(x => x.dto.ProjectId)
                 .GreaterThan(0);
 

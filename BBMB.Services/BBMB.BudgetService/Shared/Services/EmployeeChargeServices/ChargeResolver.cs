@@ -27,15 +27,18 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
                 return null;
 
             var userId = Guid.Parse(userIdClaim);
-
+            var employee= await _context.Employees.AsNoTracking()
+                .Where(x => x.UserId == userId)
+                .Select(x => new { x.Id })
+                .FirstOrDefaultAsync(ct); 
             var charge = await _context.EmployeeCharges
                 .Where(x =>
-                    x.UserId == userId &&
+                    x.EmployeeId == employee.Id &&
                     x.IsActive &&
                     !x.IsChargeExpire)
                 .Select(x => new UserChargeContext
                 {
-                    UserId = x.UserId,
+                    UserId = userId,
                     EmployeeId = x.EmployeeId,
                     ProjectId = x.ProjectId,
                     CECode = x.CECode,

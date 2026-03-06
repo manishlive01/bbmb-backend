@@ -1,4 +1,5 @@
 ﻿using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.RequestDTOs;
 using MediatR;
 using System.Security.Claims;
 
@@ -8,17 +9,14 @@ namespace BBMB.BudgetService.Features.Employees.GetById
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/employees/me", async (
+            app.MapPost("/api/employees/byId", async (
                 HttpContext context,
+                GetByStringIdRequestDto dto,
                 IMediator mediator) =>
             {
-                var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                if (string.IsNullOrEmpty(userId))
-                    return Results.Unauthorized();
-
+                 
                 var result = await mediator.Send(
-                    new GetEmployeeByUserIdQuery(Guid.Parse(userId)));
+                    new GetEmployeeByUserIdQuery(Guid.Parse(dto.Id)));
 
                 if (result == null)
                     return Results.NotFound("Employee not found");

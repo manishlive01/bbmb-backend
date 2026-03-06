@@ -2,9 +2,11 @@
 using BBMB.BudgetService.Features.Employees.GetList.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
+using BBMB.BudgetService.Shared.Settings;
 using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BBMB.BudgetService.Features.Employees.GetList
 {
@@ -12,10 +14,11 @@ namespace BBMB.BudgetService.Features.Employees.GetList
     : IRequestHandler<GetEmployeeListQuery, PagedResponse<GetEmployeeListResponseDto>>
     {
         private readonly EmployeeContext _context;
-
-        public GetEmployeeListHandler(EmployeeContext context)
+        private readonly FileSettings _fileSettings;
+        public GetEmployeeListHandler(EmployeeContext context, IOptions<FileSettings> options)
         {
             _context = context;
+            _fileSettings = options.Value;
         }
 
         public async Task<PagedResponse<GetEmployeeListResponseDto>> Handle(
@@ -51,13 +54,24 @@ namespace BBMB.BudgetService.Features.Employees.GetList
 
             var pageSize = Math.Min(dto.PageSize, 100);
             var pageNumber = Math.Max(dto.PageNumber, 1);
+            var baseUrl = _fileSettings.FileServerUrl;
 
+            
             var items = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ProjectToType<GetEmployeeListResponseDto>()
-                .ToListAsync(ct);
-
+        .Skip((pageNumber - 1) * pageSize)
+        .Take(pageSize)
+        .Select(x => new GetEmployeeListResponseDto
+        {
+            EmployeeId = x.Id,
+            NameEnglish = x.NameEnglish,
+            Gender = x.Gender,
+            PhoneNumber = x.PhoneNumber,
+            Email = x.Email,
+            Designation = x.EmploymentDetail.Designation,
+            DateOfJoining = x.EmploymentDetail.DateOfJoining,
+            PhotoUrl = x.PhotoDocument != null ? $"{baseUrl}{x.PhotoDocument.PhotoUrl}" : ""
+        })
+        .ToListAsync(ct);
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
             var paginationMetadata = new PaginationMetadata

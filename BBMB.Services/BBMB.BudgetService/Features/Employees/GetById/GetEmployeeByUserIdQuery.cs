@@ -3,6 +3,6 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.Employees.GetById
 {
-    public record GetEmployeeByUserIdQuery(Guid UserId)
+    public record GetEmployeeByUserIdQuery(Guid employeeId)
        : IRequest<GetEmployeeResponseDto?>;
 }

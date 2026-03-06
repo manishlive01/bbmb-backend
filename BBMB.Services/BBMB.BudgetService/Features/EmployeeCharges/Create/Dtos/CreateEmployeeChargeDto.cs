@@ -3,8 +3,7 @@
     public class CreateEmployeeChargeDto
     {
         public Guid EmployeeId { get; set; }
-
-        public Guid UserId { get; set; }
+         
 
         public int ProjectId { get; set; }
 

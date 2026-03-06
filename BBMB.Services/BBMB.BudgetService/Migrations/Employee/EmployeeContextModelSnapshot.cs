@@ -59,9 +59,6 @@ namespace BBMB.BudgetService.Migrations.Employee
                     b.Property<int>("ProjectId")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");

@@ -6,8 +6,7 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Entities
     {
         public Guid Id { get; set; }
 
-        public Guid EmployeeId { get; set; } 
-        public Guid UserId { get; set; } 
+        public Guid EmployeeId { get; set; }  
         public int ProjectId { get; set; }
 
         public string CECode { get; set; } = null!;
