@@ -49,7 +49,7 @@ namespace BBMB.BudgetService.Shared.Services
             return fileType switch
             {
                 FileType.Employee => _settings.EmployeeFolderPath,
-                FileType.Family => _settings.EmployeeFolderPath,
+                FileType.Family => _settings.EmployeeFamilyFolderPath,
                 FileType.Documents => "Documents",
                 _ => throw new ArgumentOutOfRangeException(nameof(fileType), "Invalid file type")
             };

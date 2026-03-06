@@ -43,7 +43,9 @@ namespace BBMB.BudgetService.Features.Employees.Create
 
             var employee = dto.Adapt<Employee>();
             employee.Id = Guid.NewGuid();
-
+            employee.DateOfBirth = DateTime.SpecifyKind(
+    dto.PersonalInfo.DateOfBirth,
+    DateTimeKind.Utc);
             // Employment
             employee.EmploymentDetail = new EmploymentDetail
             {
@@ -53,9 +55,11 @@ namespace BBMB.BudgetService.Features.Employees.Create
                 Designation = dto.Employment.Designation,
                 Position = dto.Employment.Position,
                 AppointmentType = dto.Employment.AppointmentType,
-                AppointmentDate = dto.Employment.AppointmentDate,
-                DateOfJoining = dto.Employment.DateOfJoining,
-                RetirementDate = dto.Employment.RetirementDate
+                AppointmentDate = DateTime.SpecifyKind(dto.Employment.AppointmentDate, DateTimeKind.Utc),
+                DateOfJoining = DateTime.SpecifyKind(dto.Employment.DateOfJoining, DateTimeKind.Utc),
+                RetirementDate = dto.Employment.RetirementDate == null
+          ? null
+          : DateTime.SpecifyKind(dto.Employment.RetirementDate.Value, DateTimeKind.Utc)
             };
 
             // Photo

@@ -246,6 +246,18 @@ app.UseExceptionHandler(appBuilder =>
             });
             return;
         }
+        // Form-data binding errors (YOUR CASE)
+        if (exception is BadHttpRequestException badFormRequest)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+
+            await context.Response.WriteAsJsonAsync(new
+            {
+                message = "Invalid form data",
+                error = badFormRequest.Message
+            });
+            return;
+        }
 
         // Fallback
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
