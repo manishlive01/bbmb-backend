@@ -58,7 +58,6 @@
     <Folder Include="Features\Divisions\Delete\" />
     <Folder Include="Features\Divisions\Create\" />
     <Folder Include="Features\Divisions\Update\" />
-    <Folder Include="Features\EmployeeCharges\Update\" />
     <Folder Include="Features\Employees\Delete\" />
     <Folder Include="Features\FinancialYears\GetList\" />
     <Folder Include="Features\FinancialYears\GetById\" />
