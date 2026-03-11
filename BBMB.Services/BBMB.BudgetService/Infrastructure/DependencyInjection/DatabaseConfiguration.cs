@@ -28,7 +28,7 @@ namespace BBMB.BudgetService.Infrastructure.DependencyInjection
             // ===============================
             services.AddDbContextPool<FinanceContext>(options =>
                 options.UseNpgsql(connectionString),
-                poolSize: 5);
+                poolSize: 2);
 
             // ===============================
             // Employee Schema
