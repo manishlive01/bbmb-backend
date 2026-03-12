@@ -37,12 +37,12 @@ namespace BBMB.BudgetService.Features.Employees.GetById
             var baseUrl = _fileSettings.FileServerUrl;
 
             if (dto.PhotoDocs != null)
-                dto.PhotoDocs.PhotoUrl = $"{baseUrl}/{dto.PhotoDocs.PhotoUrl}";
+                dto.PhotoDocs.PhotoUrl = $"{baseUrl}{dto.PhotoDocs.PhotoUrl}";
 
             foreach (var family in dto.FamilyMembers)
             {
                 if (!string.IsNullOrEmpty(family.PhotoUrl))
-                    family.PhotoUrl = $"{baseUrl}/{family.PhotoUrl}";
+                    family.PhotoUrl = $"{baseUrl}{family.PhotoUrl}";
             }
 
             return dto;

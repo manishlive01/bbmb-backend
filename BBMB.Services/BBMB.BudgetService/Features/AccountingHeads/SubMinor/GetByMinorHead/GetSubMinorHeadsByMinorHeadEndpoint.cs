@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetByMinorHead
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/sub-minor-heads/{minorHeadCode}", async (string minorHeadCode, IMediator mediator) =>
+            app.MapGet("/api/sub-minor-heads/list/{minorHeadCode}", async (string minorHeadCode, IMediator mediator) =>
             {
                 var query = new GetSubMinorHeadsByMinorHeadQuery(minorHeadCode);
                 var result = await mediator.Send(query);
