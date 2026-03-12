@@ -23,7 +23,6 @@ namespace BBMB.BudgetService.Features.Employees.GetById
 
                 return Results.Ok(result);
             })
-            .RequireAuthorization()
             .WithTags("Employees")
             .WithSummary("Get employee profile by logged-in user");
         }

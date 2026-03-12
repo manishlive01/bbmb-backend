@@ -6,13 +6,13 @@
 
         public Guid EmployeeId { get; set; }
 
-        public int ProjectId { get; set; }
+        public string ProjectCode { get; set; }
 
         public string CECode { get; set; } = string.Empty;
 
         public string CRCode { get; set; } = string.Empty;
 
-        public string DivCode { get; set; } = string.Empty;
+        public int DivisionCode { get; set; }
 
         public DateTime ChargeTime { get; set; }
 

@@ -40,10 +40,10 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
                 {
                     UserId = userId,
                     EmployeeId = x.EmployeeId,
-                    ProjectId = x.ProjectId,
+                    ProjectCode = x.ProjectCode,
                     CECode = x.CECode,
                     CRCode = x.CRCode,
-                    DivCode = x.DivCode
+                    DivisionCode = x.DivisionCode
                 })
                 .FirstOrDefaultAsync(ct);
 

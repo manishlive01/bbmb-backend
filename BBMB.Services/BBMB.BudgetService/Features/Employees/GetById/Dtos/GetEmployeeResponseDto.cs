@@ -11,11 +11,13 @@
     {
         public Guid UserId { get; set; }
 
-        public string ApplicantTitle { get; set; } = null!;
+        public int TitleId { get; set; }
+        public string TitleName { get; set; } = null!;
         public string NameEnglish { get; set; } = null!;
         public string? NameHindi { get; set; }
 
-        public string Gender { get; set; } = null!;
+        public int GenderId { get; set; }
+        public string GenderName { get; set; } = null!;
         public DateTime DateOfBirth { get; set; }
 
         public string PhoneNumber { get; set; } = null!;
@@ -25,10 +27,13 @@
     }
     public class EmploymentInfoResponseDto
     {
-        public string SourceOfRecruitment { get; set; } = null!;
-        public string Designation { get; set; } = null!;
+        public int SourceOfRecruitmentId { get; set; } 
+        public string SourceOfRecruitmentName { get; set; } = null!;
+        public int DesignationId { get; set; }
+        public string DesignationName { get; set; } = null!;
         public string Position { get; set; } = null!;
-        public string AppointmentType { get; set; } = null!;
+        public int AppointmentTypeId { get; set; }
+        public string AppointmentTypeName { get; set; } = null!;
 
         public DateTime AppointmentDate { get; set; }
         public DateTime DateOfJoining { get; set; }

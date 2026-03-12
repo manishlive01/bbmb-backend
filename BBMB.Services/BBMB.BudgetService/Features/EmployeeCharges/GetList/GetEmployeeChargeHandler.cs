@@ -26,10 +26,10 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetList
                 {
                     Id = ec.Id,
                     EmployeeId = ec.EmployeeId,
-                    ProjectId = ec.ProjectId,
+                    ProjectCode = ec.ProjectCode,
                     CECode = ec.CECode,
                     CRCode = ec.CRCode,
-                    DivCode = ec.DivCode,
+                    DivisionCode = ec.DivisionCode,
                     ChargeTime = ec.ChargeTime,
                     ChargeExpireTime = ec.ChargeExpireTime,
                     IsActive = ec.IsActive,

@@ -14,8 +14,8 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Entities
         [Column("employee_id")]
         public Guid EmployeeId { get; set; }
 
-        [Column("project_id")]
-        public int ProjectId { get; set; }
+        [Column("project_code")]
+        public string ProjectCode { get; set; }
 
         [Required]
         [MaxLength(20)]
@@ -28,9 +28,8 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Entities
         public string CRCode { get; set; } = null!;
 
         [Required]
-        [MaxLength(20)]
-        [Column("div_code")]
-        public string DivCode { get; set; } = null!;
+        [Column("division_code")]
+        public int DivisionCode { get; set; }
 
         [Column("charge_time")]
         public DateTime ChargeTime { get; set; }

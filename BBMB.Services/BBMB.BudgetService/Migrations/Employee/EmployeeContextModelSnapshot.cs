@@ -50,11 +50,9 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("charge_time");
 
-                    b.Property<string>("DivCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("div_code");
+                    b.Property<int>("DivisionCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("division_code");
 
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid")
@@ -68,9 +66,10 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("boolean")
                         .HasColumnName("is_charge_expire");
 
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("integer")
-                        .HasColumnName("project_id");
+                    b.Property<string>("ProjectCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("project_code");
 
                     b.HasKey("Id");
 
