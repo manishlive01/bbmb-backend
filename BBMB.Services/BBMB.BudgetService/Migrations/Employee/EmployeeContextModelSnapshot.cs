@@ -91,11 +91,6 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("text")
                         .HasColumnName("address");
 
-                    b.Property<string>("ApplicantTitle")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("applicant_title");
-
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_of_birth");
@@ -105,10 +100,9 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("text")
                         .HasColumnName("email");
 
-                    b.Property<string>("Gender")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("gender");
+                    b.Property<int>("GenderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("gender_id");
 
                     b.Property<string>("NameEnglish")
                         .IsRequired()
@@ -124,11 +118,19 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("text")
                         .HasColumnName("phone_number");
 
+                    b.Property<int>("TitleId")
+                        .HasColumnType("integer")
+                        .HasColumnName("title_id");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GenderId");
+
+                    b.HasIndex("TitleId");
 
                     b.ToTable("employee", "employee");
                 });
@@ -144,23 +146,24 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("appointment_date");
 
-                    b.Property<string>("AppointmentType")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("appointment_type");
+                    b.Property<int>("AppointmentTypeId")
+                        .HasColumnType("integer")
+                        .HasColumnName("appointment_type_id");
 
                     b.Property<DateTime>("DateOfJoining")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_of_joining");
 
-                    b.Property<string>("Designation")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("designation");
+                    b.Property<int>("DesignationId")
+                        .HasColumnType("integer")
+                        .HasColumnName("designation_id");
 
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid")
                         .HasColumnName("employee_id");
+
+                    b.Property<int?>("GenderId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Position")
                         .IsRequired()
@@ -171,15 +174,27 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("retirement_date");
 
-                    b.Property<string>("SourceOfRecruitment")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("source_of_recruitment");
+                    b.Property<int>("SourceOfRecruitmentId")
+                        .HasColumnType("integer")
+                        .HasColumnName("source_of_recruitment_id");
+
+                    b.Property<int?>("TitleId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AppointmentTypeId");
+
+                    b.HasIndex("DesignationId");
+
                     b.HasIndex("EmployeeId")
                         .IsUnique();
+
+                    b.HasIndex("GenderId");
+
+                    b.HasIndex("SourceOfRecruitmentId");
+
+                    b.HasIndex("TitleId");
 
                     b.ToTable("employment_detail", "employee");
                 });
@@ -465,15 +480,66 @@ namespace BBMB.BudgetService.Migrations.Employee
                     b.Navigation("Employee");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.Employees.Entities.Employee", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.Genders.Entities.Gender", "Genders")
+                        .WithMany()
+                        .HasForeignKey("GenderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.Titles.Entities.Title", "Titles")
+                        .WithMany()
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Genders");
+
+                    b.Navigation("Titles");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.Employees.Entities.EmploymentDetail", b =>
                 {
+                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities.AppointmentType", "AppointmentTypes")
+                        .WithMany("EmploymentDetails")
+                        .HasForeignKey("AppointmentTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.Designations.Entities.Designation", "Designations")
+                        .WithMany("EmploymentDetails")
+                        .HasForeignKey("DesignationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("BBMB.BudgetService.Features.Employees.Entities.Employee", "Employee")
                         .WithOne("EmploymentDetail")
                         .HasForeignKey("BBMB.BudgetService.Features.Employees.Entities.EmploymentDetail", "EmployeeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.Genders.Entities.Gender", null)
+                        .WithMany("EmploymentDetails")
+                        .HasForeignKey("GenderId");
+
+                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.SourceOfRecruitments.Entities.SourceOfRecruitment", "SourceOfRecruitments")
+                        .WithMany("EmploymentDetails")
+                        .HasForeignKey("SourceOfRecruitmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.Titles.Entities.Title", null)
+                        .WithMany("EmploymentDetails")
+                        .HasForeignKey("TitleId");
+
+                    b.Navigation("AppointmentTypes");
+
+                    b.Navigation("Designations");
+
                     b.Navigation("Employee");
+
+                    b.Navigation("SourceOfRecruitments");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Employees.Entities.FamilyMember", b =>
@@ -509,6 +575,31 @@ namespace BBMB.BudgetService.Migrations.Employee
 
                     b.Navigation("PhotoDocument")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities.AppointmentType", b =>
+                {
+                    b.Navigation("EmploymentDetails");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.Designations.Entities.Designation", b =>
+                {
+                    b.Navigation("EmploymentDetails");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.Genders.Entities.Gender", b =>
+                {
+                    b.Navigation("EmploymentDetails");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.SourceOfRecruitments.Entities.SourceOfRecruitment", b =>
+                {
+                    b.Navigation("EmploymentDetails");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.Titles.Entities.Title", b =>
+                {
+                    b.Navigation("EmploymentDetails");
                 });
 #pragma warning restore 612, 618
         }
