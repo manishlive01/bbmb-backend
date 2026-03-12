@@ -1,4 +1,9 @@
 ﻿using BBMB.BudgetService.Features.EmployeeCharges.Entities;
+using BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities;
+using BBMB.BudgetService.Features.PublicMasters.Designations.Entities;
+using BBMB.BudgetService.Features.PublicMasters.Genders.Entities;
+using BBMB.BudgetService.Features.PublicMasters.SourceOfRecruitments.Entities;
+using BBMB.BudgetService.Features.PublicMasters.Titles.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -14,8 +19,8 @@ namespace BBMB.BudgetService.Features.Employees.Entities
         [Column("user_id")]
         public Guid UserId { get; set; }
 
-        [Column("applicant_title")]
-        public string ApplicantTitle { get; set; } = null!;
+        [Column("title_id")]
+        public int TitleId { get; set; } 
 
         [Column("name_english")]
         public string NameEnglish { get; set; } = null!;
@@ -23,8 +28,8 @@ namespace BBMB.BudgetService.Features.Employees.Entities
         [Column("name_hindi")]
         public string? NameHindi { get; set; }
 
-        [Column("gender")]
-        public string Gender { get; set; } = null!;
+        [Column("gender_id")]
+        public int GenderId { get; set; }
 
         [Column("date_of_birth")]
         public DateTime DateOfBirth { get; set; }
@@ -45,6 +50,15 @@ namespace BBMB.BudgetService.Features.Employees.Entities
         public PhotoDocument PhotoDocument { get; set; } = null!;
 
         public ICollection<EmployeeCharge> Charges { get; set; } = new List<EmployeeCharge>();
+
+
+        [ForeignKey("GenderId")]
+        public Gender Genders { get; set; } = null!;
+
+        [ForeignKey("TitleId")]
+        public Title Titles { get; set; } = null!;
+
+
     }
 
 
@@ -58,17 +72,17 @@ namespace BBMB.BudgetService.Features.Employees.Entities
         [Column("employee_id")]
         public Guid EmployeeId { get; set; }
 
-        [Column("source_of_recruitment")]
-        public string SourceOfRecruitment { get; set; } = null!;
+        [Column("source_of_recruitment_id")]
+        public int SourceOfRecruitmentId { get; set; } 
 
-        [Column("designation")]
-        public string Designation { get; set; } = null!;
+        [Column("designation_id")]
+        public int DesignationId { get; set; }
 
         [Column("position")]
         public string Position { get; set; } = null!;
 
-        [Column("appointment_type")]
-        public string AppointmentType { get; set; } = null!;
+        [Column("appointment_type_id")]
+        public int AppointmentTypeId { get; set; }
 
         [Column("appointment_date")]
         public DateTime AppointmentDate { get; set; }
@@ -80,6 +94,15 @@ namespace BBMB.BudgetService.Features.Employees.Entities
         public DateTime? RetirementDate { get; set; }
 
         public Employee Employee { get; set; } = null!;
+
+        [ForeignKey("DesignationId")]
+        public Designation Designations { get; set; } = null!;
+
+        [ForeignKey("SourceOfRecruitmentId")]
+        public SourceOfRecruitment SourceOfRecruitments { get; set; } = null!;
+
+        [ForeignKey("AppointmentTypeId")]
+        public AppointmentType AppointmentTypes { get; set; } = null!;
     }
 
     [Table("employee_photo_document")]

@@ -10,7 +10,7 @@ namespace BBMB.BudgetService.Features.Employees.GetList
         {
             config.NewConfig<Employee, GetEmployeeListResponseDto>()
                 .Map(dest => dest.EmployeeId, src => src.Id)
-                .Map(dest => dest.Designation, src => src.EmploymentDetail.Designation)
+                .Map(dest => dest.DesignationId, src => src.EmploymentDetail.DesignationId)
                 .Map(dest => dest.DateOfJoining, src => src.EmploymentDetail.DateOfJoining)
                 .Map(dest => dest.PhotoUrl, src => src.PhotoDocument.PhotoUrl);
         }

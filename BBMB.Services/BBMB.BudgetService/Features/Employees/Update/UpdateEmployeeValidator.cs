@@ -21,7 +21,7 @@ namespace BBMB.BudgetService.Features.Employees.Update
             RuleFor(x => x.dto.PersonalInfo.PhoneNumber)
                 .NotEmpty();
 
-            RuleFor(x => x.dto.Employment.Designation)
+            RuleFor(x => x.dto.Employment.DesignationId)
                 .NotEmpty();
 
             RuleFor(x => x.dto.Employment.AppointmentDate)

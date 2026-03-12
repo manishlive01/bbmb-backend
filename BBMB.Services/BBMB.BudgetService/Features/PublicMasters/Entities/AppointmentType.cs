@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BBMB.BudgetService.Features.Employees.Entities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities
@@ -29,5 +30,6 @@ namespace BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities
 
         [Column("deleted_at")]
         public DateTime? DeletedAt { get; set; }
+        public ICollection<EmploymentDetail> EmploymentDetails { get; set; } = new List<EmploymentDetail>();
     }
 }

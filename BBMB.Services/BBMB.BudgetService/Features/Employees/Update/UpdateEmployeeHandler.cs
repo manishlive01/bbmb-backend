@@ -38,10 +38,10 @@ namespace BBMB.BudgetService.Features.Employees.Update
             dto.Adapt(employee);
 
             // Update employment
-            employee.EmploymentDetail.SourceOfRecruitment = dto.Employment.SourceOfRecruitment;
-            employee.EmploymentDetail.Designation = dto.Employment.Designation;
+            employee.EmploymentDetail.SourceOfRecruitmentId = dto.Employment.SourceOfRecruitmentId;
+            employee.EmploymentDetail.DesignationId = dto.Employment.DesignationId;
             employee.EmploymentDetail.Position = dto.Employment.Position;
-            employee.EmploymentDetail.AppointmentType = dto.Employment.AppointmentType;
+            employee.EmploymentDetail.AppointmentTypeId = dto.Employment.AppointmentTypeId;
             employee.EmploymentDetail.AppointmentDate = dto.Employment.AppointmentDate;
             employee.EmploymentDetail.DateOfJoining = dto.Employment.DateOfJoining;
             employee.EmploymentDetail.RetirementDate = dto.Employment.RetirementDate;

@@ -19,9 +19,9 @@ namespace BBMB.BudgetService.Features.Employees.Create
                 .NotEmpty()
                 .WithMessage("User ID is required");
 
-            RuleFor(x => x.dto.PersonalInfo.ApplicantTitle)
-                .NotEmpty()
-                .MaximumLength(10);
+            RuleFor(x => x.dto.PersonalInfo.TitleId)
+               .NotEmpty()
+               .WithMessage("Title is required");
 
             RuleFor(x => x.dto.PersonalInfo.NameEnglish)
                 .NotEmpty()
@@ -32,7 +32,7 @@ namespace BBMB.BudgetService.Features.Employees.Create
                 .MaximumLength(100)
                 .When(x => !string.IsNullOrEmpty(x.dto.PersonalInfo.NameHindi));
 
-            RuleFor(x => x.dto.PersonalInfo.Gender)
+            RuleFor(x => x.dto.PersonalInfo.GenderId)
                 .NotEmpty()
                 .WithMessage("Gender is required");
 
@@ -58,21 +58,23 @@ namespace BBMB.BudgetService.Features.Employees.Create
             // Employment Validation
             //------------------------------------
 
-            RuleFor(x => x.dto.Employment.SourceOfRecruitment)
-                .NotEmpty()
-                .MaximumLength(100);
 
-            RuleFor(x => x.dto.Employment.Designation)
+            RuleFor(x => x.dto.Employment.SourceOfRecruitmentId)
+     .NotEmpty()
+     .WithMessage("Source Of Recruitment is required");
+
+            RuleFor(x => x.dto.Employment.DesignationId)
                 .NotEmpty()
-                .MaximumLength(100);
+                .WithMessage("Designation is required");
 
             RuleFor(x => x.dto.Employment.Position)
                 .NotEmpty()
-                .MaximumLength(100);
+                .MaximumLength(100)
+                .WithMessage("Position is required and cannot exceed 100 characters");
 
-            RuleFor(x => x.dto.Employment.AppointmentType)
+            RuleFor(x => x.dto.Employment.AppointmentTypeId)
                 .NotEmpty()
-                .MaximumLength(50);
+                .WithMessage("Appointment Type is required");
 
             RuleFor(x => x.dto.Employment.AppointmentDate)
                 .NotEmpty();

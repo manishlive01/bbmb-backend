@@ -22,13 +22,15 @@ namespace BBMB.BudgetService.Features.Employees.GetList
         }
 
         public async Task<PagedResponse<GetEmployeeListResponseDto>> Handle(
-            GetEmployeeListQuery request,
-            CancellationToken ct)
+     GetEmployeeListQuery request,
+     CancellationToken ct)
         {
             var dto = request.dto;
 
             var query = _context.Employees
+                .Include(x => x.Genders)
                 .Include(x => x.EmploymentDetail)
+                    .ThenInclude(x => x.Designations)
                 .Include(x => x.PhotoDocument)
                 .AsQueryable();
 
@@ -42,11 +44,11 @@ namespace BBMB.BudgetService.Features.Employees.GetList
             if (!string.IsNullOrWhiteSpace(dto.Email))
                 query = query.Where(x => x.Email.Contains(dto.Email));
 
-            if (!string.IsNullOrWhiteSpace(dto.Gender))
-                query = query.Where(x => x.Gender == dto.Gender);
+            if (dto.GenderId.HasValue)
+                query = query.Where(x => x.GenderId == dto.GenderId.Value);
 
-            if (!string.IsNullOrWhiteSpace(dto.Designation))
-                query = query.Where(x => x.EmploymentDetail.Designation.Contains(dto.Designation));
+            if (dto.DesignationId.HasValue)
+                query = query.Where(x => x.EmploymentDetail.DesignationId == dto.DesignationId.Value);
 
             var totalCount = await query.CountAsync(ct);
 
@@ -54,24 +56,34 @@ namespace BBMB.BudgetService.Features.Employees.GetList
 
             var pageSize = Math.Min(dto.PageSize, 100);
             var pageNumber = Math.Max(dto.PageNumber, 1);
+
             var baseUrl = _fileSettings.FileServerUrl;
 
-            
             var items = await query
-        .Skip((pageNumber - 1) * pageSize)
-        .Take(pageSize)
-        .Select(x => new GetEmployeeListResponseDto
-        {
-            EmployeeId = x.Id,
-            NameEnglish = x.NameEnglish,
-            Gender = x.Gender,
-            PhoneNumber = x.PhoneNumber,
-            Email = x.Email,
-            Designation = x.EmploymentDetail.Designation,
-            DateOfJoining = x.EmploymentDetail.DateOfJoining,
-            PhotoUrl = x.PhotoDocument != null ? $"{baseUrl}{x.PhotoDocument.PhotoUrl}" : ""
-        })
-        .ToListAsync(ct);
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new GetEmployeeListResponseDto
+                {
+                    EmployeeId = x.Id,
+                    NameEnglish = x.NameEnglish,
+
+                    GenderId = x.GenderId,
+                    GenderName = x.Genders.GenderName,
+
+                    PhoneNumber = x.PhoneNumber,
+                    Email = x.Email,
+
+                    DesignationId = x.EmploymentDetail.DesignationId,
+                    DesignationName = x.EmploymentDetail.Designations.DesignationName,
+
+                    DateOfJoining = x.EmploymentDetail.DateOfJoining,
+
+                    PhotoUrl = x.PhotoDocument != null
+                        ? $"{baseUrl}{x.PhotoDocument.PhotoUrl}"
+                        : ""
+                })
+                .ToListAsync(ct);
+
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 
             var paginationMetadata = new PaginationMetadata
@@ -93,21 +105,30 @@ namespace BBMB.BudgetService.Features.Employees.GetList
         }
 
         private IQueryable<Employee> ApplySorting(
-            IQueryable< Employee> query,
-            string? sortBy,
-            bool sortDescending)
+     IQueryable<Employee> query,
+     string? sortBy,
+     bool sortDescending)
         {
             if (string.IsNullOrWhiteSpace(sortBy))
                 return query.OrderBy(x => x.NameEnglish);
 
             query = sortBy.ToLower() switch
             {
-                "nameenglish" => sortDescending ? query.OrderByDescending(x => x.NameEnglish) : query.OrderBy(x => x.NameEnglish),
-                "email" => sortDescending ? query.OrderByDescending(x => x.Email) : query.OrderBy(x => x.Email),
-                "phonenumber" => sortDescending ? query.OrderByDescending(x => x.PhoneNumber) : query.OrderBy(x => x.PhoneNumber),
+                "nameenglish" => sortDescending
+                    ? query.OrderByDescending(x => x.NameEnglish)
+                    : query.OrderBy(x => x.NameEnglish),
+
+                "email" => sortDescending
+                    ? query.OrderByDescending(x => x.Email)
+                    : query.OrderBy(x => x.Email),
+
+                "phonenumber" => sortDescending
+                    ? query.OrderByDescending(x => x.PhoneNumber)
+                    : query.OrderBy(x => x.PhoneNumber),
+
                 "designation" => sortDescending
-                    ? query.OrderByDescending(x => x.EmploymentDetail.Designation)
-                    : query.OrderBy(x => x.EmploymentDetail.Designation),
+                    ? query.OrderByDescending(x => x.EmploymentDetail.Designations.DesignationName)
+                    : query.OrderBy(x => x.EmploymentDetail.Designations.DesignationName),
 
                 _ => query.OrderBy(x => x.NameEnglish)
             };

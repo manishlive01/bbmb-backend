@@ -3,10 +3,10 @@
     public class PersonalInfoDto
     {
         public Guid UserId {  get; set; }
-        public string ApplicantTitle { get; set; } = null!;
+        public int TitleId { get; set; }
         public string NameEnglish { get; set; } = null!;
         public string? NameHindi { get; set; }
-        public string Gender { get; set; } = null!;
+        public int GenderId { get; set; }
         public DateTime DateOfBirth { get; set; }
 
         public string PhoneNumber { get; set; } = null!;

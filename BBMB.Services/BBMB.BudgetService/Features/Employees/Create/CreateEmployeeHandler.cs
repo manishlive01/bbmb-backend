@@ -51,10 +51,10 @@ namespace BBMB.BudgetService.Features.Employees.Create
             {
                 Id = Guid.NewGuid(),
                 EmployeeId = employee.Id,
-                SourceOfRecruitment = dto.Employment.SourceOfRecruitment,
-                Designation = dto.Employment.Designation,
+                SourceOfRecruitmentId = dto.Employment.SourceOfRecruitmentId,
+                DesignationId = dto.Employment.DesignationId,
                 Position = dto.Employment.Position,
-                AppointmentType = dto.Employment.AppointmentType,
+                AppointmentTypeId = dto.Employment.AppointmentTypeId,
                 AppointmentDate = DateTime.SpecifyKind(dto.Employment.AppointmentDate, DateTimeKind.Utc),
                 DateOfJoining = DateTime.SpecifyKind(dto.Employment.DateOfJoining, DateTimeKind.Utc),
                 RetirementDate = dto.Employment.RetirementDate == null
