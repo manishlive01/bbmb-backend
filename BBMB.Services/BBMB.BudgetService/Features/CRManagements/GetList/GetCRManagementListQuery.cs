@@ -10,11 +10,11 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
         int PageSize,
         string? SortBy,
         bool SortDescending,
-        string? crCode,
-        string? ceCode,
+        int? crCode,
+        int? ceCode,
         bool? Status
     ) : IRequest<PagedResponse<GetCRManagementListResponseDto>>;
 
-    public sealed record GetCRManagementListById(GetByStringIdRequestDto RequestDto
+    public sealed record GetCRManagementListById(GetByIdRequestDto RequestDto
     ) : IRequest<List<GetCRManagementListResponseDto>>;
 }

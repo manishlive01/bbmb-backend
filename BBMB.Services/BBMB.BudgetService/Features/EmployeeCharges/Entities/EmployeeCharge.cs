@@ -18,14 +18,12 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Entities
         public string ProjectCode { get; set; }
 
         [Required]
-        [MaxLength(20)]
         [Column("ce_code")]
-        public string CECode { get; set; } = null!;
+        public int CECode { get; set; } 
 
         [Required]
-        [MaxLength(20)]
         [Column("cr_code")]
-        public string CRCode { get; set; } = null!;
+        public int CRCode { get; set; }
 
         [Required]
         [Column("division_code")]

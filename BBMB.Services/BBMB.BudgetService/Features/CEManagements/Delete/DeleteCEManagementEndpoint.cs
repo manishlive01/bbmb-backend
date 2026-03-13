@@ -10,10 +10,10 @@ namespace BBMB.BudgetService.Features.CEManagements.Delete
         {
             app.MapDelete("/api/ce-management/{ceCode}",
                 async (
-                    string ceCode,
+                    int ceCode,
                     IMediator mediator) =>
                 {
-                    if (string.IsNullOrWhiteSpace(ceCode))
+                    if (ceCode <= 0)
                     {
                         return Results.BadRequest(new Response
                         {

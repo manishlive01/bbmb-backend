@@ -8,10 +8,10 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser.Dtos
         public string ProjectCode { get; set; }
         public string ProjDesc { get; set; } = null!;
 
-        public string CECode { get; set; } = null!;
+        public int CECode { get; set; }
         public string CEName { get; set; } = null!;
 
-        public string CRCode { get; set; } = null!;
+        public int CRCode { get; set; }
         public string CRName { get; set; } = null!;
         public int DivisionCode { get; set; }
         public string DivName { get; set; } = null!;

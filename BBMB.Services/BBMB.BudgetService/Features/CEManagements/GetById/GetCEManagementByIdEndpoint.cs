@@ -12,9 +12,9 @@ namespace BBMB.BudgetService.Features.CEManagements.GetById
         public void Map(IEndpointRouteBuilder app)
         {
             app.MapGet("/api/ce-management/{ceCode}",
-                async (string ceCode, IMediator mediator) =>
+                async (int ceCode, IMediator mediator) =>
                 {
-                    if (string.IsNullOrWhiteSpace(ceCode))
+                    if (ceCode <= 0)
                     {
                         return Results.BadRequest(new Response
                         {

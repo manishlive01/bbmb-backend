@@ -8,8 +8,8 @@ namespace BBMB.BudgetService.Features.Divisions.GetList.Dtos
         public string? RegionCode { get; set; }
         public string? PoolCode { get; set; }
         public DateTime ModificationDate { get; set; }
-        public string CRCode { get; set; } = string.Empty;
-        public string CECode { get; set; } = string.Empty;
+        public int CRCode { get; set; } 
+        public int CECode { get; set; } 
         public string UserCode { get; set; } = string.Empty;
     }
 }

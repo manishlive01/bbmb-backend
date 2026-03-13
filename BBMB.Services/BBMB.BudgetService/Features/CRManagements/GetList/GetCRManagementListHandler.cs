@@ -26,9 +26,9 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
                 .AsQueryable();
 
             // 🔎 Apply Filters
-            if (!string.IsNullOrWhiteSpace(request.ceCode))
+            if (request.ceCode.HasValue)
             {
-                query = query.Where(x => x.CECode == request.ceCode);
+                query = query.Where(x => x.CECode == request.ceCode.Value);
             }
 
             if (request.Status.HasValue)

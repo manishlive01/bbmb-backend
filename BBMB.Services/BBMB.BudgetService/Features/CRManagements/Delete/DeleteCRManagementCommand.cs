@@ -3,6 +3,6 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.CRManagements.Delete
 {
-    public sealed record DeleteCRManagementCommand(string crCode)
+    public sealed record DeleteCRManagementCommand(int crCode)
         : IRequest<Response>;
 }

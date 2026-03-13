@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Features.CRManagements.Delete
         public void Map(IEndpointRouteBuilder app)
         {
             app.MapDelete("/api/cr-management/{crCode}", async (
-                string crCode,
+                int crCode,
                 IMediator mediator) =>
             {
                 var command = new DeleteCRManagementCommand(crCode);

@@ -909,9 +909,9 @@ namespace BBMB.BudgetService.Features.BulkUploads
         // CE MANAGEMENT MASTER
         // ============================================================
         private async Task<Response> UploadCEManagementMaster(
-    ExcelWorksheet worksheet,
-    int rowCount,
-    CancellationToken cancellationToken)
+     ExcelWorksheet worksheet,
+     int rowCount,
+     CancellationToken cancellationToken)
         {
             await using var transaction =
                 await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -921,10 +921,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
             try
             {
                 var list = new List<CEManagement>();
-                var duplicateExcelCheck = new HashSet<string>();
+                var duplicateExcelCheck = new HashSet<int>();
 
                 // 🔥 ONE DB HIT – Existing CE Codes
-                var existingSet = new HashSet<string>(
+                var existingSet = new HashSet<int>(
                     await _context.Set<CEManagement>()
                         .AsNoTracking()
                         .Select(x => x.CECode)
@@ -939,15 +939,20 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 for (int row = 2; row <= rowCount; row++)
                 {
-                    var ceCode = worksheet.Cells[row, 1].Text?.Trim();
+                    var ceCodeValue = worksheet.Cells[row, 1].Value;
                     var name = worksheet.Cells[row, 2].Text?.Trim();
                     var projectCode = worksheet.Cells[row, 3].Text?.Trim();
                     var desc = worksheet.Cells[row, 4].Text?.Trim();
                     var location = worksheet.Cells[row, 5].Text?.Trim();
 
+                    // 🔹 CECode validation
+                    if (ceCodeValue == null || !int.TryParse(ceCodeValue.ToString(), out int ceCode))
+                    {
+                        throw new Exception($"Invalid CECode at row {row}");
+                    }
+
                     // 🔹 Required field validation
-                    if (string.IsNullOrWhiteSpace(ceCode) ||
-                        string.IsNullOrWhiteSpace(name) ||
+                    if (string.IsNullOrWhiteSpace(name) ||
                         string.IsNullOrWhiteSpace(projectCode))
                     {
                         throw new Exception($"Required fields missing at row {row}");
@@ -965,7 +970,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         throw new Exception($"CECode already exists in database: {ceCode}");
                     }
 
-                    // 🔹 FK check
+                    // 🔹 FK validation
                     if (!projectSet.Contains(projectCode))
                     {
                         throw new Exception($"ProjectCode does not exist: {projectCode}");
@@ -1023,14 +1028,13 @@ namespace BBMB.BudgetService.Features.BulkUploads
             }
         }
 
-
         // ============================================================
         // CR MANAGEMENT MASTER
         // ============================================================
         private async Task<Response> UploadCRManagementMaster(
-    ExcelWorksheet worksheet,
-    int rowCount,
-    CancellationToken cancellationToken)
+     ExcelWorksheet worksheet,
+     int rowCount,
+     CancellationToken cancellationToken)
         {
             await using var transaction =
                 await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -1040,17 +1044,17 @@ namespace BBMB.BudgetService.Features.BulkUploads
             try
             {
                 var list = new List<CRManagement>();
-                var duplicateExcelCheck = new HashSet<string>();
+                var duplicateExcelCheck = new HashSet<int>();
 
-                // 🔥 ONE DB HIT – Existing CR codes
-                var crSet = new HashSet<string>(
+                // 🔥 ONE DB HIT – Existing CR Codes
+                var crSet = new HashSet<int>(
                     await _context.Set<CRManagement>()
                         .AsNoTracking()
                         .Select(x => x.CRCode)
                         .ToListAsync(cancellationToken));
 
-                // 🔥 ONE DB HIT – Existing CE codes (FK validation)
-                var ceSet = new HashSet<string>(
+                // 🔥 ONE DB HIT – Existing CE Codes (FK validation)
+                var ceSet = new HashSet<int>(
                     await _context.Set<CEManagement>()
                         .AsNoTracking()
                         .Select(x => x.CECode)
@@ -1058,16 +1062,27 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 for (int row = 2; row <= rowCount; row++)
                 {
-                    var ceCode = worksheet.Cells[row, 1].Text?.Trim();
-                    var crCode = worksheet.Cells[row, 2].Text?.Trim();
+                    var ceCodeValue = worksheet.Cells[row, 1].Value;
+                    var crCodeValue = worksheet.Cells[row, 2].Value;
+
                     var name = worksheet.Cells[row, 3].Text?.Trim();
                     var desc = worksheet.Cells[row, 4].Text?.Trim();
                     var location = worksheet.Cells[row, 5].Text?.Trim();
 
-                    // 🔹 Required field validation
-                    if (string.IsNullOrWhiteSpace(ceCode) ||
-                        string.IsNullOrWhiteSpace(crCode) ||
-                        string.IsNullOrWhiteSpace(name))
+                    // 🔹 Convert CECode
+                    if (ceCodeValue == null || !int.TryParse(ceCodeValue.ToString(), out int ceCode))
+                    {
+                        throw new Exception($"Invalid CECode at row {row}");
+                    }
+
+                    // 🔹 Convert CRCode
+                    if (crCodeValue == null || !int.TryParse(crCodeValue.ToString(), out int crCode))
+                    {
+                        throw new Exception($"Invalid CRCode at row {row}");
+                    }
+
+                    // 🔹 Required validation
+                    if (string.IsNullOrWhiteSpace(name))
                     {
                         throw new Exception($"Required fields missing at row {row}");
                     }
@@ -1167,13 +1182,13 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         .Select(x => x.DivisionCode)
                         .ToListAsync(cancellationToken));
 
-                var ceSet = new HashSet<string>(
+                var ceSet = new HashSet<int>(
                     await _context.Set<CEManagement>()
                         .AsNoTracking()
                         .Select(x => x.CECode)
                         .ToListAsync(cancellationToken));
 
-                var crSet = new HashSet<string>(
+                var crSet = new HashSet<int>(
                     await _context.Set<CRManagement>()
                         .AsNoTracking()
                         .Select(x => x.CRCode)
@@ -1220,8 +1235,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     var divisionCodeText = worksheet.Cells[row, 1].Text?.Trim();
                     var divSectionText = worksheet.Cells[row, 2].Text?.Trim();
                     var divisionDesc = worksheet.Cells[row, 3].Text?.Trim();
-                    var ceCode = worksheet.Cells[row, 4].Text?.Trim();
-                    var crCode = worksheet.Cells[row, 5].Text?.Trim();
+
+                    var ceCodeValue = worksheet.Cells[row, 4].Value;
+                    var crCodeValue = worksheet.Cells[row, 5].Value;
+
                     var majorAccCode = worksheet.Cells[row, 6].Text?.Trim();
                     var roCode = worksheet.Cells[row, 7].Text?.Trim();
                     var accOffice = worksheet.Cells[row, 8].Text?.Trim();
@@ -1230,13 +1247,13 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     var regionCode = worksheet.Cells[row, 11].Text?.Trim();
                     var parentDivisionText = worksheet.Cells[row, 12].Text?.Trim();
 
-                    // Required validation
+                    // 🔹 Required validation
                     if (string.IsNullOrWhiteSpace(divisionCodeText) ||
                         string.IsNullOrWhiteSpace(divSectionText) ||
-                        string.IsNullOrWhiteSpace(divisionDesc) ||
-                        string.IsNullOrWhiteSpace(ceCode) ||
-                        string.IsNullOrWhiteSpace(crCode))
+                        string.IsNullOrWhiteSpace(divisionDesc))
+                    {
                         throw new Exception($"Required fields missing at row {row}");
+                    }
 
                     if (!int.TryParse(divisionCodeText, out var divisionCode))
                         throw new Exception($"Invalid DivisionCode '{divisionCodeText}' at row {row}");
@@ -1244,23 +1261,30 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     if (!int.TryParse(divSectionText, out var divSection))
                         throw new Exception($"Invalid DivSection '{divSectionText}' at row {row}");
 
+                    if (ceCodeValue == null || !int.TryParse(ceCodeValue.ToString(), out var ceCode))
+                        throw new Exception($"Invalid CECode at row {row}");
+
+                    if (crCodeValue == null || !int.TryParse(crCodeValue.ToString(), out var crCode))
+                        throw new Exception($"Invalid CRCode at row {row}");
+
                     int? parentDivision = null;
                     if (!string.IsNullOrWhiteSpace(parentDivisionText))
                     {
                         if (!int.TryParse(parentDivisionText, out var parent))
                             throw new Exception($"Invalid ParentDivisionCode '{parentDivisionText}' at row {row}");
+
                         parentDivision = parent;
                     }
 
-                    // Excel duplicate
+                    // 🔹 Excel duplicate
                     if (!excelDuplicateCheck.Add(divisionCode))
                         throw new Exception($"Duplicate DivisionCode '{divisionCode}' in Excel (row {row})");
 
-                    // DB duplicate
+                    // 🔹 DB duplicate
                     if (divisionSet.Contains(divisionCode))
                         throw new Exception($"DivisionCode '{divisionCode}' already exists in database (row {row})");
 
-                    // FK validations
+                    // 🔹 FK validations
                     if (!ceSet.Contains(ceCode))
                         throw new Exception($"CECode '{ceCode}' not found (row {row})");
 

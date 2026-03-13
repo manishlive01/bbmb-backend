@@ -9,7 +9,7 @@ namespace BBMB.BudgetService.Features.CRManagements.Update
         public void Map(IEndpointRouteBuilder app)
         {
             app.MapPut("/api/cr-management/{crCode}", async (
-                string crCode,
+                int crCode,
                 UpdateCRManagementDto dto,
                 IMediator mediator) =>
             {

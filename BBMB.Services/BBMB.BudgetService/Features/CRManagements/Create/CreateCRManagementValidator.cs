@@ -8,12 +8,12 @@ namespace BBMB.BudgetService.Features.CRManagements.Create
         public CreateCRManagementValidator()
         {
             RuleFor(x => x.Dto.CECode)
-            .NotEmpty().WithMessage("CE code is required")
-            .Matches(@"^\d+$").WithMessage("CE code must contain digits only");
+            .NotNull().WithMessage("CE code is required")
+            .GreaterThan(0).WithMessage("CE code must be greater than 0");
 
             RuleFor(x => x.Dto.CRCode)
-            .NotEmpty().WithMessage("CE code is required")
-            .Matches(@"^\d+$").WithMessage("CE code must contain digits only");
+                .NotNull().WithMessage("CR code is required")
+                .GreaterThan(0).WithMessage("CR code must be greater than 0");
 
             RuleFor(x => x.Dto.Name)
                 .NotEmpty()

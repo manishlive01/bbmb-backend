@@ -61,11 +61,11 @@ namespace BBMB.BudgetService.Features.Works.Entities
 
         [Required]
         [Column("ce_code")]
-        public string CECode { get; set; } = string.Empty;
+        public int CECode { get; set; } 
 
         [Required]
         [Column("cr_code")]
-        public string CRCode { get; set; } = string.Empty;
+        public int CRCode { get; set; }
 
         [Column("original_budget")]
         public string OriginalBudget { get; set; } = string.Empty;

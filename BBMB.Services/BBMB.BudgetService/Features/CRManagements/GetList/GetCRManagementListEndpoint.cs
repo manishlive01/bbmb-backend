@@ -17,8 +17,8 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
                 IMediator mediator,
                 [FromQuery] string? sortBy = null,
                 [FromQuery] bool sortDescending = false,
-                [FromQuery] string? crCode = null,
-                [FromQuery] string? ceCode = null,
+                [FromQuery] int? crCode = null,
+                [FromQuery] int? ceCode = null,
                 [FromQuery] bool? status = null) =>
             {
                 var query = new GetCRManagementListQuery(
@@ -39,7 +39,7 @@ namespace BBMB.BudgetService.Features.CRManagements.GetList
 
             app.MapPost("/api/List-By-CRCode", async ( 
                 IMediator mediator,
-                [FromBody]GetByStringIdRequestDto requestDto
+                [FromBody] GetByIdRequestDto requestDto
                  ) =>
             {
                 var query = new GetCRManagementListById(requestDto

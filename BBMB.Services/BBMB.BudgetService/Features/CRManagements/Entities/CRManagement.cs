@@ -11,12 +11,12 @@ namespace BBMB.BudgetService.Features.CRManagements.Entities
         [Key]
         [Required]
         [Column("cr_code")]
-        public string CRCode { get; set; } = string.Empty;
+        public int CRCode { get; set; }
 
 
         [Required]
         [Column("ce_code")]
-        public string CECode { get; set; } = string.Empty;
+        public int CECode { get; set; }
 
         [Required]
         [MaxLength(200)]

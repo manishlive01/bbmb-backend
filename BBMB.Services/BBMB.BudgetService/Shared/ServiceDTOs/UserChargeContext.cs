@@ -7,8 +7,8 @@
 
         public string ProjectCode { get; set; }
 
-        public string CECode { get; set; } = null!;
-        public string CRCode { get; set; } = null!;
+        public int CECode { get; set; }
+        public int CRCode { get; set; }
         public int DivisionCode { get; set; }
     }
 }

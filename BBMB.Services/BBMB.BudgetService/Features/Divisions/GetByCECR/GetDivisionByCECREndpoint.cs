@@ -11,8 +11,8 @@ namespace BBMB.BudgetService.Features.Divisions.GetByCECR
         {
             app.MapGet("/api/divisions/by-ce-cr", async (
                 IMediator mediator,
-                [FromQuery] string ceCode,
-                [FromQuery] string crCode) =>
+                [FromQuery] int ceCode,
+                [FromQuery] int crCode) =>
             {
                 var query = new GetDivisionByCECRQuery(ceCode, crCode);
 

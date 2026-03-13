@@ -7,7 +7,7 @@ namespace BBMB.BudgetService.Features.CRManagements.GetById
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/cr-management/{crCode}", async (string crCode, IMediator mediator) =>
+            app.MapGet("/api/cr-management/{crCode}", async (int crCode, IMediator mediator) =>
             {
                 try
                 {

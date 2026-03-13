@@ -8,9 +8,9 @@
 
         public string ProjectCode { get; set; }
 
-        public string CECode { get; set; } = string.Empty;
+        public int CECode { get; set; }
 
-        public string CRCode { get; set; } = string.Empty;
+        public int CRCode { get; set; }
 
         public int DivisionCode { get; set; }
 

@@ -4,6 +4,6 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.CEManagements.GetById
 {
-    public sealed record GetCEManagementByIdQuery(string ceCode)
+    public sealed record GetCEManagementByIdQuery(int ceCode)
         : IRequest<Response<GetCEManagementByIdResponseDto>>;
 }

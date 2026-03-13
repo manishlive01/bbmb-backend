@@ -9,17 +9,14 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Update
         {
              RuleFor(x => x.dto.EmployeeId)
                 .NotEmpty();
-             
 
             RuleFor(x => x.dto.CECode)
-                .NotEmpty()
-                .MaximumLength(10);
+    .NotNull().WithMessage("CE code is required")
+    .GreaterThan(0).WithMessage("CE code must be greater than 0");
 
             RuleFor(x => x.dto.CRCode)
-                .NotEmpty()
-                .MaximumLength(10);
-
-
+                .NotNull().WithMessage("CR code is required")
+                .GreaterThan(0).WithMessage("CR code must be greater than 0");
             RuleFor(x => x.dto.ChargeTime)
                 .NotEmpty();
         }

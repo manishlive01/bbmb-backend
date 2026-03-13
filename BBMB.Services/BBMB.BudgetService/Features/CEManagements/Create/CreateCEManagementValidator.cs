@@ -13,8 +13,8 @@ namespace BBMB.BudgetService.Features.CEManagements.Create
                 .MaximumLength(15).WithMessage("Name must not exceed 15 characters");
 
             RuleFor(x => x.dto.CECode)
-    .NotEmpty().WithMessage("CE code is required")
-    .Matches(@"^\d+$").WithMessage("CE code must contain digits only");
+                 .GreaterThan(0)
+                 .WithMessage("CE code must be greater than 0");
 
             RuleFor(x => x.dto.ProjectCode)
                 .NotEmpty().WithMessage("Project code is required")

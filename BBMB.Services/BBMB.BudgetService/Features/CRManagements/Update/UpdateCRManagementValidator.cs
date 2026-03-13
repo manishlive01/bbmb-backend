@@ -8,8 +8,8 @@ namespace BBMB.BudgetService.Features.CRManagements.Update
         public UpdateCRManagementValidator()
         {
             RuleFor(x => x.Dto.CECode)
-            .NotEmpty().WithMessage("CE code is required")
-            .Matches(@"^\d+$").WithMessage("CE code must contain digits only");
+    .NotNull().WithMessage("CE code is required")
+    .GreaterThan(0).WithMessage("CE code must be greater than 0");
 
             RuleFor(x => x.Dto.Name)
                 .NotEmpty()

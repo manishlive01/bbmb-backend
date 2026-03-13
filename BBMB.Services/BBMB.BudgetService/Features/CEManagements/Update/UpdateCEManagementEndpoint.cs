@@ -11,11 +11,11 @@ namespace BBMB.BudgetService.Features.CEManagements.Update
         {
             app.MapPut("/api/ce-management/{ceCode}",
                     async (
-                        string ceCode,
+                        int ceCode,
                         UpdateCEManagementDto dto,
                         IMediator mediator) =>
                     {
-                        if (string.IsNullOrWhiteSpace(ceCode))
+                        if (ceCode <= 0)
                         {
                             return Results.BadRequest(new Response
                             {
