@@ -30,16 +30,12 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("CECode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                    b.Property<int>("CECode")
+                        .HasColumnType("integer")
                         .HasColumnName("ce_code");
 
-                    b.Property<string>("CRCode")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                    b.Property<int>("CRCode")
+                        .HasColumnType("integer")
                         .HasColumnName("cr_code");
 
                     b.Property<DateTime?>("ChargeExpireTime")

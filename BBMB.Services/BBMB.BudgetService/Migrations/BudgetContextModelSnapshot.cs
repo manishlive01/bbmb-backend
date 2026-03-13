@@ -306,9 +306,12 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
                 {
-                    b.Property<string>("CECode")
-                        .HasColumnType("text")
+                    b.Property<int>("CECode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
                         .HasColumnName("ce_code");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CECode"));
 
                     b.Property<DateTime?>("Date")
                         .HasColumnType("timestamp with time zone")
@@ -355,13 +358,15 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
                 {
-                    b.Property<string>("CRCode")
-                        .HasColumnType("text")
+                    b.Property<int>("CRCode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
                         .HasColumnName("cr_code");
 
-                    b.Property<string>("CECode")
-                        .IsRequired()
-                        .HasColumnType("text")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CRCode"));
+
+                    b.Property<int>("CECode")
+                        .HasColumnType("integer")
                         .HasColumnName("ce_code");
 
                     b.Property<DateTime?>("Date")
@@ -520,14 +525,12 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<string>("AccountOfficeAccOffice")
                         .HasColumnType("character varying(2)");
 
-                    b.Property<string>("CECode")
-                        .IsRequired()
-                        .HasColumnType("text")
+                    b.Property<int>("CECode")
+                        .HasColumnType("integer")
                         .HasColumnName("ce_code");
 
-                    b.Property<string>("CRCode")
-                        .IsRequired()
-                        .HasColumnType("text")
+                    b.Property<int>("CRCode")
+                        .HasColumnType("integer")
                         .HasColumnName("cr_code");
 
                     b.Property<int?>("CtrlOffice1")
@@ -1136,14 +1139,12 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(8)")
                         .HasColumnName("work_code");
 
-                    b.Property<string>("CECode")
-                        .IsRequired()
-                        .HasColumnType("text")
+                    b.Property<int>("CECode")
+                        .HasColumnType("integer")
                         .HasColumnName("ce_code");
 
-                    b.Property<string>("CRCode")
-                        .IsRequired()
-                        .HasColumnType("text")
+                    b.Property<int>("CRCode")
+                        .HasColumnType("integer")
                         .HasColumnName("cr_code");
 
                     b.Property<string>("DesignationCode")

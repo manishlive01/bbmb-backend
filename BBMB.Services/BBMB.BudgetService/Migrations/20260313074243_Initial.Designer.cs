@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BBMB.BudgetService.Migrations
 {
     [DbContext(typeof(BudgetContext))]
-    [Migration("20260223054147_AddCRAndCEIDInDivisionTable")]
-    partial class AddCRAndCEIDInDivisionTable
+    [Migration("20260313074243_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -309,31 +309,31 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("CECode")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnName("ce_code");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CECode"));
 
                     b.Property<DateTime?>("Date")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("desc");
 
                     b.Property<string>("Location")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("location");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<string>("ProjectCode")
@@ -352,7 +352,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(6)")
                         .HasColumnName("user_code");
 
-                    b.HasKey("Id");
+                    b.HasKey("CECode");
 
                     b.HasIndex("ProjectCode");
 
@@ -361,35 +361,35 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("CRCode")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnName("cr_code");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CRCode"));
 
-                    b.Property<int>("CEId")
+                    b.Property<int>("CECode")
                         .HasColumnType("integer")
-                        .HasColumnName("ce_id");
+                        .HasColumnName("ce_code");
 
                     b.Property<DateTime?>("Date")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("desc");
 
                     b.Property<string>("Location")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("location");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
                     b.Property<bool>("Status")
@@ -402,9 +402,9 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(6)")
                         .HasColumnName("user_code");
 
-                    b.HasKey("Id");
+                    b.HasKey("CRCode");
 
-                    b.HasIndex("CEId");
+                    b.HasIndex("CECode");
 
                     b.ToTable("cr_management", "budget");
                 });
@@ -528,13 +528,13 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<string>("AccountOfficeAccOffice")
                         .HasColumnType("character varying(2)");
 
-                    b.Property<int>("CEId")
+                    b.Property<int>("CECode")
                         .HasColumnType("integer")
-                        .HasColumnName("ce_id");
+                        .HasColumnName("ce_code");
 
-                    b.Property<int>("CRId")
+                    b.Property<int>("CRCode")
                         .HasColumnType("integer")
-                        .HasColumnName("cr_id");
+                        .HasColumnName("cr_code");
 
                     b.Property<int?>("CtrlOffice1")
                         .HasColumnType("integer")
@@ -555,8 +555,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("DivisionDesc")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("division_desc");
 
                     b.Property<string>("MajorAccCode")
@@ -622,9 +622,9 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("AccountOfficeAccOffice");
 
-                    b.HasIndex("CEId");
+                    b.HasIndex("CECode");
 
-                    b.HasIndex("CRId");
+                    b.HasIndex("CRCode");
 
                     b.HasIndex("MajorHeadMajorAccCode");
 
@@ -908,8 +908,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("ObjectAccDesc")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
                         .HasColumnName("object_acc_desc");
 
                     b.Property<string>("UserCode")
@@ -1142,6 +1142,14 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(8)")
                         .HasColumnName("work_code");
 
+                    b.Property<int>("CECode")
+                        .HasColumnType("integer")
+                        .HasColumnName("ce_code");
+
+                    b.Property<int>("CRCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("cr_code");
+
                     b.Property<string>("DesignationCode")
                         .HasMaxLength(6)
                         .HasColumnType("character varying(6)")
@@ -1217,10 +1225,30 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<string>("ObjectClassificationObjectAccCode")
                         .HasColumnType("character varying(3)");
 
+                    b.Property<string>("OriginalBudget")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("original_budget");
+
+                    b.Property<string>("ProposedBudget")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("proposed_budget");
+
                     b.Property<string>("RefWorkCode")
                         .HasMaxLength(8)
                         .HasColumnType("character varying(8)")
                         .HasColumnName("ref_work_code");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("remarks");
+
+                    b.Property<string>("RevisedBudget")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("revised_budget");
 
                     b.Property<string>("SanctionDate")
                         .HasMaxLength(11)
@@ -1386,7 +1414,7 @@ namespace BBMB.BudgetService.Migrations
                 {
                     b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
                         .WithMany("CRManagements")
-                        .HasForeignKey("CEId")
+                        .HasForeignKey("CECode")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1419,13 +1447,13 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
                         .WithMany("Divisions")
-                        .HasForeignKey("CEId")
+                        .HasForeignKey("CECode")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", "CRManagement")
                         .WithMany("Divisions")
-                        .HasForeignKey("CRId")
+                        .HasForeignKey("CRCode")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

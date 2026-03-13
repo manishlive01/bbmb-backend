@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BBMB.BudgetService.Migrations
 {
     /// <inheritdoc />
-    public partial class AddInitialMigration : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -96,7 +96,7 @@ namespace BBMB.BudgetService.Migrations
                 columns: table => new
                 {
                     object_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
-                    object_acc_desc = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    object_acc_desc = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
                 },
@@ -279,6 +279,33 @@ namespace BBMB.BudgetService.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ce_management",
+                schema: "budget",
+                columns: table => new
+                {
+                    ce_code = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    project_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
+                    desc = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    location = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    date = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    status = table.Column<bool>(type: "boolean", nullable: false),
+                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ce_management", x => x.ce_code);
+                    table.ForeignKey(
+                        name: "FK_ce_management_projects_project_code",
+                        column: x => x.project_code,
+                        principalSchema: "budget",
+                        principalTable: "projects",
+                        principalColumn: "proj_code",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "units",
                 schema: "budget",
                 columns: table => new
@@ -361,73 +388,30 @@ namespace BBMB.BudgetService.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "division",
+                name: "cr_management",
                 schema: "budget",
                 columns: table => new
                 {
-                    division_code = table.Column<int>(type: "integer", nullable: false)
+                    cr_code = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    div_section = table.Column<int>(type: "integer", nullable: false),
-                    division_desc = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    ctrl_office1 = table.Column<int>(type: "integer", nullable: true),
-                    ctrl_office2 = table.Column<int>(type: "integer", nullable: true),
-                    ro_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
-                    major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
-                    acc_office = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
-                    unit_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
-                    pool_code = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
-                    umd_unit = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
-                    region_code = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
-                    ddo_tds = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
-                    modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    parent_division_code = table.Column<int>(type: "integer", nullable: true),
-                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false),
-                    RemittanceOfficeRoCode = table.Column<string>(type: "character varying(3)", nullable: true),
-                    MajorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true),
-                    AccountOfficeAccOffice = table.Column<string>(type: "character varying(2)", nullable: true),
-                    UnitMastersUnitCode = table.Column<string>(type: "character varying(2)", nullable: true),
-                    PoolCode1 = table.Column<string>(type: "character varying(2)", nullable: true),
-                    RegionCode1 = table.Column<string>(type: "character varying(2)", nullable: true)
+                    ce_code = table.Column<int>(type: "integer", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    desc = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    location = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    date = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    status = table.Column<bool>(type: "boolean", nullable: false),
+                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_division", x => x.division_code);
+                    table.PrimaryKey("PK_cr_management", x => x.cr_code);
                     table.ForeignKey(
-                        name: "FK_division_account_office_AccountOfficeAccOffice",
-                        column: x => x.AccountOfficeAccOffice,
+                        name: "FK_cr_management_ce_management_ce_code",
+                        column: x => x.ce_code,
                         principalSchema: "budget",
-                        principalTable: "account_office",
-                        principalColumn: "acc_office");
-                    table.ForeignKey(
-                        name: "FK_division_fa_major_head_MajorHeadMajorAccCode",
-                        column: x => x.MajorHeadMajorAccCode,
-                        principalSchema: "budget",
-                        principalTable: "fa_major_head",
-                        principalColumn: "major_acc_code");
-                    table.ForeignKey(
-                        name: "FK_division_pool_PoolCode1",
-                        column: x => x.PoolCode1,
-                        principalSchema: "budget",
-                        principalTable: "pool",
-                        principalColumn: "pool_code");
-                    table.ForeignKey(
-                        name: "FK_division_region_RegionCode1",
-                        column: x => x.RegionCode1,
-                        principalSchema: "budget",
-                        principalTable: "region",
-                        principalColumn: "region_code");
-                    table.ForeignKey(
-                        name: "FK_division_remit_office_RemittanceOfficeRoCode",
-                        column: x => x.RemittanceOfficeRoCode,
-                        principalSchema: "budget",
-                        principalTable: "remit_office",
-                        principalColumn: "ro_code");
-                    table.ForeignKey(
-                        name: "FK_division_units_UnitMastersUnitCode",
-                        column: x => x.UnitMastersUnitCode,
-                        principalSchema: "budget",
-                        principalTable: "units",
-                        principalColumn: "unit_code");
+                        principalTable: "ce_management",
+                        principalColumn: "ce_code",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -485,6 +469,92 @@ namespace BBMB.BudgetService.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "division",
+                schema: "budget",
+                columns: table => new
+                {
+                    division_code = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    div_section = table.Column<int>(type: "integer", nullable: false),
+                    division_desc = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    ctrl_office1 = table.Column<int>(type: "integer", nullable: true),
+                    ctrl_office2 = table.Column<int>(type: "integer", nullable: true),
+                    ro_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    major_acc_code = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
+                    acc_office = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
+                    unit_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: true),
+                    pool_code = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
+                    umd_unit = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: true),
+                    region_code = table.Column<string>(type: "character varying(1)", maxLength: 1, nullable: true),
+                    ddo_tds = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: true),
+                    modification_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    parent_division_code = table.Column<int>(type: "integer", nullable: true),
+                    ce_code = table.Column<int>(type: "integer", nullable: false),
+                    cr_code = table.Column<int>(type: "integer", nullable: false),
+                    user_code = table.Column<string>(type: "character varying(6)", maxLength: 6, nullable: false),
+                    RemittanceOfficeRoCode = table.Column<string>(type: "character varying(3)", nullable: true),
+                    MajorHeadMajorAccCode = table.Column<string>(type: "character varying(4)", nullable: true),
+                    AccountOfficeAccOffice = table.Column<string>(type: "character varying(2)", nullable: true),
+                    UnitMastersUnitCode = table.Column<string>(type: "character varying(2)", nullable: true),
+                    PoolCode1 = table.Column<string>(type: "character varying(2)", nullable: true),
+                    RegionCode1 = table.Column<string>(type: "character varying(2)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_division", x => x.division_code);
+                    table.ForeignKey(
+                        name: "FK_division_account_office_AccountOfficeAccOffice",
+                        column: x => x.AccountOfficeAccOffice,
+                        principalSchema: "budget",
+                        principalTable: "account_office",
+                        principalColumn: "acc_office");
+                    table.ForeignKey(
+                        name: "FK_division_ce_management_ce_code",
+                        column: x => x.ce_code,
+                        principalSchema: "budget",
+                        principalTable: "ce_management",
+                        principalColumn: "ce_code",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_division_cr_management_cr_code",
+                        column: x => x.cr_code,
+                        principalSchema: "budget",
+                        principalTable: "cr_management",
+                        principalColumn: "cr_code",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_division_fa_major_head_MajorHeadMajorAccCode",
+                        column: x => x.MajorHeadMajorAccCode,
+                        principalSchema: "budget",
+                        principalTable: "fa_major_head",
+                        principalColumn: "major_acc_code");
+                    table.ForeignKey(
+                        name: "FK_division_pool_PoolCode1",
+                        column: x => x.PoolCode1,
+                        principalSchema: "budget",
+                        principalTable: "pool",
+                        principalColumn: "pool_code");
+                    table.ForeignKey(
+                        name: "FK_division_region_RegionCode1",
+                        column: x => x.RegionCode1,
+                        principalSchema: "budget",
+                        principalTable: "region",
+                        principalColumn: "region_code");
+                    table.ForeignKey(
+                        name: "FK_division_remit_office_RemittanceOfficeRoCode",
+                        column: x => x.RemittanceOfficeRoCode,
+                        principalSchema: "budget",
+                        principalTable: "remit_office",
+                        principalColumn: "ro_code");
+                    table.ForeignKey(
+                        name: "FK_division_units_UnitMastersUnitCode",
+                        column: x => x.UnitMastersUnitCode,
+                        principalSchema: "budget",
+                        principalTable: "units",
+                        principalColumn: "unit_code");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "work",
                 schema: "budget",
                 columns: table => new
@@ -498,6 +568,12 @@ namespace BBMB.BudgetService.Migrations
                     sub_minor_acc_code = table.Column<string>(type: "character varying(2)", maxLength: 2, nullable: false),
                     detail_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
                     object_acc_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    ce_code = table.Column<int>(type: "integer", nullable: false),
+                    cr_code = table.Column<int>(type: "integer", nullable: false),
+                    original_budget = table.Column<string>(type: "text", nullable: false),
+                    revised_budget = table.Column<string>(type: "text", nullable: false),
+                    proposed_budget = table.Column<string>(type: "text", nullable: false),
+                    remarks = table.Column<string>(type: "text", nullable: false),
                     fin_yr_start = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
                     fin_yr_end = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
                     sanction_no = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
@@ -760,6 +836,18 @@ namespace BBMB.BudgetService.Migrations
                 column: "WorkCode1");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ce_management_project_code",
+                schema: "budget",
+                table: "ce_management",
+                column: "project_code");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_cr_management_ce_code",
+                schema: "budget",
+                table: "cr_management",
+                column: "ce_code");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_designation_class_code",
                 schema: "budget",
                 table: "designation",
@@ -776,6 +864,18 @@ namespace BBMB.BudgetService.Migrations
                 schema: "budget",
                 table: "division",
                 column: "AccountOfficeAccOffice");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_division_ce_code",
+                schema: "budget",
+                table: "division",
+                column: "ce_code");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_division_cr_code",
+                schema: "budget",
+                table: "division",
+                column: "cr_code");
 
             migrationBuilder.CreateIndex(
                 name: "IX_division_MajorHeadMajorAccCode",
@@ -954,6 +1054,10 @@ namespace BBMB.BudgetService.Migrations
                 schema: "budget");
 
             migrationBuilder.DropTable(
+                name: "cr_management",
+                schema: "budget");
+
+            migrationBuilder.DropTable(
                 name: "pool",
                 schema: "budget");
 
@@ -978,15 +1082,19 @@ namespace BBMB.BudgetService.Migrations
                 schema: "budget");
 
             migrationBuilder.DropTable(
+                name: "ce_management",
+                schema: "budget");
+
+            migrationBuilder.DropTable(
                 name: "irr_pwr",
                 schema: "budget");
 
             migrationBuilder.DropTable(
-                name: "projects",
+                name: "fa_minor_head",
                 schema: "budget");
 
             migrationBuilder.DropTable(
-                name: "fa_minor_head",
+                name: "projects",
                 schema: "budget");
         }
     }
