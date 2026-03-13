@@ -21,7 +21,7 @@ namespace BBMB.BudgetService.Infrastructure.DependencyInjection
             // ===============================
             services.AddDbContextPool<BudgetContext>(options =>
                 options.UseNpgsql(connectionString),
-                poolSize: 5);
+                poolSize: 3);
 
             // ===============================
             // Finance Schema
@@ -35,7 +35,7 @@ namespace BBMB.BudgetService.Infrastructure.DependencyInjection
             // ===============================
             services.AddDbContextPool<EmployeeContext>(options =>
                 options.UseNpgsql(connectionString),
-                poolSize: 5);
+                poolSize: 3);
 
             return services;
         }
