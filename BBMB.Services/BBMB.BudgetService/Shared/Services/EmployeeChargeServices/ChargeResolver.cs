@@ -1,5 +1,6 @@
 ﻿using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
 using BBMB.BudgetService.Shared.ServiceDTOs;
+using BBMB.BudgetService.Shared.Utilities;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
@@ -20,18 +21,34 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
 
         public async Task<UserChargeContext?> GetCurrentChargeAsync(CancellationToken ct)
         {
-            var userIdClaim = _httpContextAccessor.HttpContext?
-                .User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var httpContext = _httpContextAccessor.HttpContext;
+
+            if (httpContext == null)
+                return null;
+
+            // ✅ Use JwtClaimHelper method
+            var userIdClaim = JwtClaimHelper.GetUserId(httpContext.User);
 
             if (string.IsNullOrEmpty(userIdClaim))
                 return null;
 
             var userId = Guid.Parse(userIdClaim);
-            var employee= await _context.Employees.AsNoTracking()
+
+            // ================= GET EMPLOYEE =================
+
+            var employee = await _context.Employees
+                .AsNoTracking()
                 .Where(x => x.UserId == userId)
                 .Select(x => new { x.Id })
-                .FirstOrDefaultAsync(ct); 
+                .FirstOrDefaultAsync(ct);
+
+            if (employee == null)
+                return null;
+
+            // ================= GET ACTIVE CHARGE =================
+
             var charge = await _context.EmployeeCharges
+                .AsNoTracking()
                 .Where(x =>
                     x.EmployeeId == employee.Id &&
                     x.IsActive &&

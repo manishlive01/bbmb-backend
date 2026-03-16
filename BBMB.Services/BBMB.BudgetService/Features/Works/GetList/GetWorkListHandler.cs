@@ -1,6 +1,7 @@
 using BBMB.BudgetService.Features.Works.GetList.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
+using BBMB.BudgetService.Shared.Services.EmployeeChargeServices;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,16 +10,27 @@ namespace BBMB.BudgetService.Features.Works.GetList
     public class GetWorkListHandler : IRequestHandler<GetWorkListQuery, PagedResponse<GetWorkListResponseDto>>
     {
         private readonly BudgetContext _context;
+        private readonly IChargeResolver _chargeResolver;
 
-        public GetWorkListHandler(BudgetContext context)
+        public GetWorkListHandler(BudgetContext context, IChargeResolver chargeResolver)
         {
             _context = context;
+            _chargeResolver = chargeResolver;
         }
 
         public async Task<PagedResponse<GetWorkListResponseDto>> Handle(
-    GetWorkListQuery request,
-    CancellationToken ct)
+             GetWorkListQuery request,
+             CancellationToken ct)
         {
+            // ================= GET CURRENT USER CHARGE =================
+
+            var charge = await _chargeResolver.GetCurrentChargeAsync(ct);
+
+            if (charge == null)
+                throw new Exception("User charge not found.");
+
+            // ================= BASE QUERY =================
+
             var query =
                 from w in _context.Works.AsNoTracking()
 
@@ -76,7 +88,19 @@ namespace BBMB.BudgetService.Features.Works.GetList
                     cr
                 };
 
-            // ================= FILTERS =================
+            // ================= CHARGE BASED FILTER =================
+
+            if (charge.DivisionCode != null)
+                query = query.Where(x => x.w.DivisionCode == charge.DivisionCode);
+
+            if (charge.CECode != null)
+                query = query.Where(x => x.w.CECode == charge.CECode);
+
+            if (charge.CRCode != null)
+                query = query.Where(x => x.w.CRCode == charge.CRCode);
+
+
+            // ================= REQUEST FILTERS =================
 
             if (!string.IsNullOrWhiteSpace(request.WorkCode))
                 query = query.Where(x => x.w.WorkCode.Contains(request.WorkCode));
