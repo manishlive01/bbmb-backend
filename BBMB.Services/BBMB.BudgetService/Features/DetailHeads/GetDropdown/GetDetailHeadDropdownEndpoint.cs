@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.GetDropdown
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/detail-heads/dropdown", async (
+            app.MapPost("/api/detail-heads/dropdown", async (
                 [FromQuery] string? detailAccCode,
                 [FromQuery] string? detailAccDesc,
                 ISender sender) =>
