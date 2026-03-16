@@ -5,6 +5,8 @@
         public Guid Id { get; set; }
 
         public Guid EmployeeId { get; set; }
+        public string EmployeeName { get; set; }
+        public string? ProfileImageUrl { get; set; }
 
         public string ProjectCode { get; set; }
 
