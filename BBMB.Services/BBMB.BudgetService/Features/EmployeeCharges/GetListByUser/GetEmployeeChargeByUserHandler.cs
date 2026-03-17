@@ -32,20 +32,32 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser
 
             var userGuid = Guid.Parse(userId);
 
-            // 🔹 Step 1: Get employee charges
+            // 🔥 STEP 1: Update expired charges in ONE DB HIT
+            await _employeeContext.EmployeeCharges
+                .Where(ec =>
+                    ec.Employee.UserId == userGuid &&
+                    ec.ChargeExpireTime.HasValue &&
+                    ec.ChargeExpireTime <= DateTime.UtcNow &&
+                    !ec.IsChargeExpire)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(ec => ec.IsChargeExpire, true),
+                    cancellationToken);
+
+
+            // 🔹 STEP 2: Fetch employee charges
             var employeeCharges = await (
-                from ec in _employeeContext.EmployeeCharges
+                from ec in _employeeContext.EmployeeCharges.AsNoTracking()
                 join e in _employeeContext.Employees
                     on ec.EmployeeId equals e.Id
                 where e.UserId == userGuid
                 select ec
-            ).AsNoTracking().ToListAsync(cancellationToken);
+            ).ToListAsync(cancellationToken);
 
             if (!employeeCharges.Any())
                 return new List<GetEmployeeChargeByUserResponseDto>();
 
 
-            // 🔹 Step 2: Get lookup tables from Budget DB
+            // 🔹 STEP 3: Load lookup tables
             var projects = await _budgetContext.Projects
                 .AsNoTracking()
                 .ToDictionaryAsync(x => x.ProjCode, cancellationToken);
@@ -63,7 +75,7 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser
                 .ToDictionaryAsync(x => x.DivisionCode, cancellationToken);
 
 
-            // 🔹 Step 3: Map response
+            // 🔹 STEP 4: Map response
             var result = employeeCharges.Select(ec => new GetEmployeeChargeByUserResponseDto
             {
                 ProjectCode = ec.ProjectCode,
@@ -84,7 +96,9 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser
                 DivisionCode = ec.DivisionCode,
                 DivName = divs.ContainsKey(ec.DivisionCode)
                     ? divs[ec.DivisionCode].DivisionDesc
-                    : ""
+                    : "",
+
+                IsChargeExpire = ec.IsChargeExpire
             }).ToList();
 
             return result;

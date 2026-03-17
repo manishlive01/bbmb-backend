@@ -40,7 +40,6 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Update
             employeeCharge.ChargeTime = dto.ChargeTime;
             employeeCharge.ChargeExpireTime = dto.ChargeExpireTime;
             employeeCharge.IsActive = dto.IsActive;
-            employeeCharge.IsChargeExpire = dto.IsChargeExpire;
 
             await _context.SaveChangesAsync(ct);
 

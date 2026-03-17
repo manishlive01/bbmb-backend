@@ -11,11 +11,11 @@
         public string ProjectCode { get; set; }
 
         public int CECode { get; set; }
-
+        public string CEName { get; set; } = null!;
         public int CRCode { get; set; }
-
+        public string CRName { get; set; } = null!;
         public int DivisionCode { get; set; }
-
+        public string DivName { get; set; } = null!;
         public DateTime ChargeTime { get; set; }
 
         public DateTime? ChargeExpireTime { get; set; }

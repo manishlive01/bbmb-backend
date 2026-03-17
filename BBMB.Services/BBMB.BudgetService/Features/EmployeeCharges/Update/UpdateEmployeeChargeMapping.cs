@@ -8,9 +8,7 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Update
     {
         public void Register(TypeAdapterConfig config)
         {
-            config.NewConfig<UpdateEmployeeChargeDto, EmployeeCharge>()
-                .Map(dest => dest.IsActive, src => true)
-                .Map(dest => dest.IsChargeExpire, src => false);
+            config.NewConfig<UpdateEmployeeChargeDto, EmployeeCharge>();
         }
     }
 }

@@ -14,6 +14,5 @@
         public DateTime? ChargeExpireTime { get; set; }
 
         public bool IsActive { get; set; }
-        public bool IsChargeExpire { get; set; }
     }
 }

@@ -15,5 +15,6 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser.Dtos
         public string CRName { get; set; } = null!;
         public int DivisionCode { get; set; }
         public string DivName { get; set; } = null!;
+        public bool IsChargeExpire { get; set; }
     }
 }
