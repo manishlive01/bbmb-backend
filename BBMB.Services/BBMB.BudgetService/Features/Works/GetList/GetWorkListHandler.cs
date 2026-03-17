@@ -12,22 +12,25 @@ namespace BBMB.BudgetService.Features.Works.GetList
         private readonly BudgetContext _context;
         private readonly IChargeResolver _chargeResolver;
 
-        public GetWorkListHandler(BudgetContext context, IChargeResolver chargeResolver)
+        public GetWorkListHandler(
+            BudgetContext context,
+            IChargeResolver chargeResolver)
         {
             _context = context;
             _chargeResolver = chargeResolver;
         }
 
         public async Task<PagedResponse<GetWorkListResponseDto>> Handle(
-             GetWorkListQuery request,
-             CancellationToken ct)
+            GetWorkListQuery request,
+            CancellationToken ct)
         {
             // ================= GET CURRENT USER CHARGE =================
 
             var charge = await _chargeResolver.GetCurrentChargeAsync(ct);
 
-            if (charge == null)
-                throw new Exception("User charge not found.");
+            // NOTE:
+            // If charge is null → no filtering (return all data)
+            // If charge exists → apply filters
 
             // ================= BASE QUERY =================
 
@@ -90,15 +93,17 @@ namespace BBMB.BudgetService.Features.Works.GetList
 
             // ================= CHARGE BASED FILTER =================
 
-            if (charge.DivisionCode != null)
-                query = query.Where(x => x.w.DivisionCode == charge.DivisionCode);
+            if (charge != null)
+            {
+                if (charge.DivisionCode != null)
+                    query = query.Where(x => x.w.DivisionCode == charge.DivisionCode);
 
-            if (charge.CECode != null)
-                query = query.Where(x => x.w.CECode == charge.CECode);
+                if (charge.CECode != null)
+                    query = query.Where(x => x.w.CECode == charge.CECode);
 
-            if (charge.CRCode != null)
-                query = query.Where(x => x.w.CRCode == charge.CRCode);
-
+                if (charge.CRCode != null)
+                    query = query.Where(x => x.w.CRCode == charge.CRCode);
+            }
 
             // ================= REQUEST FILTERS =================
 
@@ -208,16 +213,27 @@ namespace BBMB.BudgetService.Features.Works.GetList
         }
 
         private IQueryable<BBMB.BudgetService.Features.Works.Entities.Work> ApplySorting(
-            IQueryable<BBMB.BudgetService.Features.Works.Entities.Work> query, string? sortBy, bool sortDescending)
+            IQueryable<BBMB.BudgetService.Features.Works.Entities.Work> query,
+            string? sortBy,
+            bool sortDescending)
         {
             if (string.IsNullOrEmpty(sortBy))
                 return query.OrderBy(w => w.WorkCode);
 
             return sortBy.ToLower() switch
             {
-                "workcode" => sortDescending ? query.OrderByDescending(w => w.WorkCode) : query.OrderBy(w => w.WorkCode),
-                "workdesc" => sortDescending ? query.OrderByDescending(w => w.WorkDesc) : query.OrderBy(w => w.WorkDesc),
-                "divisioncode" => sortDescending ? query.OrderByDescending(w => w.DivisionCode) : query.OrderBy(w => w.DivisionCode),
+                "workcode" => sortDescending
+                    ? query.OrderByDescending(w => w.WorkCode)
+                    : query.OrderBy(w => w.WorkCode),
+
+                "workdesc" => sortDescending
+                    ? query.OrderByDescending(w => w.WorkDesc)
+                    : query.OrderBy(w => w.WorkDesc),
+
+                "divisioncode" => sortDescending
+                    ? query.OrderByDescending(w => w.DivisionCode)
+                    : query.OrderBy(w => w.DivisionCode),
+
                 _ => query.OrderBy(w => w.WorkCode)
             };
         }
