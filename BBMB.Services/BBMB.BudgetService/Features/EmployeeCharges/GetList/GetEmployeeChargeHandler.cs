@@ -31,50 +31,64 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetList
         {
             var fileServerUrl = _fileSettings.FileServerUrl;
 
-            var result =
-                from ec in _employeeContext.EmployeeCharges.AsNoTracking()
+            // 🔹 STEP 1: Load lookup tables (Budget DB)
+            var ces = await _budgetContext.CEManagements
+                .AsNoTracking()
+                .ToDictionaryAsync(x => x.CECode, ct);
 
-                join ce in _budgetContext.CEManagements.AsNoTracking()
-                    on ec.CECode equals ce.CECode into ceJoin
-                from ce in ceJoin.DefaultIfEmpty()
+            var crs = await _budgetContext.CRManagements
+                .AsNoTracking()
+                .ToDictionaryAsync(x => x.CRCode, ct);
 
-                join cr in _budgetContext.CRManagements.AsNoTracking()
-                    on ec.CRCode equals cr.CRCode into crJoin
-                from cr in crJoin.DefaultIfEmpty()
+            var divs = await _budgetContext.Divisions
+                .AsNoTracking()
+                .ToDictionaryAsync(x => x.DivisionCode, ct);
 
-                join div in _budgetContext.Divisions.AsNoTracking()
-                    on ec.DivisionCode equals div.DivisionCode into divJoin
-                from div in divJoin.DefaultIfEmpty()
 
-                select new GetEmployeeChargeResponseDto
-                {
-                    Id = ec.Id,
-                    EmployeeId = ec.EmployeeId,
+            // 🔹 STEP 2: Fetch employee charges (Employee DB)
+            var employeeCharges = await _employeeContext.EmployeeCharges
+                .AsNoTracking()
+                .Include(x => x.Employee)
+                    .ThenInclude(e => e.PhotoDocument)
+                .ToListAsync(ct);
 
-                    EmployeeName = ec.Employee.NameEnglish,
 
-                    ProfileImageUrl = ec.Employee.PhotoDocument != null
-                        ? fileServerUrl + ec.Employee.PhotoDocument.PhotoUrl
-                        : null,
+            // 🔹 STEP 3: Map response
+            var result = employeeCharges.Select(ec => new GetEmployeeChargeResponseDto
+            {
+                Id = ec.Id,
+                EmployeeId = ec.EmployeeId,
 
-                    ProjectCode = ec.ProjectCode,
+                EmployeeName = ec.Employee.NameEnglish,
 
-                    CECode = ec.CECode,
-                    CEName = ce != null ? ce.Name : "",
+                ProfileImageUrl = ec.Employee.PhotoDocument != null
+                    ? fileServerUrl + ec.Employee.PhotoDocument.PhotoUrl
+                    : null,
 
-                    CRCode = ec.CRCode,
-                    CRName = cr != null ? cr.Name : "",
+                ProjectCode = ec.ProjectCode,
 
-                    DivisionCode = ec.DivisionCode,
-                    DivName = div != null ? div.DivisionDesc : "",
+                CECode = ec.CECode,
+                CEName = ces.ContainsKey(ec.CECode)
+                    ? ces[ec.CECode].Name
+                    : "",
 
-                    ChargeTime = ec.ChargeTime,
-                    ChargeExpireTime = ec.ChargeExpireTime,
-                    IsActive = ec.IsActive,
-                    IsChargeExpire = ec.IsChargeExpire
-                };
+                CRCode = ec.CRCode,
+                CRName = crs.ContainsKey(ec.CRCode)
+                    ? crs[ec.CRCode].Name
+                    : "",
 
-            return await result.ToListAsync(ct);
+                DivisionCode = ec.DivisionCode,
+                DivName = divs.ContainsKey(ec.DivisionCode)
+                    ? divs[ec.DivisionCode].DivisionDesc
+                    : "",
+
+                ChargeTime = ec.ChargeTime,
+                ChargeExpireTime = ec.ChargeExpireTime,
+                IsActive = ec.IsActive,
+                IsChargeExpire = ec.IsChargeExpire
+            }).ToList();
+
+            return result;
         }
     }
 }
