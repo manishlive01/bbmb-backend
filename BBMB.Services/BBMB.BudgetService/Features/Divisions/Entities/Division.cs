@@ -2,6 +2,7 @@
 using BBMB.BudgetService.Features.CEManagements.Entities;
 using BBMB.BudgetService.Features.CRManagements.Entities;
 using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
+using BBMB.BudgetService.Features.Offices.OfficeManagements.Entities;
 using BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities;
 using BBMB.BudgetService.Features.Pools.Entities;
 using BBMB.BudgetService.Features.Regions.Entities;
@@ -101,5 +102,6 @@ namespace BBMB.BudgetService.Features.Divisions.Entities
 
         [ForeignKey(nameof(CRCode))]
         public virtual CRManagement? CRManagement { get; set; }
+        public virtual ICollection<OfficeManagement> OfficeManagements { get; set; } = new List<OfficeManagement>();
     }
 }

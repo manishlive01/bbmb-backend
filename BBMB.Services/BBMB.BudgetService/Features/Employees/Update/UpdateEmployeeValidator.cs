@@ -32,8 +32,13 @@ namespace BBMB.BudgetService.Features.Employees.Update
                 .WithMessage("Gender is required");
 
             RuleFor(x => x.dto.PersonalInfo.DateOfBirth)
-                .LessThan(DateTime.Today)
-                .WithMessage("Date of birth must be in the past");
+                 .NotEmpty()
+                 .LessThan(DateTime.Today)
+                 .WithMessage("Date of birth must be in the past")
+                 .Must(dob => dob <= DateTime.Today.AddYears(-18))
+                 .WithMessage("Employee must be at least 18 years old")
+                 .Must(dob => dob >= DateTime.Today.AddYears(-60))
+                 .WithMessage("Employee age cannot be more than 60 years");
 
             RuleFor(x => x.dto.PersonalInfo.PhoneNumber)
                 .NotEmpty()

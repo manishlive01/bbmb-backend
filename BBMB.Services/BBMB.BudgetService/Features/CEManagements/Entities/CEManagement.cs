@@ -1,7 +1,6 @@
-﻿using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
-using BBMB.BudgetService.Features.CRManagements.Entities;
-using BBMB.BudgetService.Features.DetailHeads.Entities;
+﻿using BBMB.BudgetService.Features.CRManagements.Entities;
 using BBMB.BudgetService.Features.Divisions.Entities;
+using BBMB.BudgetService.Features.Offices.OfficeManagements.Entities;
 using BBMB.BudgetService.Features.Projects.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -52,5 +51,6 @@ namespace BBMB.BudgetService.Features.CEManagements.Entities
 
         public virtual ICollection<CRManagement> CRManagements { get; set; } = new List<CRManagement>();
         public virtual ICollection<Division> Divisions { get; set; } = new List<Division>();
+        public virtual ICollection<OfficeManagement> OfficeManagements { get; set; } = new List<OfficeManagement>();
     }
 }

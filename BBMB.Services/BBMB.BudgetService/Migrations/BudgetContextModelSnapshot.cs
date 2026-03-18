@@ -948,6 +948,48 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("account_office", "budget");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.Offices.OfficeManagements.Entities.OfficeManagement", b =>
+                {
+                    b.Property<string>("OfficeCode")
+                        .HasColumnType("text")
+                        .HasColumnName("office_code");
+
+                    b.Property<int>("CECode")
+                        .HasColumnType("integer")
+                        .HasColumnName("ce_code");
+
+                    b.Property<int?>("CRCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("cr_code");
+
+                    b.Property<int?>("DivisionCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("division_code");
+
+                    b.Property<DateTime?>("ModificationDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modification_date");
+
+                    b.Property<string>("OfficeDesc")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("office_desc");
+
+                    b.Property<string>("UserCode")
+                        .HasColumnType("text")
+                        .HasColumnName("user_code");
+
+                    b.HasKey("OfficeCode");
+
+                    b.HasIndex("CECode");
+
+                    b.HasIndex("CRCode");
+
+                    b.HasIndex("DivisionCode");
+
+                    b.ToTable("office_management", "budget");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities.RemittanceOffice", b =>
                 {
                     b.Property<string>("RoCode")
@@ -1548,6 +1590,29 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("ObjectClassification");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.Offices.OfficeManagements.Entities.OfficeManagement", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
+                        .WithMany("OfficeManagements")
+                        .HasForeignKey("CECode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", "CRManagement")
+                        .WithMany("OfficeManagements")
+                        .HasForeignKey("CRCode");
+
+                    b.HasOne("BBMB.BudgetService.Features.Divisions.Entities.Division", "Divisions")
+                        .WithMany("OfficeManagements")
+                        .HasForeignKey("DivisionCode");
+
+                    b.Navigation("CEManagement");
+
+                    b.Navigation("CRManagement");
+
+                    b.Navigation("Divisions");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.Units.Entities.UnitMaster", b =>
                 {
                     b.HasOne("BBMB.BudgetService.Features.PowerIrrigations.Entities.PowerIrrigation", "PowerIrrigation")
@@ -1638,11 +1703,20 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("CRManagements");
 
                     b.Navigation("Divisions");
+
+                    b.Navigation("OfficeManagements");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
                 {
                     b.Navigation("Divisions");
+
+                    b.Navigation("OfficeManagements");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.Divisions.Entities.Division", b =>
+                {
+                    b.Navigation("OfficeManagements");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Geographical.States.Entities.StateMaster", b =>

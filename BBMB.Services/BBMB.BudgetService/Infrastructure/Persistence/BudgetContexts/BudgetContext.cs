@@ -16,6 +16,7 @@ using BBMB.BudgetService.Features.Geographical.States.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
 using BBMB.BudgetService.Features.ObjectClassifications.Entities;
 using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
+using BBMB.BudgetService.Features.Offices.OfficeManagements.Entities;
 using BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities;
 using BBMB.BudgetService.Features.Pools.Entities;
 using BBMB.BudgetService.Features.PowerIrrigations.Entities;
@@ -50,6 +51,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<ObjectClassification> ObjectClassifications { get; set; }
         public DbSet<AccountOffice> AccountOffices { get; set; }
         public DbSet<RemittanceOffice> RemittanceOffices { get; set; }
+        public DbSet<OfficeManagement> OfficeManagements { get; set; }
         public DbSet<Pool> Pools { get; set; }
         public DbSet<PowerIrrigation> PowerIrrigations { get; set; }
         public DbSet<Project> Projects { get; set; }

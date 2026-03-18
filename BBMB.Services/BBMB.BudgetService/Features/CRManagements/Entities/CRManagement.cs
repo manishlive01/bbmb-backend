@@ -1,5 +1,6 @@
 ﻿using BBMB.BudgetService.Features.CEManagements.Entities;
 using BBMB.BudgetService.Features.Divisions.Entities;
+using BBMB.BudgetService.Features.Offices.OfficeManagements.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -46,5 +47,6 @@ namespace BBMB.BudgetService.Features.CRManagements.Entities
         [ForeignKey(nameof(CECode))]
         public virtual CEManagement? CEManagement { get; set; }
         public virtual ICollection<Division> Divisions { get; set; } = new List<Division>();
+        public virtual ICollection<OfficeManagement> OfficeManagements { get; set; } = new List<OfficeManagement>();
     }
 }
