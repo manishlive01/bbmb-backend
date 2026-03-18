@@ -157,6 +157,9 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("uuid")
                         .HasColumnName("employee_id");
 
+                    b.Property<int?>("FamilyRelationId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("GenderId")
                         .HasColumnType("integer");
 
@@ -184,6 +187,8 @@ namespace BBMB.BudgetService.Migrations.Employee
 
                     b.HasIndex("EmployeeId")
                         .IsUnique();
+
+                    b.HasIndex("FamilyRelationId");
 
                     b.HasIndex("GenderId");
 
@@ -342,6 +347,46 @@ namespace BBMB.BudgetService.Migrations.Employee
                     b.HasKey("Id");
 
                     b.ToTable("designation_master", "employee");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.Entities.FamilyRelation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("FamilyRelationName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("family_relation_name");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsStatus")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("family_relation_master", "employee");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.Genders.Entities.Gender", b =>
@@ -514,6 +559,10 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.Entities.FamilyRelation", null)
+                        .WithMany("EmploymentDetails")
+                        .HasForeignKey("FamilyRelationId");
+
                     b.HasOne("BBMB.BudgetService.Features.PublicMasters.Genders.Entities.Gender", null)
                         .WithMany("EmploymentDetails")
                         .HasForeignKey("GenderId");
@@ -578,6 +627,11 @@ namespace BBMB.BudgetService.Migrations.Employee
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.Designations.Entities.Designation", b =>
+                {
+                    b.Navigation("EmploymentDetails");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.Entities.FamilyRelation", b =>
                 {
                     b.Navigation("EmploymentDetails");
                 });

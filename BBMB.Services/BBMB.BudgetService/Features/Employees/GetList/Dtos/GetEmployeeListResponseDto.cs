@@ -3,7 +3,7 @@
     public class GetEmployeeListResponseDto
     {
         public Guid EmployeeId { get; set; }
-
+        public int EmployeeCode { get; set; }
         public string NameEnglish { get; set; } = null!;
 
         public int GenderId { get; set; }

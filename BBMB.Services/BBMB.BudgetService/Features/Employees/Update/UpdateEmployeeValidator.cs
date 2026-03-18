@@ -107,9 +107,9 @@ namespace BBMB.BudgetService.Features.Employees.Update
                     .NotEmpty()
                     .MaximumLength(100);
 
-                family.RuleFor(x => x.Relation)
-                    .NotEmpty()
-                    .MaximumLength(50);
+                //family.RuleFor(x => x.Relation)
+                //    .NotEmpty()
+                //    .MaximumLength(50);
 
                 family.RuleFor(x => x.PhoneNumber)
                     .NotEmpty()

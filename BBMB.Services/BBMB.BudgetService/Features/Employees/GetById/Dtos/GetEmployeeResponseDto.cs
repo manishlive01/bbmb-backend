@@ -9,6 +9,7 @@
     }
     public class PersonalInfoResponseDto
     {
+        public int EmployeeCode { get; set; }
         public Guid UserId { get; set; }
 
         public int TitleId { get; set; }
@@ -46,7 +47,8 @@
     public class FamilyMemberResponseDto
     {
         public string Name { get; set; } = null!;
-        public string Relation { get; set; } = null!;
+        public int FamilyRelationId { get; set; }
+        public string FamilyRelationName { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
         public string Address { get; set; } = null!;
 

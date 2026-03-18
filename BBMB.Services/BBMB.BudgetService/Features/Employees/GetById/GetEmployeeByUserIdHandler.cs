@@ -31,6 +31,7 @@ namespace BBMB.BudgetService.Features.Employees.GetById
                 .Include(x => x.Genders)
                 .Include(x => x.PhotoDocument)
                 .Include(x => x.FamilyMembers)
+                    .ThenInclude(f => f.FamilyRelation) // ✅ IMPORTANT
                 .Include(x => x.EmploymentDetail)
                     .ThenInclude(x => x.Designations)
                 .Include(x => x.EmploymentDetail)
@@ -48,13 +49,18 @@ namespace BBMB.BudgetService.Features.Employees.GetById
             {
                 PersonalInfo = new PersonalInfoResponseDto
                 {
+                    EmployeeCode = employee.EmployeeCode, // ✅ FIXED
                     UserId = employee.Id,
+
                     TitleId = employee.TitleId,
                     TitleName = employee.Titles?.TitleName ?? "",
+
                     NameEnglish = employee.NameEnglish,
                     NameHindi = employee.NameHindi,
+
                     GenderId = employee.GenderId,
                     GenderName = employee.Genders?.GenderName ?? "",
+
                     DateOfBirth = employee.DateOfBirth,
                     PhoneNumber = employee.PhoneNumber,
                     Email = employee.Email,
@@ -86,13 +92,20 @@ namespace BBMB.BudgetService.Features.Employees.GetById
                         : ""
                 },
 
+                // ✅ FIXED FAMILY MEMBERS
                 FamilyMembers = employee.FamilyMembers.Select(f => new FamilyMemberResponseDto
                 {
                     Name = f.Name,
-                    Relation = f.Relation,
+
+                    FamilyRelationId = f.FamilyRelationId, // ✅ FIXED
+                    FamilyRelationName = f.FamilyRelation != null
+                        ? f.FamilyRelation.FamilyRelationName
+                        : "",
+
                     PhoneNumber = f.PhoneNumber,
                     Address = f.Address,
                     IsEmployee = f.IsEmployee,
+
                     PhotoUrl = !string.IsNullOrEmpty(f.PhotoUrl)
                         ? $"{baseUrl}{f.PhotoUrl}"
                         : null

@@ -3,6 +3,7 @@
     public class PersonalInfoDto
     {
         public Guid UserId {  get; set; }
+        public int EmployeeCode { get; set; }
         public int TitleId { get; set; }
         public string NameEnglish { get; set; } = null!;
         public string? NameHindi { get; set; }

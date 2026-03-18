@@ -3,7 +3,7 @@
     public class FamilyMemberDto
     {
         public string Name { get; set; } = null!;
-        public string Relation { get; set; } = null!;
+        public int FamilyRelationId { get; set; }
         public string PhoneNumber { get; set; } = null!;
         public string Address { get; set; } = null!;
 

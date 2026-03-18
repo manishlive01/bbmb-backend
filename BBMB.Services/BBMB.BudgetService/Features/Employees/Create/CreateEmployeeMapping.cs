@@ -9,6 +9,7 @@ namespace BBMB.BudgetService.Features.Employees.Create
         public void Register(TypeAdapterConfig config)
         {
             config.NewConfig<CreateEmployeeDto, Employee>()
+                .Map(dest => dest.EmployeeCode, src => src.PersonalInfo.EmployeeCode)
                 .Map(dest => dest.UserId, src => src.PersonalInfo.UserId)
                 .Map(dest => dest.TitleId, src => src.PersonalInfo.TitleId)
                 .Map(dest => dest.NameEnglish, src => src.PersonalInfo.NameEnglish)

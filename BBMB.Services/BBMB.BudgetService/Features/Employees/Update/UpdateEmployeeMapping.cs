@@ -10,6 +10,7 @@ namespace BBMB.BudgetService.Features.Employees.Update
         {
             config.NewConfig<CreateEmployeeDto, Employee>()
                 .Map(dest => dest.UserId, src => src.PersonalInfo.UserId)
+                .Map(dest => dest.EmployeeCode, src => src.PersonalInfo.EmployeeCode)
                 .Map(dest => dest.TitleId, src => src.PersonalInfo.TitleId)
                 .Map(dest => dest.NameEnglish, src => src.PersonalInfo.NameEnglish)
                 .Map(dest => dest.NameHindi, src => src.PersonalInfo.NameHindi)

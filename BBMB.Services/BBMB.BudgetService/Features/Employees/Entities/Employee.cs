@@ -1,6 +1,7 @@
 ﻿using BBMB.BudgetService.Features.EmployeeCharges.Entities;
 using BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities;
 using BBMB.BudgetService.Features.PublicMasters.Designations.Entities;
+using BBMB.BudgetService.Features.PublicMasters.Entities;
 using BBMB.BudgetService.Features.PublicMasters.Genders.Entities;
 using BBMB.BudgetService.Features.PublicMasters.SourceOfRecruitments.Entities;
 using BBMB.BudgetService.Features.PublicMasters.Titles.Entities;
@@ -15,6 +16,10 @@ namespace BBMB.BudgetService.Features.Employees.Entities
         [Key]
         [Column("id")]
         public Guid Id { get; set; }
+
+        [Column("employee_code")]
+        [MaxLength(6)]
+        public int EmployeeCode { get; set; }
 
         [Column("user_id")]
         public Guid UserId { get; set; }
@@ -135,8 +140,9 @@ namespace BBMB.BudgetService.Features.Employees.Entities
         [Column("name")]
         public string Name { get; set; } = null!;
 
-        [Column("relation")]
-        public string Relation { get; set; } = null!;
+        // ✅ FK instead of string
+        [Column("family_relation_id")]
+        public int FamilyRelationId { get; set; }
 
         [Column("phone_number")]
         public string PhoneNumber { get; set; } = null!;
@@ -151,5 +157,8 @@ namespace BBMB.BudgetService.Features.Employees.Entities
         public string? PhotoUrl { get; set; }
 
         public Employee Employee { get; set; } = null!;
+        [ForeignKey(nameof(FamilyRelationId))]
+        public FamilyRelation FamilyRelation { get; set; } = null!;
+
     }
 }

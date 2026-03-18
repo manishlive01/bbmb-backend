@@ -45,6 +45,11 @@ namespace BBMB.BudgetService.Features.Employees.Create
                 .Must(dob => dob >= DateTime.Today.AddYears(-60))
                 .WithMessage("Employee age cannot be more than 60 years");
 
+            RuleFor(x => x.dto.PersonalInfo.EmployeeCode)
+                 .NotEmpty()
+                 .InclusiveBetween(100000, 999999)
+                 .WithMessage("Employee code must be exactly 6 digits");
+
             RuleFor(x => x.dto.PersonalInfo.PhoneNumber)
                 .NotEmpty()
                 .Matches(@"^[0-9]{10}$")
@@ -117,9 +122,9 @@ namespace BBMB.BudgetService.Features.Employees.Create
                     .NotEmpty()
                     .MaximumLength(100);
 
-                family.RuleFor(x => x.Relation)
-                    .NotEmpty()
-                    .MaximumLength(50);
+                //family.RuleFor(x => x.Relation)
+                //    .NotEmpty()
+                //    .MaximumLength(50);
 
                 family.RuleFor(x => x.PhoneNumber)
                     .NotEmpty()

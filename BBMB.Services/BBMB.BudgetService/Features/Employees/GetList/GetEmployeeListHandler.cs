@@ -65,6 +65,7 @@ namespace BBMB.BudgetService.Features.Employees.GetList
                 .Select(x => new GetEmployeeListResponseDto
                 {
                     EmployeeId = x.Id,
+                    EmployeeCode = x.EmployeeCode,
                     NameEnglish = x.NameEnglish,
 
                     GenderId = x.GenderId,

@@ -2,6 +2,7 @@
 using BBMB.BudgetService.Features.Employees.Entities;
 using BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities;
 using BBMB.BudgetService.Features.PublicMasters.Designations.Entities;
+using BBMB.BudgetService.Features.PublicMasters.Entities;
 using BBMB.BudgetService.Features.PublicMasters.Genders.Entities;
 using BBMB.BudgetService.Features.PublicMasters.SourceOfRecruitments.Entities;
 using BBMB.BudgetService.Features.PublicMasters.Titles.Entities;
@@ -30,12 +31,16 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts
 
         }
         public DbSet<Employee> Employees { get; set; }
+        public DbSet<EmploymentDetail> EmploymentDetails { get; set; }
+        public DbSet<PhotoDocument> PhotoDocuments { get; set; }
+        public DbSet<FamilyMember> FamilyMembers { get; set; }
         public DbSet<EmployeeCharge> EmployeeCharges { get; set; }
         public DbSet<Designation> Designations { get; set; }
         public DbSet<Title> Titles { get; set; }
         public DbSet<Gender> Genders { get; set; }
         public DbSet<SourceOfRecruitment> SourceOfRecruitments { get; set; }
         public DbSet<AppointmentType> AppointmentTypes { get; set; }
+        public DbSet<FamilyRelation> FamilyRelations { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // DEFAULT SCHEMA FOR EMPLOYEE

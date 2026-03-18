@@ -99,7 +99,7 @@ namespace BBMB.BudgetService.Features.Employees.Create
                     Id = Guid.NewGuid(),
                     EmployeeId = employee.Id,
                     Name = f.Name,
-                    Relation = f.Relation,
+                    FamilyRelationId = f.FamilyRelationId,
                     PhoneNumber = f.PhoneNumber,
                     Address = f.Address,
                     IsEmployee = f.IsEmployee,
