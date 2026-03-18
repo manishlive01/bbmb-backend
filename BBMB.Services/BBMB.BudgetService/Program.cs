@@ -257,6 +257,20 @@ app.UseExceptionHandler(appBuilder =>
                 error = badFormRequest.Message
             });
             return;
+        }// Null reference inside FluentValidation (your case)
+        if (exception is NullReferenceException nullEx)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            context.Response.ContentType = "application/json";
+
+            await context.Response.WriteAsJsonAsync(new
+            {
+                message = "Validation Error",
+                error = "A required object was null. Please check request payload.",
+                details = nullEx.Message
+            });
+
+            return;
         }
 
         // Fallback
