@@ -95,6 +95,11 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("text")
                         .HasColumnName("email");
 
+                    b.Property<int>("EmployeeCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("integer")
+                        .HasColumnName("employee_code");
+
                     b.Property<int>("GenderId")
                         .HasColumnType("integer")
                         .HasColumnName("gender_id");
@@ -157,9 +162,6 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("uuid")
                         .HasColumnName("employee_id");
 
-                    b.Property<int?>("FamilyRelationId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("GenderId")
                         .HasColumnType("integer");
 
@@ -188,8 +190,6 @@ namespace BBMB.BudgetService.Migrations.Employee
                     b.HasIndex("EmployeeId")
                         .IsUnique();
 
-                    b.HasIndex("FamilyRelationId");
-
                     b.HasIndex("GenderId");
 
                     b.HasIndex("SourceOfRecruitmentId");
@@ -215,6 +215,10 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("uuid")
                         .HasColumnName("employee_id");
 
+                    b.Property<int>("FamilyRelationId")
+                        .HasColumnType("integer")
+                        .HasColumnName("family_relation_id");
+
                     b.Property<bool>("IsEmployee")
                         .HasColumnType("boolean")
                         .HasColumnName("is_employee");
@@ -233,14 +237,11 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("text")
                         .HasColumnName("photo_url");
 
-                    b.Property<string>("Relation")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("relation");
-
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
+
+                    b.HasIndex("FamilyRelationId");
 
                     b.ToTable("family_member", "employee");
                 });
@@ -559,10 +560,6 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.Entities.FamilyRelation", null)
-                        .WithMany("EmploymentDetails")
-                        .HasForeignKey("FamilyRelationId");
-
                     b.HasOne("BBMB.BudgetService.Features.PublicMasters.Genders.Entities.Gender", null)
                         .WithMany("EmploymentDetails")
                         .HasForeignKey("GenderId");
@@ -594,7 +591,15 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BBMB.BudgetService.Features.PublicMasters.Entities.FamilyRelation", "FamilyRelation")
+                        .WithMany("FamilyMembers")
+                        .HasForeignKey("FamilyRelationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Employee");
+
+                    b.Navigation("FamilyRelation");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Employees.Entities.PhotoDocument", b =>
@@ -633,7 +638,7 @@ namespace BBMB.BudgetService.Migrations.Employee
 
             modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.Entities.FamilyRelation", b =>
                 {
-                    b.Navigation("EmploymentDetails");
+                    b.Navigation("FamilyMembers");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.PublicMasters.Genders.Entities.Gender", b =>
