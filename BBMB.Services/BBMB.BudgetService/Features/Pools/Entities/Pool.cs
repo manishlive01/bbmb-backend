@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BBMB.BudgetService.Features.Pools.Entities
@@ -24,5 +25,6 @@ namespace BBMB.BudgetService.Features.Pools.Entities
         [MaxLength(6)]
         [Column("user_code")]
         public string UserCode { get; set; } = string.Empty;
+        public ICollection<Division> Divisions { get; set; } = new List<Division>();
     }
 }

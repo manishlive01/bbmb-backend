@@ -1,4 +1,5 @@
 ﻿using BBMB.BudgetService.Features.Classes.Entities;
+using BBMB.BudgetService.Features.Works.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -40,5 +41,6 @@ namespace BBMB.BudgetService.Features.Designations.Entities
         // Navigation property
         [ForeignKey("ClassCode")]
         public virtual Class Class { get; set; } = null!;
+        public ICollection<Work> Works { get; set; } = new List<Work>();
     }
 }

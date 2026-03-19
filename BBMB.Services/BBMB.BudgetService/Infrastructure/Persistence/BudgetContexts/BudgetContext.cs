@@ -85,6 +85,46 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .WithMany(d => d.BudgetEntries)
                 .HasForeignKey(b => b.DivisionCode)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // BudgetEntry → Work
+            modelBuilder.Entity<BudgetEntry>()
+                .HasOne(b => b.Work)
+                .WithMany(w => w.BudgetEntries)
+                .HasForeignKey(b => b.WorkCode)
+                .HasPrincipalKey(w => w.WorkCode)   
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Work → Division
+            modelBuilder.Entity<Work>()
+                .HasOne(w => w.Division)
+                .WithMany(d => d.Works)
+                .HasForeignKey(w => w.DivisionCode)
+                .HasPrincipalKey(d => d.DivisionCode)    
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Division → Pool
+            modelBuilder.Entity<Division>()
+                .HasOne(d => d.Pool)
+                .WithMany(p => p.Divisions)
+                .HasForeignKey(d => d.PoolCode)
+                .HasPrincipalKey(p => p.PoolCode)    
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Division → Region
+            modelBuilder.Entity<Division>()
+                .HasOne(d => d.Region)
+                .WithMany(r => r.Divisions)
+                .HasForeignKey(d => d.RegionCode)
+                .HasPrincipalKey(r => r.RegionCode)    
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Work → Designation
+            modelBuilder.Entity<Work>()
+                .HasOne(w => w.Designation)
+                .WithMany(d => d.Works)
+                .HasForeignKey(w => w.DesignationCode)
+                .HasPrincipalKey(d => d.DesignationCode) 
+                .OnDelete(DeleteBehavior.Restrict);
             // =====================================================
             // SubMajorHead Configuration
             // =====================================================

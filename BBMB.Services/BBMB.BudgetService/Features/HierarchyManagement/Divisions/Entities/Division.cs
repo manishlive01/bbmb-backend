@@ -8,6 +8,7 @@ using BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities;
 using BBMB.BudgetService.Features.Pools.Entities;
 using BBMB.BudgetService.Features.Regions.Entities;
 using BBMB.BudgetService.Features.Units.Entities;
+using BBMB.BudgetService.Features.Works.Entities;
 using MediatR;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -105,5 +106,6 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities
         public virtual CRManagement? CRManagement { get; set; }
         public virtual ICollection<OfficeManagement> OfficeManagements { get; set; } = new List<OfficeManagement>();
         public ICollection<BudgetEntry> BudgetEntries { get; set; } = new List<BudgetEntry>();
+        public ICollection<Work> Works { get; set; } = new List<Work>();
     }
 }

@@ -201,9 +201,6 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("division_code");
 
-                    b.Property<int?>("DivisionCode1")
-                        .HasColumnType("integer");
-
                     b.Property<string>("MajorAccCode")
                         .IsRequired()
                         .HasMaxLength(4)
@@ -280,14 +277,11 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(8)")
                         .HasColumnName("work_code");
 
-                    b.Property<string>("WorkCode1")
-                        .HasColumnType("character varying(8)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DetailHeadDetailAccCode");
 
-                    b.HasIndex("DivisionCode1");
+                    b.HasIndex("DivisionCode");
 
                     b.HasIndex("MajorHeadMajorAccCode");
 
@@ -295,7 +289,7 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("ObjectClassificationObjectAccCode");
 
-                    b.HasIndex("WorkCode1");
+                    b.HasIndex("WorkCode");
 
                     b.HasIndex("SubMajorHeadMajorAccCode", "SubMajorHeadSubMajorAccCode");
 
@@ -833,16 +827,10 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(1)")
                         .HasColumnName("pool_code");
 
-                    b.Property<string>("PoolCode1")
-                        .HasColumnType("character varying(2)");
-
                     b.Property<string>("RegionCode")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")
                         .HasColumnName("region_code");
-
-                    b.Property<string>("RegionCode1")
-                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("RemittanceOfficeRoCode")
                         .HasColumnType("character varying(3)");
@@ -881,9 +869,9 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("MajorHeadMajorAccCode");
 
-                    b.HasIndex("PoolCode1");
+                    b.HasIndex("PoolCode");
 
-                    b.HasIndex("RegionCode1");
+                    b.HasIndex("RegionCode");
 
                     b.HasIndex("RemittanceOfficeRoCode");
 
@@ -1217,9 +1205,6 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(6)")
                         .HasColumnName("designation_code");
 
-                    b.Property<string>("DesignationCode1")
-                        .HasColumnType("character varying(4)");
-
                     b.Property<string>("DetailAccCode")
                         .IsRequired()
                         .HasMaxLength(3)
@@ -1236,9 +1221,6 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<int>("DivisionCode")
                         .HasColumnType("integer")
                         .HasColumnName("division_code");
-
-                    b.Property<int?>("DivisionCode1")
-                        .HasColumnType("integer");
 
                     b.Property<decimal?>("EstimatedCost")
                         .HasPrecision(12, 2)
@@ -1365,11 +1347,11 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasKey("WorkCode");
 
-                    b.HasIndex("DesignationCode1");
+                    b.HasIndex("DesignationCode");
 
                     b.HasIndex("DetailHeadDetailAccCode");
 
-                    b.HasIndex("DivisionCode1");
+                    b.HasIndex("DivisionCode");
 
                     b.HasIndex("MajorHeadMajorAccCode");
 
@@ -1417,8 +1399,10 @@ namespace BBMB.BudgetService.Migrations
                         .HasForeignKey("DetailHeadDetailAccCode");
 
                     b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", "Division")
-                        .WithMany()
-                        .HasForeignKey("DivisionCode1");
+                        .WithMany("BudgetEntries")
+                        .HasForeignKey("DivisionCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
                         .WithMany()
@@ -1433,8 +1417,9 @@ namespace BBMB.BudgetService.Migrations
                         .HasForeignKey("ObjectClassificationObjectAccCode");
 
                     b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", "Work")
-                        .WithMany()
-                        .HasForeignKey("WorkCode1");
+                        .WithMany("BudgetEntries")
+                        .HasForeignKey("WorkCode")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
                         .WithMany()
@@ -1581,12 +1566,14 @@ namespace BBMB.BudgetService.Migrations
                         .HasForeignKey("MajorHeadMajorAccCode");
 
                     b.HasOne("BBMB.BudgetService.Features.Pools.Entities.Pool", "Pool")
-                        .WithMany()
-                        .HasForeignKey("PoolCode1");
+                        .WithMany("Divisions")
+                        .HasForeignKey("PoolCode")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BBMB.BudgetService.Features.Regions.Entities.Region", "Region")
-                        .WithMany()
-                        .HasForeignKey("RegionCode1");
+                        .WithMany("Divisions")
+                        .HasForeignKey("RegionCode")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities.RemittanceOffice", "RemittanceOffice")
                         .WithMany()
@@ -1658,16 +1645,19 @@ namespace BBMB.BudgetService.Migrations
             modelBuilder.Entity("BBMB.BudgetService.Features.Works.Entities.Work", b =>
                 {
                     b.HasOne("BBMB.BudgetService.Features.Designations.Entities.Designation", "Designation")
-                        .WithMany()
-                        .HasForeignKey("DesignationCode1");
+                        .WithMany("Works")
+                        .HasForeignKey("DesignationCode")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BBMB.BudgetService.Features.DetailHeads.Entities.DetailHead", "DetailHead")
                         .WithMany()
                         .HasForeignKey("DetailHeadDetailAccCode");
 
                     b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", "Division")
-                        .WithMany()
-                        .HasForeignKey("DivisionCode1");
+                        .WithMany("Works")
+                        .HasForeignKey("DivisionCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
                         .WithMany()
@@ -1721,6 +1711,11 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("DetailHeads");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.Designations.Entities.Designation", b =>
+                {
+                    b.Navigation("Works");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.Geographical.States.Entities.StateMaster", b =>
                 {
                     b.Navigation("DistrictMasters");
@@ -1744,7 +1739,16 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", b =>
                 {
+                    b.Navigation("BudgetEntries");
+
                     b.Navigation("OfficeManagements");
+
+                    b.Navigation("Works");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.Pools.Entities.Pool", b =>
+                {
+                    b.Navigation("Divisions");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.PowerIrrigations.Entities.PowerIrrigation", b =>
@@ -1757,6 +1761,16 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("CEManagements");
 
                     b.Navigation("UnitMasters");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.Regions.Entities.Region", b =>
+                {
+                    b.Navigation("Divisions");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.Works.Entities.Work", b =>
+                {
+                    b.Navigation("BudgetEntries");
                 });
 #pragma warning restore 612, 618
         }

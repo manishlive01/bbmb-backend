@@ -2,6 +2,7 @@
 using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
+using BBMB.BudgetService.Features.Budgets.Entities;
 using BBMB.BudgetService.Features.Designations.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
@@ -134,6 +135,7 @@ namespace BBMB.BudgetService.Features.Works.Entities
         public virtual DetailHead? DetailHead { get; set; }
         public virtual ObjectClassification? ObjectClassification { get; set; }
         public virtual Designation? Designation { get; set; }
+        public ICollection<BudgetEntry> BudgetEntries { get; set; } = new List<BudgetEntry>();
 
     }
 }
