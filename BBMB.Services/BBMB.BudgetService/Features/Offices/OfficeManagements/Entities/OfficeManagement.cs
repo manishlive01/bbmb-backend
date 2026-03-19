@@ -1,6 +1,6 @@
-﻿using BBMB.BudgetService.Features.CEManagements.Entities;
-using BBMB.BudgetService.Features.CRManagements.Entities;
-using BBMB.BudgetService.Features.Divisions.Entities;
+﻿using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

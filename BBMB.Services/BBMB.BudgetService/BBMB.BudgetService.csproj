@@ -17,6 +17,7 @@
 
   <ItemGroup>
 	  <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+	  <PackageReference Include="Dapper" Version="2.1.72" />
 	  <PackageReference Include="EPPlus" Version="8.4.2" />
 	  <PackageReference Include="FluentValidation" Version="12.1.1" />
 	  <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
@@ -53,11 +54,6 @@
     <Folder Include="Features\DetailHeads\Delete\" />
     <Folder Include="Features\DetailHeads\Create\" />
     <Folder Include="Features\DetailHeads\Update\" />
-    <Folder Include="Features\Divisions\GetList\" />
-    <Folder Include="Features\Divisions\GetById\" />
-    <Folder Include="Features\Divisions\Delete\" />
-    <Folder Include="Features\Divisions\Create\" />
-    <Folder Include="Features\Divisions\Update\" />
     <Folder Include="Features\Employees\Delete\" />
     <Folder Include="Features\FinancialYears\GetList\" />
     <Folder Include="Features\FinancialYears\GetById\" />

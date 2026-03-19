@@ -46,11 +46,13 @@ namespace BBMB.BudgetService.Features.Employees.Create
             employee.DateOfBirth = DateTime.SpecifyKind(
     dto.PersonalInfo.DateOfBirth,
     DateTimeKind.Utc);
+            employee.EmployeeCode = dto.PersonalInfo.EmployeeCode;
             // Employment
             employee.EmploymentDetail = new EmploymentDetail
             {
                 Id = Guid.NewGuid(),
                 EmployeeId = employee.Id,
+
                 SourceOfRecruitmentId = dto.Employment.SourceOfRecruitmentId,
                 DesignationId = dto.Employment.DesignationId,
                 Position = dto.Employment.Position,
@@ -107,7 +109,7 @@ namespace BBMB.BudgetService.Features.Employees.Create
                 });
             }
 
-            await     _context.Employees.AddAsync(employee);
+            await _context.Employees.AddAsync(employee);
 
             await _context.SaveChangesAsync(ct);
 
@@ -117,6 +119,6 @@ namespace BBMB.BudgetService.Features.Employees.Create
                 Message = "Employee created successfully"
             };
         }
-       
+
     }
 }

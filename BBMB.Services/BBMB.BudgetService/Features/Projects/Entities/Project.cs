@@ -1,5 +1,5 @@
-﻿using BBMB.BudgetService.Features.CEManagements.Entities;
-using BBMB.BudgetService.Features.DetailHeads.Entities;
+﻿using BBMB.BudgetService.Features.DetailHeads.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
 using BBMB.BudgetService.Features.Units.Entities;
 using MediatR;
 using System.ComponentModel.DataAnnotations;

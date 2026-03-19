@@ -3,7 +3,7 @@ using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
-using BBMB.BudgetService.Features.Divisions.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
 using BBMB.BudgetService.Features.ObjectClassifications.Entities;
 using BBMB.BudgetService.Features.Works.Entities;
 using Microsoft.EntityFrameworkCore;

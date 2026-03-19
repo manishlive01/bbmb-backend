@@ -1,7 +1,4 @@
-﻿using BBMB.BudgetService.Features.CEManagements.Entities;
-using BBMB.BudgetService.Features.CRManagements.Entities;
-using BBMB.BudgetService.Features.Divisions.Entities;
-using BBMB.BudgetService.Features.Offices.OfficeManagements.GetListByFilter.Dtos;
+﻿using BBMB.BudgetService.Features.Offices.OfficeManagements.GetListByFilter.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

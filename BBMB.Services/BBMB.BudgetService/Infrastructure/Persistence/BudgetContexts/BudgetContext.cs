@@ -3,17 +3,18 @@ using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
 using BBMB.BudgetService.Features.Budgets.Entities;
-using BBMB.BudgetService.Features.CEManagements.Entities;
 using BBMB.BudgetService.Features.Classes.Entities;
-using BBMB.BudgetService.Features.CRManagements.Entities;
 using BBMB.BudgetService.Features.Designations.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
-using BBMB.BudgetService.Features.Divisions.Entities;
 using BBMB.BudgetService.Features.Estimates.Entities;
 using BBMB.BudgetService.Features.FinancialYears.Entities;
 using BBMB.BudgetService.Features.Geographical.Districts.Entities;
 using BBMB.BudgetService.Features.Geographical.States.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entites;
 using BBMB.BudgetService.Features.ObjectClassifications.Entities;
 using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
 using BBMB.BudgetService.Features.Offices.OfficeManagements.Entities;
@@ -60,7 +61,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<Work> Works { get; set; }
         public DbSet<CEManagement> CEManagements { get; set; }
         public DbSet<CRManagement> CRManagements { get; set; }
-
+        public DbSet<Levels> Levels { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // DEFAULT SCHEMA FOR BUDGET
@@ -78,7 +79,12 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .HasForeignKey(e => e.WorkCode)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
+            // BudgetEntry → Division
+            modelBuilder.Entity<BudgetEntry>()
+                .HasOne(b => b.Division)
+                .WithMany(d => d.BudgetEntries)
+                .HasForeignKey(b => b.DivisionCode)
+                .OnDelete(DeleteBehavior.Restrict);
             // =====================================================
             // SubMajorHead Configuration
             // =====================================================
@@ -191,18 +197,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                           x.MinorAccCode
                       })
                       .OnDelete(DeleteBehavior.Restrict);
-
-                // 🔹 ✅ FIXED FK → DetailHead (COMPOSITE)
-                //entity.HasOne(x => x.DetailHead)
-                //      .WithMany()
-                //      .HasForeignKey(x => new
-                //      {
-                //          x.MajorAccCode,
-                //          x.MinorAccCode,
-                //          x.DetailAccCode
-                //      })
-                //      .OnDelete(DeleteBehavior.Restrict);
-
+ 
                 // 🔹 FK → ObjectClassification
                 entity.HasOne(x => x.ObjectClassification)
                       .WithMany()

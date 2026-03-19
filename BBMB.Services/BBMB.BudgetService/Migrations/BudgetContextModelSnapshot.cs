@@ -304,108 +304,6 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("budget_table", "budget");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
-                {
-                    b.Property<int>("CECode")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("ce_code");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CECode"));
-
-                    b.Property<DateTime?>("Date")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("date");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("desc");
-
-                    b.Property<string>("Location")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("location");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("ProjectCode")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("project_code");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("boolean")
-                        .HasColumnName("status");
-
-                    b.Property<string>("UserCode")
-                        .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)")
-                        .HasColumnName("user_code");
-
-                    b.HasKey("CECode");
-
-                    b.HasIndex("ProjectCode");
-
-                    b.ToTable("ce_management", "budget");
-                });
-
-            modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
-                {
-                    b.Property<int>("CRCode")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("cr_code");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CRCode"));
-
-                    b.Property<int>("CECode")
-                        .HasColumnType("integer")
-                        .HasColumnName("ce_code");
-
-                    b.Property<DateTime?>("Date")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("date");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("desc");
-
-                    b.Property<string>("Location")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("location");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("boolean")
-                        .HasColumnName("status");
-
-                    b.Property<string>("UserCode")
-                        .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)")
-                        .HasColumnName("user_code");
-
-                    b.HasKey("CRCode");
-
-                    b.HasIndex("CECode");
-
-                    b.ToTable("cr_management", "budget");
-                });
-
             modelBuilder.Entity("BBMB.BudgetService.Features.Classes.Entities.Class", b =>
                 {
                     b.Property<string>("ClassCode")
@@ -506,134 +404,6 @@ namespace BBMB.BudgetService.Migrations
                     b.HasIndex("SubMinorHeadMinorAccCode", "SubMinorHeadSubMinorAccCode");
 
                     b.ToTable("fa_detail_head", "budget");
-                });
-
-            modelBuilder.Entity("BBMB.BudgetService.Features.Divisions.Entities.Division", b =>
-                {
-                    b.Property<int>("DivisionCode")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("division_code");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DivisionCode"));
-
-                    b.Property<string>("AccOffice")
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("acc_office");
-
-                    b.Property<string>("AccountOfficeAccOffice")
-                        .HasColumnType("character varying(2)");
-
-                    b.Property<int>("CECode")
-                        .HasColumnType("integer")
-                        .HasColumnName("ce_code");
-
-                    b.Property<int>("CRCode")
-                        .HasColumnType("integer")
-                        .HasColumnName("cr_code");
-
-                    b.Property<int?>("CtrlOffice1")
-                        .HasColumnType("integer")
-                        .HasColumnName("ctrl_office1");
-
-                    b.Property<int?>("CtrlOffice2")
-                        .HasColumnType("integer")
-                        .HasColumnName("ctrl_office2");
-
-                    b.Property<string>("DdoTds")
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)")
-                        .HasColumnName("ddo_tds");
-
-                    b.Property<int>("DivSection")
-                        .HasColumnType("integer")
-                        .HasColumnName("div_section");
-
-                    b.Property<string>("DivisionDesc")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("division_desc");
-
-                    b.Property<string>("MajorAccCode")
-                        .HasMaxLength(4)
-                        .HasColumnType("character varying(4)")
-                        .HasColumnName("major_acc_code");
-
-                    b.Property<string>("MajorHeadMajorAccCode")
-                        .HasColumnType("character varying(4)");
-
-                    b.Property<DateTime>("ModificationDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("modification_date");
-
-                    b.Property<int?>("ParentDivisionCode")
-                        .HasColumnType("integer")
-                        .HasColumnName("parent_division_code");
-
-                    b.Property<string>("PoolCode")
-                        .HasMaxLength(1)
-                        .HasColumnType("character varying(1)")
-                        .HasColumnName("pool_code");
-
-                    b.Property<string>("PoolCode1")
-                        .HasColumnType("character varying(2)");
-
-                    b.Property<string>("RegionCode")
-                        .HasMaxLength(1)
-                        .HasColumnType("character varying(1)")
-                        .HasColumnName("region_code");
-
-                    b.Property<string>("RegionCode1")
-                        .HasColumnType("character varying(2)");
-
-                    b.Property<string>("RemittanceOfficeRoCode")
-                        .HasColumnType("character varying(3)");
-
-                    b.Property<string>("RoCode")
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasColumnName("ro_code");
-
-                    b.Property<string>("UmdUnit")
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)")
-                        .HasColumnName("umd_unit");
-
-                    b.Property<string>("UnitCode")
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)")
-                        .HasColumnName("unit_code");
-
-                    b.Property<string>("UnitMastersUnitCode")
-                        .HasColumnType("character varying(2)");
-
-                    b.Property<string>("UserCode")
-                        .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)")
-                        .HasColumnName("user_code");
-
-                    b.HasKey("DivisionCode");
-
-                    b.HasIndex("AccountOfficeAccOffice");
-
-                    b.HasIndex("CECode");
-
-                    b.HasIndex("CRCode");
-
-                    b.HasIndex("MajorHeadMajorAccCode");
-
-                    b.HasIndex("PoolCode1");
-
-                    b.HasIndex("RegionCode1");
-
-                    b.HasIndex("RemittanceOfficeRoCode");
-
-                    b.HasIndex("UnitMastersUnitCode");
-
-                    b.ToTable("division", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Estimates.Entities.Estimate", b =>
@@ -890,6 +660,259 @@ namespace BBMB.BudgetService.Migrations
                         .IsUnique();
 
                     b.ToTable("budget_head_master", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", b =>
+                {
+                    b.Property<int>("CECode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("ce_code");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CECode"));
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("desc");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("location");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("ProjectCode")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("project_code");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("status");
+
+                    b.Property<string>("UserCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("user_code");
+
+                    b.HasKey("CECode");
+
+                    b.HasIndex("ProjectCode");
+
+                    b.ToTable("ce_management", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities.CRManagement", b =>
+                {
+                    b.Property<int>("CRCode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("cr_code");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CRCode"));
+
+                    b.Property<int>("CECode")
+                        .HasColumnType("integer")
+                        .HasColumnName("ce_code");
+
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("desc");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("location");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("status");
+
+                    b.Property<string>("UserCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("user_code");
+
+                    b.HasKey("CRCode");
+
+                    b.HasIndex("CECode");
+
+                    b.ToTable("cr_management", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", b =>
+                {
+                    b.Property<int>("DivisionCode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("division_code");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DivisionCode"));
+
+                    b.Property<string>("AccOffice")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("acc_office");
+
+                    b.Property<string>("AccountOfficeAccOffice")
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<int>("CECode")
+                        .HasColumnType("integer")
+                        .HasColumnName("ce_code");
+
+                    b.Property<int>("CRCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("cr_code");
+
+                    b.Property<int?>("CtrlOffice1")
+                        .HasColumnType("integer")
+                        .HasColumnName("ctrl_office1");
+
+                    b.Property<int?>("CtrlOffice2")
+                        .HasColumnType("integer")
+                        .HasColumnName("ctrl_office2");
+
+                    b.Property<string>("DdoTds")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("ddo_tds");
+
+                    b.Property<int>("DivSection")
+                        .HasColumnType("integer")
+                        .HasColumnName("div_section");
+
+                    b.Property<string>("DivisionDesc")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("division_desc");
+
+                    b.Property<string>("MajorAccCode")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("major_acc_code");
+
+                    b.Property<string>("MajorHeadMajorAccCode")
+                        .HasColumnType("character varying(4)");
+
+                    b.Property<DateTime>("ModificationDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modification_date");
+
+                    b.Property<int?>("ParentDivisionCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("parent_division_code");
+
+                    b.Property<string>("PoolCode")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("pool_code");
+
+                    b.Property<string>("PoolCode1")
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("RegionCode")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)")
+                        .HasColumnName("region_code");
+
+                    b.Property<string>("RegionCode1")
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("RemittanceOfficeRoCode")
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("RoCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("ro_code");
+
+                    b.Property<string>("UmdUnit")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("umd_unit");
+
+                    b.Property<string>("UnitCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("unit_code");
+
+                    b.Property<string>("UnitMastersUnitCode")
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("UserCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)")
+                        .HasColumnName("user_code");
+
+                    b.HasKey("DivisionCode");
+
+                    b.HasIndex("AccountOfficeAccOffice");
+
+                    b.HasIndex("CECode");
+
+                    b.HasIndex("CRCode");
+
+                    b.HasIndex("MajorHeadMajorAccCode");
+
+                    b.HasIndex("PoolCode1");
+
+                    b.HasIndex("RegionCode1");
+
+                    b.HasIndex("RemittanceOfficeRoCode");
+
+                    b.HasIndex("UnitMastersUnitCode");
+
+                    b.ToTable("division", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entites.Levels", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("boolean")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("levels", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.ObjectClassifications.Entities.ObjectClassification", b =>
@@ -1393,7 +1416,7 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("DetailHeadDetailAccCode");
 
-                    b.HasOne("BBMB.BudgetService.Features.Divisions.Entities.Division", "Division")
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", "Division")
                         .WithMany()
                         .HasForeignKey("DivisionCode1");
 
@@ -1438,28 +1461,6 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("Work");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
-                {
-                    b.HasOne("BBMB.BudgetService.Features.Projects.Entities.Project", "Projects")
-                        .WithMany("CEManagements")
-                        .HasForeignKey("ProjectCode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Projects");
-                });
-
-            modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
-                {
-                    b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
-                        .WithMany("CRManagements")
-                        .HasForeignKey("CECode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CEManagement");
-                });
-
             modelBuilder.Entity("BBMB.BudgetService.Features.Designations.Entities.Designation", b =>
                 {
                     b.HasOne("BBMB.BudgetService.Features.Classes.Entities.Class", "Class")
@@ -1476,61 +1477,6 @@ namespace BBMB.BudgetService.Migrations
                     b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities.SubMinorHead", null)
                         .WithMany("DetailHeads")
                         .HasForeignKey("SubMinorHeadMinorAccCode", "SubMinorHeadSubMinorAccCode");
-                });
-
-            modelBuilder.Entity("BBMB.BudgetService.Features.Divisions.Entities.Division", b =>
-                {
-                    b.HasOne("BBMB.BudgetService.Features.Offices.AccountOffices.Entities.AccountOffice", "AccountOffice")
-                        .WithMany()
-                        .HasForeignKey("AccountOfficeAccOffice");
-
-                    b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
-                        .WithMany("Divisions")
-                        .HasForeignKey("CECode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", "CRManagement")
-                        .WithMany("Divisions")
-                        .HasForeignKey("CRCode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
-                        .WithMany()
-                        .HasForeignKey("MajorHeadMajorAccCode");
-
-                    b.HasOne("BBMB.BudgetService.Features.Pools.Entities.Pool", "Pool")
-                        .WithMany()
-                        .HasForeignKey("PoolCode1");
-
-                    b.HasOne("BBMB.BudgetService.Features.Regions.Entities.Region", "Region")
-                        .WithMany()
-                        .HasForeignKey("RegionCode1");
-
-                    b.HasOne("BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities.RemittanceOffice", "RemittanceOffice")
-                        .WithMany()
-                        .HasForeignKey("RemittanceOfficeRoCode");
-
-                    b.HasOne("BBMB.BudgetService.Features.Units.Entities.UnitMaster", "UnitMasters")
-                        .WithMany()
-                        .HasForeignKey("UnitMastersUnitCode");
-
-                    b.Navigation("AccountOffice");
-
-                    b.Navigation("CEManagement");
-
-                    b.Navigation("CRManagement");
-
-                    b.Navigation("MajorHead");
-
-                    b.Navigation("Pool");
-
-                    b.Navigation("Region");
-
-                    b.Navigation("RemittanceOffice");
-
-                    b.Navigation("UnitMasters");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Estimates.Entities.Estimate", b =>
@@ -1590,19 +1536,96 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("ObjectClassification");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.Projects.Entities.Project", "Projects")
+                        .WithMany("CEManagements")
+                        .HasForeignKey("ProjectCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities.CRManagement", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", "CEManagement")
+                        .WithMany("CRManagements")
+                        .HasForeignKey("CECode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CEManagement");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.Offices.AccountOffices.Entities.AccountOffice", "AccountOffice")
+                        .WithMany()
+                        .HasForeignKey("AccountOfficeAccOffice");
+
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", "CEManagement")
+                        .WithMany("Divisions")
+                        .HasForeignKey("CECode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities.CRManagement", "CRManagement")
+                        .WithMany("Divisions")
+                        .HasForeignKey("CRCode")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Entities.MajorHead", "MajorHead")
+                        .WithMany()
+                        .HasForeignKey("MajorHeadMajorAccCode");
+
+                    b.HasOne("BBMB.BudgetService.Features.Pools.Entities.Pool", "Pool")
+                        .WithMany()
+                        .HasForeignKey("PoolCode1");
+
+                    b.HasOne("BBMB.BudgetService.Features.Regions.Entities.Region", "Region")
+                        .WithMany()
+                        .HasForeignKey("RegionCode1");
+
+                    b.HasOne("BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities.RemittanceOffice", "RemittanceOffice")
+                        .WithMany()
+                        .HasForeignKey("RemittanceOfficeRoCode");
+
+                    b.HasOne("BBMB.BudgetService.Features.Units.Entities.UnitMaster", "UnitMasters")
+                        .WithMany()
+                        .HasForeignKey("UnitMastersUnitCode");
+
+                    b.Navigation("AccountOffice");
+
+                    b.Navigation("CEManagement");
+
+                    b.Navigation("CRManagement");
+
+                    b.Navigation("MajorHead");
+
+                    b.Navigation("Pool");
+
+                    b.Navigation("Region");
+
+                    b.Navigation("RemittanceOffice");
+
+                    b.Navigation("UnitMasters");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.Offices.OfficeManagements.Entities.OfficeManagement", b =>
                 {
-                    b.HasOne("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", "CEManagement")
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", "CEManagement")
                         .WithMany("OfficeManagements")
                         .HasForeignKey("CECode")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", "CRManagement")
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities.CRManagement", "CRManagement")
                         .WithMany("OfficeManagements")
                         .HasForeignKey("CRCode");
 
-                    b.HasOne("BBMB.BudgetService.Features.Divisions.Entities.Division", "Divisions")
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", "Divisions")
                         .WithMany("OfficeManagements")
                         .HasForeignKey("DivisionCode");
 
@@ -1642,7 +1665,7 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("DetailHeadDetailAccCode");
 
-                    b.HasOne("BBMB.BudgetService.Features.Divisions.Entities.Division", "Division")
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", "Division")
                         .WithMany()
                         .HasForeignKey("DivisionCode1");
 
@@ -1698,7 +1721,12 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("DetailHeads");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.CEManagements.Entities.CEManagement", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.Geographical.States.Entities.StateMaster", b =>
+                {
+                    b.Navigation("DistrictMasters");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", b =>
                 {
                     b.Navigation("CRManagements");
 
@@ -1707,21 +1735,16 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("OfficeManagements");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.CRManagements.Entities.CRManagement", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities.CRManagement", b =>
                 {
                     b.Navigation("Divisions");
 
                     b.Navigation("OfficeManagements");
                 });
 
-            modelBuilder.Entity("BBMB.BudgetService.Features.Divisions.Entities.Division", b =>
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", b =>
                 {
                     b.Navigation("OfficeManagements");
-                });
-
-            modelBuilder.Entity("BBMB.BudgetService.Features.Geographical.States.Entities.StateMaster", b =>
-                {
-                    b.Navigation("DistrictMasters");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.PowerIrrigations.Entities.PowerIrrigation", b =>
