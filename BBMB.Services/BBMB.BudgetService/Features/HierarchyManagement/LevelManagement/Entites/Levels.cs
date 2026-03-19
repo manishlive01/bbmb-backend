@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BBMB.BudgetService.Features.Offices.OfficeManagements.Entities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entites
@@ -13,5 +14,6 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entite
         public string Name { get; set; }
         [Column("status")]
         public bool Status { get; set; }
+        public virtual ICollection<OfficeManagement> OfficeManagements { get; set; } = new List<OfficeManagement>();
     }
 }

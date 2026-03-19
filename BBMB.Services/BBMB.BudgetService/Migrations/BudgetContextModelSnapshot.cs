@@ -977,6 +977,10 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("division_code");
 
+                    b.Property<int>("LevelId")
+                        .HasColumnType("integer")
+                        .HasColumnName("level_id");
+
                     b.Property<DateTime?>("ModificationDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modification_date");
@@ -997,6 +1001,8 @@ namespace BBMB.BudgetService.Migrations
                     b.HasIndex("CRCode");
 
                     b.HasIndex("DivisionCode");
+
+                    b.HasIndex("LevelId");
 
                     b.ToTable("office_management", "budget");
                 });
@@ -1616,11 +1622,19 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany("OfficeManagements")
                         .HasForeignKey("DivisionCode");
 
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entites.Levels", "Levels")
+                        .WithMany("OfficeManagements")
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("CEManagement");
 
                     b.Navigation("CRManagement");
 
                     b.Navigation("Divisions");
+
+                    b.Navigation("Levels");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Units.Entities.UnitMaster", b =>
@@ -1744,6 +1758,11 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("OfficeManagements");
 
                     b.Navigation("Works");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entites.Levels", b =>
+                {
+                    b.Navigation("OfficeManagements");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Pools.Entities.Pool", b =>

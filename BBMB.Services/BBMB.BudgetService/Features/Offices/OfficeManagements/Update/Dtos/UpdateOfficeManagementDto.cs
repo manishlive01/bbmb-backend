@@ -6,6 +6,7 @@
         public string OfficeDesc { get; set; }
         public int CECode { get; set; }
         public int? CRCode { get; set; }
+        public int LevelId { get; set; }
         public int? DivisionCode { get; set; }
     }
 }

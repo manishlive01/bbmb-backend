@@ -13,5 +13,7 @@
 
         public int? DivisionCode { get; set; }
         public string? DivName { get; set; }
+        public int LevelId { get; set; }
+        public string? LevelName { get; set; }
     }
 }

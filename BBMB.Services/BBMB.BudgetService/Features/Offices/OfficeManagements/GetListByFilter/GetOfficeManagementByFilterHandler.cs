@@ -37,7 +37,7 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.GetListByFilter
             var ceCodes = data.Select(x => x.CECode).Distinct().ToList();
             var crCodes = data.Where(x => x.CRCode.HasValue).Select(x => x.CRCode!.Value).Distinct().ToList();
             var divCodes = data.Where(x => x.DivisionCode.HasValue).Select(x => x.DivisionCode!.Value).Distinct().ToList();
-
+            var levelIds = data.Select(x => x.LevelId).Distinct().ToList();
             var ces = await _context.CEManagements
                 .Where(x => ceCodes.Contains(x.CECode))
                 .ToDictionaryAsync(x => x.CECode, ct);
@@ -49,7 +49,9 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.GetListByFilter
             var divs = await _context.Divisions
                 .Where(x => divCodes.Contains(x.DivisionCode))
                 .ToDictionaryAsync(x => x.DivisionCode, ct);
-
+            var levels = await _context.Levels
+                .Where(x => levelIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, ct);
             // 🔁 Mapping
             return data.Select(x => new GetOfficeManagementByFilterDto
             {
@@ -69,6 +71,10 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.GetListByFilter
                 DivisionCode = x.DivisionCode,
                 DivName = x.DivisionCode.HasValue && divs.ContainsKey(x.DivisionCode.Value)
                     ? divs[x.DivisionCode.Value].DivisionDesc
+                    : "",
+                LevelId = x.LevelId,
+                LevelName = levels.ContainsKey(x.LevelId)
+                    ? levels[x.LevelId].Name
                     : ""
             }).ToList();
         }

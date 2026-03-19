@@ -93,9 +93,9 @@ namespace BBMB.BudgetService.Features.Employees.Update
             // Photo Validation
             //------------------------------------
 
-            RuleFor(x => x.dto.PhotoDocs.Photo)
-                .NotNull()
-                .WithMessage("Employee photo is required");
+            //RuleFor(x => x.dto.PhotoDocs.Photo)
+            //    .NotNull()
+            //    .WithMessage("Employee photo is required");
 
             //------------------------------------
             // Family Members Validation

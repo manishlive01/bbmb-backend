@@ -1,6 +1,7 @@
 ﻿using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entites;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -26,6 +27,8 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.Entities
 
         [Column("division_code")]
         public int? DivisionCode { get; set; }
+        [Column("level_id")]
+        public int LevelId { get; set; }
 
         [Column("modification_date")]
         public DateTime? ModificationDate { get; set; }
@@ -42,6 +45,8 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.Entities
         [ForeignKey(nameof(DivisionCode))]
         public virtual Division? Divisions { get; set; }
 
+        [ForeignKey(nameof(LevelId))]
+        public virtual Levels Levels { get; set; }
 
     }
 }
