@@ -19,7 +19,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
         public async Task<Response> Handle(UpdateCRManagementCommand request, CancellationToken ct)
         {
             var cr = await _context.CRManagements
-                .FirstOrDefaultAsync(x => x.CRCode == request.crCode, ct);
+                .FirstOrDefaultAsync(x => x.CRCode == request.crCode && x.DivSection == request.Dto.DivSection, ct);
 
             if (cr == null)
             {

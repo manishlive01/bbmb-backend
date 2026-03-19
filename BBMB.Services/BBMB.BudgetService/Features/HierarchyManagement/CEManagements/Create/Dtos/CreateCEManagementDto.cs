@@ -1,8 +1,12 @@
-﻿namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Create.Dtos
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Create.Dtos
 {
     public class CreateCEManagementDto
     {
-        public int CECode { get; set; }
+        public int CECode { get; set; } 
+        public int DivSection { get; set; }
         public string Name { get; set; } = string.Empty;
         public string ProjectCode { get; set; } = string.Empty;
         public string? Description { get; set; }

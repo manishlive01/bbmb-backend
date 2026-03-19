@@ -23,7 +23,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Create
 
             // 🔎 Optional: Check duplicate (if needed)
             var exists = await _context.CEManagements
-                .AnyAsync(x => x.CECode == request.dto.CECode, ct);
+                .AnyAsync(x => x.CECode == request.dto.CECode && x.DivSection == request.dto.DivSection, ct);
             if (exists)
             {
                 return new Response

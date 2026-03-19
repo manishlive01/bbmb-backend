@@ -14,7 +14,9 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities
         [Required]
         [Column("ce_code")]
         public int CECode { get; set; }
-
+        [Required]
+        [Column("div_section")]
+        public int DivSection { get; set; }
         [Required]
         [MaxLength(200)]
         [Column("name")]

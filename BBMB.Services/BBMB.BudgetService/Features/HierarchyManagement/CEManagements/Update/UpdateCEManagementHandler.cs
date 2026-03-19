@@ -18,7 +18,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
         public async Task<Response> Handle(UpdateCEManagementCommand request, CancellationToken ct)
         {
             var ce = await _context.CEManagements
-                .FirstOrDefaultAsync(x => x.CECode == request.ceCode, ct);
+                .FirstOrDefaultAsync(x => x.CECode == request.ceCode && x.DivSection == request.Dto.DivSection, ct);
 
             if (ce == null)
             {

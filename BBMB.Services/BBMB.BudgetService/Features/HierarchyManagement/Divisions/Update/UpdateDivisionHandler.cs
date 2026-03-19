@@ -17,7 +17,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
         public async Task<Response> Handle(UpdateDivisionCommand request, CancellationToken ct)
         {
             var division = await _context.Divisions
-                .FirstOrDefaultAsync(d => d.DivisionCode == request.Code, ct);
+                .FirstOrDefaultAsync(d => d.DivisionCode == request.Code && d.DivSection == request.dto.DivSection, ct);
 
             if (division == null)
             {

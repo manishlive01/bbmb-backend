@@ -4,6 +4,7 @@
     {
         public string Name { get; set; } = string.Empty;
         public string ProjectCode { get; set; } = string.Empty;
+        public int DivSection { get; set; }
         public string? Description { get; set; }
         public string? Location { get; set; }
         public DateTime? Date { get; set; }

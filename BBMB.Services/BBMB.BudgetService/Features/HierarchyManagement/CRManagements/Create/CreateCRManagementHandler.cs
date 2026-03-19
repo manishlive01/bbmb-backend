@@ -22,7 +22,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Create
         {
             // ✅ Validate CE exists
             var ceExists = await _context.CEManagements
-                .AnyAsync(x => x.CECode == request.Dto.CECode, ct);
+                .AnyAsync(x => x.CECode == request.Dto.CECode&&x.DivSection==request.Dto.DivSection, ct);
 
             if (!ceExists)
             {
