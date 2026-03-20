@@ -55,6 +55,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetList
                 .Take(pageSize)
                 .Select(d => new GetDivisionListResponseDto
                 {
+                    DivisionId = d.Id,
                     DivisionCode = d.DivisionCode,
                     //DivSection = d.DivSection,
                     DivisionDesc = d.DivisionDesc,

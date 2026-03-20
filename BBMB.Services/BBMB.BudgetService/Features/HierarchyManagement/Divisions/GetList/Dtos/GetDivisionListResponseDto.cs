@@ -2,6 +2,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetList.Dtos
 {
     public class GetDivisionListResponseDto
     {
+        public int DivisionId { get; set; }
         public int DivisionCode { get; set; }
         public int DivSection { get; set; }
         public string DivisionDesc { get; set; } = string.Empty;
