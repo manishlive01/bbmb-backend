@@ -5,7 +5,7 @@ using MediatR;
 namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
 {
     public sealed record UpdateCRManagementCommand(
-        int crCode,
+        int crId,
         UpdateCRManagementDto Dto
     ) : IRequest<Response>;
 }

@@ -47,6 +47,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.GetList
             var items = ceList.Select(x => new GetCEManagementListResponseDto
             {
                 CECode = x.CECode,
+                CEId= x.Id,
                 Name = x.Name,
                 ProjectCode = x.ProjectCode,
                 //DivSection = x.CESection,

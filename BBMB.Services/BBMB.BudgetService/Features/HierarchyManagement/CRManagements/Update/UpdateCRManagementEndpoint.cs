@@ -8,12 +8,12 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/cr-management/{crCode}", async (
-                int crCode,
+            app.MapPut("/api/cr-management/{crId}", async (
+                int crId,
                 UpdateCRManagementDto dto,
                 IMediator mediator) =>
             {
-                var command = new UpdateCRManagementCommand(crCode, dto);
+                var command = new UpdateCRManagementCommand(crId, dto);
                 var response = await mediator.Send(command);
 
                 if (!response.IsSucced)

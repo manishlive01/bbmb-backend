@@ -19,14 +19,14 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
         public async Task<Response> Handle(UpdateCRManagementCommand request, CancellationToken ct)
         {
             var cr = await _context.CRManagements
-                .FirstOrDefaultAsync(x => x.CRCode == request.crCode  , ct);
+                .FirstOrDefaultAsync(x => x.Id == request.crId  , ct);
 
             if (cr == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CR Management record with ID '{request.crCode}' not found"
+                    Message = $"CR Management record  not found"
                 };
             }
 
@@ -44,9 +44,8 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
             }
 
             // 🔄 Update fields
-            //cr.CECode = request.Dto.CECode;
-            cr.Name = request.Dto.Name;
-            //cr.CRSection = request.Dto.CRSection;
+            cr.CEId = request.Dto.CEId;
+            cr.Name = request.Dto.Name; 
             cr.Description = request.Dto.Description;
             cr.Location = request.Dto.Location;
             cr.Status = request.Dto.Status;

@@ -2,6 +2,7 @@
 {
     public class GetCEManagementListResponseDto
     {
+        public int CEId { get; set; }
         public int CECode { get; set; }
         public string Name { get; set; } = string.Empty;
         public int DivSection { get; set; }
