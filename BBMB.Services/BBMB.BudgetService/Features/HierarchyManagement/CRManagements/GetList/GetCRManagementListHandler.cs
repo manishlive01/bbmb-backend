@@ -43,7 +43,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetList
             // 📄 Pagination
             var pageSize = Math.Min(request.PageSize, 100);
 
-            var crList = await query
+            var crList = await query.Include(d=>d.CEManagement)
                 .Skip((request.PageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(ct);
@@ -52,6 +52,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetList
             {
                 CRCode = x.CRCode,
                 CEId = x.CEId,
+                CECode = x.CEManagement != null ? x.CEManagement.CECode : 0,    
                 CRId = x.Id,
                 Name = x.Name,
                 //DivSection = x.CRSection,

@@ -19,14 +19,14 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Delete
         {
             // 🔎 Check if CR exists
             var cr = await _context.CRManagements
-                .FirstOrDefaultAsync(x => x.CRCode == request.crCode, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.crId, ct);
 
             if (cr == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CR Management record with Code '{request.crCode}' not found"
+                    Message = $"CR Management record with Code   not found"
                 };
             }
 
