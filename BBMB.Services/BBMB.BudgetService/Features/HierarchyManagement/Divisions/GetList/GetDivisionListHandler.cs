@@ -50,7 +50,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetList
 
             // Apply pagination
             var pageSize = Math.Min(request.PageSize, 100);
-            var items = await query
+            var items = await query.Include(d=>d.CRManagement).ThenInclude(d=>d.CEManagement)
                 .Skip((request.PageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(d => new GetDivisionListResponseDto
@@ -62,8 +62,8 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetList
                     RegionCode = d.RegionCode,
                     PoolCode = d.PoolCode,
                     ModificationDate = d.ModificationDate,
-                    //CECode = d.CECode,
-                    //CRCode = d.CRCode,
+                    CECode = d.CRManagement.CEManagement.CECode,
+                    CRCode = d.CRManagement.CRCode,
                     UserCode = d.UserCode
                 })
                 .ToListAsync(ct);

@@ -4,6 +4,8 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetList.Dtos
     {
         public int DivisionId { get; set; }
         public int DivisionCode { get; set; }
+        public int CECode { get; set; }
+        public int CRCode { get; set; }
         public int DivSection { get; set; }
         public string DivisionDesc { get; set; } = string.Empty;
         public string? RegionCode { get; set; }
