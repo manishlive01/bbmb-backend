@@ -10,10 +10,10 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetByCECR
         {
             app.MapGet("/api/divisions/by-ce-cr", async (
                 IMediator mediator,
-                [FromQuery] int ceCode,
-                [FromQuery] int crCode) =>
+                [FromQuery] int ceId,
+                [FromQuery] int crId) =>
             {
-                var query = new GetDivisionByCECRQuery(ceCode, crCode);
+                var query = new GetDivisionByCECRQuery(ceId, crId);
 
                 var result = await mediator.Send(query);
 

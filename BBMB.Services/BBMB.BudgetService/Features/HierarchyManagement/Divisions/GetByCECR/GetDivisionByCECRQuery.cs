@@ -4,7 +4,7 @@ using MediatR;
 namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetByCECR
 {
     public sealed record GetDivisionByCECRQuery(
-        int CECode,
-        int CRCode
+        int ceId,
+        int crId
     ) : IRequest<List<GetDivisionByCECRResponseDto>>;
 }
