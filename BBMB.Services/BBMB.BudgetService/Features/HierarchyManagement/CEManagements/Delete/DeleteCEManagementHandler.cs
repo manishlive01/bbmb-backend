@@ -18,14 +18,14 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Delete
         public async Task<Response> Handle(DeleteCEManagementCommand request, CancellationToken ct)
         {
             var ce = await _context.CEManagements
-                .FirstOrDefaultAsync(x => x.CECode == request.ceCode, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.ceId, ct);
 
             if (ce == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CE Management record with code '{request.ceCode}' not found"
+                    Message = $"CE Management record with code  not found"
                 };
             }
 

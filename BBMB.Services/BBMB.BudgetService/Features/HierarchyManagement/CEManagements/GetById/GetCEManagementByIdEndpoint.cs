@@ -9,10 +9,10 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.GetById
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/ce-management/{ceCode}",
-                async (int ceCode, IMediator mediator) =>
+            app.MapGet("/api/ce-management/{ceId}",
+                async (int ceId, IMediator mediator) =>
                 {
-                    if (ceCode <= 0)
+                    if (ceId <= 0)
                     {
                         return Results.BadRequest(new Response
                         {
@@ -21,7 +21,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.GetById
                         });
                     }
 
-                    var query = new GetCEManagementByIdQuery(ceCode);
+                    var query = new GetCEManagementByIdQuery(ceId);
                     var response = await mediator.Send(query);
 
                     if (!response.IsSucced)

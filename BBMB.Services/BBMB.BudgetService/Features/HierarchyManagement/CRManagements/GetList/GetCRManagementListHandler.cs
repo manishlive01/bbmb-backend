@@ -50,8 +50,9 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetList
 
             var items = crList.Select(x => new GetCRManagementListResponseDto
             {
-                //CRCode = x.CRCode,
-                //CECode = x.CECode,
+                CRCode = x.CRCode,
+                CEId = x.CEId,
+                CRId = x.Id,
                 Name = x.Name,
                 //DivSection = x.CRSection,
                 Description = x.Description,

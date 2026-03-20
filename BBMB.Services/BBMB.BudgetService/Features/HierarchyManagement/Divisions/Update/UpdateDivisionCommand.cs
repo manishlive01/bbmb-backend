@@ -4,5 +4,5 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
 {
-    public sealed record UpdateDivisionCommand(int Code, UpdateDivisionDto dto) : IRequest<Response>;
+    public sealed record UpdateDivisionCommand(int divId, UpdateDivisionDto dto) : IRequest<Response>;
 }

@@ -3,6 +3,7 @@
     public class UpdateCEManagementDto
     {
         public string Name { get; set; } = string.Empty;
+        public int CECode { get; set; }
         public string ProjectCode { get; set; } = string.Empty;
         public int DivSection { get; set; }
         public string? Description { get; set; }

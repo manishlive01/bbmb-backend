@@ -2,8 +2,8 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Create.Dtos
 {
     public class CreateDivisionDto
     {
-        public int DivisionCode { get; set; }
-        public int DivSection { get; set; }
+        public int DivisionCode { get; set; } 
+        public int CRId { get; set; } 
         public string DivisionDesc { get; set; } = string.Empty;
         public int? CtrlOffice1 { get; set; }
         public int? CtrlOffice2 { get; set; }

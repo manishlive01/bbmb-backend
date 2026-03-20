@@ -8,9 +8,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Create
         {
             RuleFor(x => x.dto.DivisionCode)
                 .NotEmpty().WithMessage("Division code is required");
-
-            RuleFor(x => x.dto.DivSection)
-                .NotEmpty().WithMessage("Division section is required");
+             
 
             RuleFor(x => x.dto.DivisionDesc)
                 .NotEmpty().WithMessage("Division description is required")

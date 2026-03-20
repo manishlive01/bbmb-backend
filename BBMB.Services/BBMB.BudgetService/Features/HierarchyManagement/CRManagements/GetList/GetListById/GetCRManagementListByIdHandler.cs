@@ -27,7 +27,8 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetList.
                 .Select(x => new GetCRManagementListResponseDto
                 {
                     CRCode = x.CRCode,
-                    CECode = x.CEManagement.CECode,
+                    CEId = x.CEId,
+                    CRId = x.Id,
                     Name = x.Name,
                     Description = x.Description,
                     Location = x.Location,

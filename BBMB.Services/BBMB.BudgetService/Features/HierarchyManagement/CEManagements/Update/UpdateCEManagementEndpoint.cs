@@ -9,13 +9,13 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/ce-management/{ceCode}",
+            app.MapPut("/api/ce-management/{ceId}",
                     async (
-                        int ceCode,
+                        int ceId,
                         UpdateCEManagementDto dto,
                         IMediator mediator) =>
                     {
-                        if (ceCode <= 0)
+                        if (ceId <= 0)
                         {
                             return Results.BadRequest(new Response
                             {
@@ -24,7 +24,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
                             });
                         }
 
-                        var command = new UpdateCEManagementCommand(ceCode, dto);
+                        var command = new UpdateCEManagementCommand(ceId, dto);
                         var response = await mediator.Send(command);
 
                         if (!response.IsSucced)

@@ -18,20 +18,20 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
         public async Task<Response> Handle(UpdateCEManagementCommand request, CancellationToken ct)
         {
             var ce = await _context.CEManagements
-                .FirstOrDefaultAsync(x => x.CECode == request.ceCode  , ct);
+                .FirstOrDefaultAsync(x => x.CECode == request.ceId, ct);
 
             if (ce == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CE Management record with Code '{request.ceCode}' not found"
+                    Message = $"CE Management record   not found"
                 };
             }
 
             // 🔎 Optional: Check duplicate (if needed)
             var exists = await _context.CEManagements
-                .AnyAsync(x => x.Name == request.Dto.Name && x.CECode != request.ceCode, ct);
+                .AnyAsync(x =>  x.CECode != request.Dto.CECode, ct);
             if (exists)
             {
                 return new Response
@@ -43,8 +43,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
 
             // 🔹 Map only allowed fields
             ce.Name = request.Dto.Name;
-            ce.ProjectCode = request.Dto.ProjectCode;
-            //ce.CESection = request.Dto.DivSection;
+            ce.ProjectCode = request.Dto.ProjectCode; 
             ce.Description = request.Dto.Description;
             ce.Location = request.Dto.Location;
             ce.Status = request.Dto.Status;

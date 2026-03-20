@@ -5,7 +5,7 @@ using MediatR;
 namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
 {
     public sealed record UpdateCEManagementCommand(
-        int ceCode,
+        int ceId,
         UpdateCEManagementDto Dto
     ) : IRequest<Response>;
 }

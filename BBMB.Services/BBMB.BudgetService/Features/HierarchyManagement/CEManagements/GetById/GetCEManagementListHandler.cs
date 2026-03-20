@@ -23,7 +23,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.GetById
         {
             var entity = await _context.CEManagements
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.CECode == request.ceCode, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == request.ceId, cancellationToken);
 
             if (entity == null)
             {

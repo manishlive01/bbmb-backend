@@ -8,12 +8,12 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/ce-management/{ceCode}",
+            app.MapDelete("/api/ce-management/{ceId}",
                 async (
-                    int ceCode,
+                    int ceId,
                     IMediator mediator) =>
                 {
-                    if (ceCode <= 0)
+                    if (ceId <= 0)
                     {
                         return Results.BadRequest(new Response
                         {
@@ -22,7 +22,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Delete
                         });
                     }
 
-                    var command = new DeleteCEManagementCommand(ceCode);
+                    var command = new DeleteCEManagementCommand(ceId);
                     var response = await mediator.Send(command);
 
                     if (!response.IsSucced)

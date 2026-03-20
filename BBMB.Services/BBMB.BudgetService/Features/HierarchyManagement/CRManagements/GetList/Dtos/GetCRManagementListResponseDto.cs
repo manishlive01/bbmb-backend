@@ -3,7 +3,8 @@
     public class GetCRManagementListResponseDto
     {
         public int CRCode { get; set; } 
-        public int CECode { get; set; } 
+        public int CEId { get; set; } 
+        public int CRId { get; set; } 
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? Location { get; set; }

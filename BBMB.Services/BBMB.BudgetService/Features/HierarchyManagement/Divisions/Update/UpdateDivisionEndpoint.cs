@@ -8,9 +8,9 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/divisions/{code:int}", async (int code, UpdateDivisionDto dto, IMediator mediator) =>
+            app.MapPut("/api/divisions/{code:int}", async (int divId, UpdateDivisionDto dto, IMediator mediator) =>
             {
-                var command = new UpdateDivisionCommand(code, dto);
+                var command = new UpdateDivisionCommand(divId, dto);
                 var response = await mediator.Send(command);
 
                 return response.IsSucced

@@ -17,14 +17,14 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
         public async Task<Response> Handle(UpdateDivisionCommand request, CancellationToken ct)
         {
             var division = await _context.Divisions
-                .FirstOrDefaultAsync(d => d.DivisionCode == request.Code  , ct);
+                .FirstOrDefaultAsync(d => d.Id == request.divId, ct);
 
             if (division == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Division with code '{request.Code}' not found"
+                    Message = $"Division  not found"
                 };
             }
 
@@ -41,9 +41,8 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
             division.UmdUnit = request.dto.UmdUnit;
             division.RegionCode = request.dto.RegionCode;
             division.DdoTds = request.dto.DdoTds;
-            division.ParentDivisionCode = request.dto.ParentDivisionCode;
-            //division.CECode = request.dto.CECode;
-            //division.CRCode = request.dto.CRCode;
+            division.ParentDivisionCode = request.dto.ParentDivisionCode; 
+            division.CRId = request.dto.CRId;
             division.UserCode = request.dto.UserCode;
             division.ModificationDate = DateTime.UtcNow;
 
