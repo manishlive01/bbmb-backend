@@ -7,10 +7,12 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
     {
         public UpdateCRManagementValidator()
         {
-            RuleFor(x => x.Dto.CECode)
-    .NotNull().WithMessage("CE code is required")
-    .GreaterThan(0).WithMessage("CE code must be greater than 0");
+            RuleFor(x => x.Dto.CEId)
+    .NotNull().WithMessage("CE code is required");
 
+            RuleFor(x => x.Dto.CRCode)
+.NotNull().WithMessage("CR code is required")
+.GreaterThan(0).WithMessage("CR code must be greater than 0");
             RuleFor(x => x.Dto.Name)
                 .NotEmpty()
                 .MaximumLength(15);

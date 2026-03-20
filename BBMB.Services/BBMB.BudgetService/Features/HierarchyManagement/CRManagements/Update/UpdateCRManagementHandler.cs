@@ -32,14 +32,14 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
 
             // ✅ Validate CE exists
             var ceExists = await _context.CEManagements
-                .AnyAsync(x => x.CECode == request.Dto.CECode , ct);
+                .AnyAsync(x => x.Id == request.Dto.CEId , ct);
 
             if (!ceExists)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"CE with ID '{request.Dto.CECode}' not found"
+                    Message = $"CE not found"
                 };
             }
 
