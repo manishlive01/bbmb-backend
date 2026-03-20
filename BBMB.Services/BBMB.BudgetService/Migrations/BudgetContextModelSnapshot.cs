@@ -659,11 +659,12 @@ namespace BBMB.BudgetService.Migrations
             modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", b =>
                 {
                     b.Property<int>("CECode")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasColumnName("ce_code");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CECode"));
+                    b.Property<int>("DivSection")
+                        .HasColumnType("integer")
+                        .HasColumnName("div_section");
 
                     b.Property<DateTime?>("Date")
                         .HasColumnType("timestamp with time zone")
@@ -673,10 +674,6 @@ namespace BBMB.BudgetService.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("desc");
-
-                    b.Property<int>("DivSection")
-                        .HasColumnType("integer")
-                        .HasColumnName("div_section");
 
                     b.Property<string>("Location")
                         .HasMaxLength(200)
@@ -705,7 +702,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(6)")
                         .HasColumnName("user_code");
 
-                    b.HasKey("CECode");
+                    b.HasKey("CECode", "DivSection");
 
                     b.HasIndex("ProjectCode");
 
@@ -761,7 +758,7 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasKey("CRCode");
 
-                    b.HasIndex("CECode");
+                    b.HasIndex("CECode", "DivSection");
 
                     b.ToTable("cr_management", "budget");
                 });
@@ -871,8 +868,6 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("AccountOfficeAccOffice");
 
-                    b.HasIndex("CECode");
-
                     b.HasIndex("CRCode");
 
                     b.HasIndex("MajorHeadMajorAccCode");
@@ -884,6 +879,8 @@ namespace BBMB.BudgetService.Migrations
                     b.HasIndex("RemittanceOfficeRoCode");
 
                     b.HasIndex("UnitMastersUnitCode");
+
+                    b.HasIndex("CECode", "DivSection");
 
                     b.ToTable("division", "budget");
                 });
@@ -973,18 +970,6 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("text")
                         .HasColumnName("office_code");
 
-                    b.Property<int>("CECode")
-                        .HasColumnType("integer")
-                        .HasColumnName("ce_code");
-
-                    b.Property<int?>("CRCode")
-                        .HasColumnType("integer")
-                        .HasColumnName("cr_code");
-
-                    b.Property<int?>("DivisionCode")
-                        .HasColumnType("integer")
-                        .HasColumnName("division_code");
-
                     b.Property<int>("LevelId")
                         .HasColumnType("integer")
                         .HasColumnName("level_id");
@@ -1003,12 +988,6 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("user_code");
 
                     b.HasKey("OfficeCode");
-
-                    b.HasIndex("CECode");
-
-                    b.HasIndex("CRCode");
-
-                    b.HasIndex("DivisionCode");
 
                     b.HasIndex("LevelId");
 
@@ -1550,7 +1529,7 @@ namespace BBMB.BudgetService.Migrations
                 {
                     b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", "CEManagement")
                         .WithMany("CRManagements")
-                        .HasForeignKey("CECode")
+                        .HasForeignKey("CECode", "DivSection")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1562,12 +1541,6 @@ namespace BBMB.BudgetService.Migrations
                     b.HasOne("BBMB.BudgetService.Features.Offices.AccountOffices.Entities.AccountOffice", "AccountOffice")
                         .WithMany()
                         .HasForeignKey("AccountOfficeAccOffice");
-
-                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", "CEManagement")
-                        .WithMany("Divisions")
-                        .HasForeignKey("CECode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities.CRManagement", "CRManagement")
                         .WithMany("Divisions")
@@ -1597,6 +1570,12 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("UnitMastersUnitCode");
 
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", "CEManagement")
+                        .WithMany("Divisions")
+                        .HasForeignKey("CECode", "DivSection")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("AccountOffice");
 
                     b.Navigation("CEManagement");
@@ -1616,31 +1595,11 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Offices.OfficeManagements.Entities.OfficeManagement", b =>
                 {
-                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities.CEManagement", "CEManagement")
-                        .WithMany("OfficeManagements")
-                        .HasForeignKey("CECode")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities.CRManagement", "CRManagement")
-                        .WithMany("OfficeManagements")
-                        .HasForeignKey("CRCode");
-
-                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", "Divisions")
-                        .WithMany("OfficeManagements")
-                        .HasForeignKey("DivisionCode");
-
                     b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entites.Levels", "Levels")
                         .WithMany("OfficeManagements")
                         .HasForeignKey("LevelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("CEManagement");
-
-                    b.Navigation("CRManagement");
-
-                    b.Navigation("Divisions");
 
                     b.Navigation("Levels");
                 });
@@ -1748,22 +1707,16 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("CRManagements");
 
                     b.Navigation("Divisions");
-
-                    b.Navigation("OfficeManagements");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities.CRManagement", b =>
                 {
                     b.Navigation("Divisions");
-
-                    b.Navigation("OfficeManagements");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities.Division", b =>
                 {
                     b.Navigation("BudgetEntries");
-
-                    b.Navigation("OfficeManagements");
 
                     b.Navigation("Works");
                 });

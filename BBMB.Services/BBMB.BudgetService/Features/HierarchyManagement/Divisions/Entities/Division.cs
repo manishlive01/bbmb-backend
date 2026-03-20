@@ -103,8 +103,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities
         public virtual CEManagement? CEManagement { get; set; }
 
         [ForeignKey(nameof(CRCode))]
-        public virtual CRManagement? CRManagement { get; set; }
-        public virtual ICollection<OfficeManagement> OfficeManagements { get; set; } = new List<OfficeManagement>();
+        public virtual CRManagement? CRManagement { get; set; } 
         public ICollection<BudgetEntry> BudgetEntries { get; set; } = new List<BudgetEntry>();
         public ICollection<Work> Works { get; set; } = new List<Work>();
     }

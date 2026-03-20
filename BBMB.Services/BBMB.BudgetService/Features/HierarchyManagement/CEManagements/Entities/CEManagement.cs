@@ -52,7 +52,6 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities
         public virtual Project? Projects { get; set; }
 
         public virtual ICollection<CRManagement> CRManagements { get; set; } = new List<CRManagement>();
-        public virtual ICollection<Division> Divisions { get; set; } = new List<Division>();
-        public virtual ICollection<OfficeManagement> OfficeManagements { get; set; } = new List<OfficeManagement>();
+        public virtual ICollection<Division> Divisions { get; set; } = new List<Division>(); 
     }
 }

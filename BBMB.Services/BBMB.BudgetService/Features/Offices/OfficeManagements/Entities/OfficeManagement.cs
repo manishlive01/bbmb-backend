@@ -18,15 +18,7 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.Entities
         [Column("office_desc")]
         public string OfficeDesc { get; set; } = null!;
 
-        [Required]
-        [Column("ce_code")]
-        public int CECode { get; set; }
-
-        [Column("cr_code")]
-        public int? CRCode { get; set; }
-
-        [Column("division_code")]
-        public int? DivisionCode { get; set; }
+        
         [Column("level_id")]
         public int LevelId { get; set; }
 
@@ -36,14 +28,7 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.Entities
         [Column("user_code")]
         public string? UserCode { get; set; }
 
-        [ForeignKey(nameof(CECode))]
-        public virtual CEManagement? CEManagement { get; set; }
-
-        [ForeignKey(nameof(CRCode))]
-        public virtual CRManagement? CRManagement { get; set; }
-
-        [ForeignKey(nameof(DivisionCode))]
-        public virtual Division? Divisions { get; set; }
+       
 
         [ForeignKey(nameof(LevelId))]
         public virtual Levels Levels { get; set; }

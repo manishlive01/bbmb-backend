@@ -34,7 +34,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Create
             }
 
             // ✅ Persist
-            _context.CEManagements.Add(ce);
+         await   _context.CEManagements.AddAsync(ce);
             await _context.SaveChangesAsync(ct);
 
             return new Response

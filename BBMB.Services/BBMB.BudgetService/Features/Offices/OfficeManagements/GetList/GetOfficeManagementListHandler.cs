@@ -30,14 +30,14 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.GetList
             if (!string.IsNullOrEmpty(request.OfficeDesc))
                 query = query.Where(x => x.OfficeDesc.Contains(request.OfficeDesc));
 
-            if (request.CECode.HasValue)
-                query = query.Where(x => x.CECode == request.CECode);
+            //if (request.CECode.HasValue)
+            //    query = query.Where(x => x.CECode == request.CECode);
 
-            if (request.CRCode.HasValue)
-                query = query.Where(x => x.CRCode == request.CRCode);
+            //if (request.CRCode.HasValue)
+            //    query = query.Where(x => x.CRCode == request.CRCode);
 
-            if (request.DivisionCode.HasValue)
-                query = query.Where(x => x.DivisionCode == request.DivisionCode);
+            //if (request.DivisionCode.HasValue)
+            //    query = query.Where(x => x.DivisionCode == request.DivisionCode);
 
             if (!string.IsNullOrEmpty(request.UserCode))
                 query = query.Where(x => x.UserCode == request.UserCode);
@@ -61,22 +61,22 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.GetList
                 .Take(pageSize)
                 .ToListAsync(ct);
 
-            // 🔥 Fetch related master data (OPTIMIZED)
-            var ceCodes = data.Select(x => x.CECode).Distinct().ToList();
-            var crCodes = data.Where(x => x.CRCode.HasValue).Select(x => x.CRCode!.Value).Distinct().ToList();
-            var divCodes = data.Where(x => x.DivisionCode.HasValue).Select(x => x.DivisionCode!.Value).Distinct().ToList();
+            //// 🔥 Fetch related master data (OPTIMIZED)
+            //var ceCodes = data.Select(x => x.CECode).Distinct().ToList();
+            //var crCodes = data.Where(x => x.CRCode.HasValue).Select(x => x.CRCode!.Value).Distinct().ToList();
+            //var divCodes = data.Where(x => x.DivisionCode.HasValue).Select(x => x.DivisionCode!.Value).Distinct().ToList();
             var levelIds = data.Select(x => x.LevelId).Distinct().ToList();
-            var ces = await _context.CEManagements
-                .Where(x => ceCodes.Contains(x.CECode))
-                .ToDictionaryAsync(x => x.CECode, ct);
+            //var ces = await _context.CEManagements
+            //    .Where(x => ceCodes.Contains(x.CECode))
+            //    .ToDictionaryAsync(x => x.CECode, ct);
 
-            var crs = await _context.CRManagements
-                .Where(x => crCodes.Contains(x.CRCode))
-                .ToDictionaryAsync(x => x.CRCode, ct);
+            //var crs = await _context.CRManagements
+            //    .Where(x => crCodes.Contains(x.CRCode))
+            //    .ToDictionaryAsync(x => x.CRCode, ct);
 
-            var divs = await _context.Divisions
-                .Where(x => divCodes.Contains(x.DivisionCode))
-                .ToDictionaryAsync(x => x.DivisionCode, ct);
+            //var divs = await _context.Divisions
+            //    .Where(x => divCodes.Contains(x.DivisionCode))
+            //    .ToDictionaryAsync(x => x.DivisionCode, ct);
             var levels = await _context.Levels
                 .Where(x => levelIds.Contains(x.Id))
                 .ToDictionaryAsync(x => x.Id, ct);
@@ -87,20 +87,20 @@ namespace BBMB.BudgetService.Features.Offices.OfficeManagements.GetList
                 OfficeCode = ec.OfficeCode,
                 OfficeDesc = ec.OfficeDesc,
 
-                CECode = ec.CECode,
-                CEName = ces.ContainsKey(ec.CECode)
-                    ? ces[ec.CECode].Name
-                    : "",
+                //CECode = ec.CECode,
+                //CEName = ces.ContainsKey(ec.CECode)
+                //    ? ces[ec.CECode].Name
+                //    : "",
 
-                CRCode = ec.CRCode,
-                CRName = ec.CRCode.HasValue && crs.ContainsKey(ec.CRCode.Value)
-                    ? crs[ec.CRCode.Value].Name
-                    : "",
+                //CRCode = ec.CRCode,
+                //CRName = ec.CRCode.HasValue && crs.ContainsKey(ec.CRCode.Value)
+                //    ? crs[ec.CRCode.Value].Name
+                //    : "",
 
-                DivisionCode = ec.DivisionCode,
-                DivName = ec.DivisionCode.HasValue && divs.ContainsKey(ec.DivisionCode.Value)
-                    ? divs[ec.DivisionCode.Value].DivisionDesc
-                    : "",
+                //DivisionCode = ec.DivisionCode,
+                //DivName = ec.DivisionCode.HasValue && divs.ContainsKey(ec.DivisionCode.Value)
+                //    ? divs[ec.DivisionCode.Value].DivisionDesc
+                //    : "",
                 LevelId = ec.LevelId,
                 LevelName = ec.LevelId != 0 && levels.ContainsKey(ec.LevelId)
                     ? levels[ec.LevelId].Name

@@ -91,7 +91,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .HasOne(b => b.Work)
                 .WithMany(w => w.BudgetEntries)
                 .HasForeignKey(b => b.WorkCode)
-                .HasPrincipalKey(w => w.WorkCode)   
+                .HasPrincipalKey(w => w.WorkCode)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Work → Division
@@ -99,7 +99,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .HasOne(w => w.Division)
                 .WithMany(d => d.Works)
                 .HasForeignKey(w => w.DivisionCode)
-                .HasPrincipalKey(d => d.DivisionCode)    
+                .HasPrincipalKey(d => d.DivisionCode)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Division → Pool
@@ -107,7 +107,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .HasOne(d => d.Pool)
                 .WithMany(p => p.Divisions)
                 .HasForeignKey(d => d.PoolCode)
-                .HasPrincipalKey(p => p.PoolCode)    
+                .HasPrincipalKey(p => p.PoolCode)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Division → Region
@@ -115,7 +115,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .HasOne(d => d.Region)
                 .WithMany(r => r.Divisions)
                 .HasForeignKey(d => d.RegionCode)
-                .HasPrincipalKey(r => r.RegionCode)    
+                .HasPrincipalKey(r => r.RegionCode)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Work → Designation
@@ -123,7 +123,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .HasOne(w => w.Designation)
                 .WithMany(d => d.Works)
                 .HasForeignKey(w => w.DesignationCode)
-                .HasPrincipalKey(d => d.DesignationCode) 
+                .HasPrincipalKey(d => d.DesignationCode)
                 .OnDelete(DeleteBehavior.Restrict);
             // =====================================================
             // SubMajorHead Configuration
@@ -233,16 +233,31 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .WithMany()
                       .HasForeignKey(x => new
                       {
-                          
+
                           x.MinorAccCode
                       })
                       .OnDelete(DeleteBehavior.Restrict);
- 
+
                 // 🔹 FK → ObjectClassification
                 entity.HasOne(x => x.ObjectClassification)
                       .WithMany()
                       .HasForeignKey(x => x.ObjectAccCode)
                       .OnDelete(DeleteBehavior.Restrict);
+
+                modelBuilder.Entity<CEManagement>()
+                    .HasKey(c => new { c.CECode, c.DivSection });
+                //CE → CR
+                modelBuilder.Entity<CRManagement>()
+                    .HasOne(x => x.CEManagement)
+                    .WithMany(x => x.CRManagements)
+                    .HasForeignKey(x => new { x.CECode, x.DivSection });
+                //CE → Division
+                modelBuilder.Entity<Division>()
+                .HasOne(d => d.CEManagement)
+                .WithMany(c => c.Divisions) 
+                .HasForeignKey(d => new { d.CECode, d.DivSection });
+                //CE → Office
+              
             });
 
 

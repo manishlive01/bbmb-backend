@@ -48,7 +48,6 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities
 
         [ForeignKey(nameof(CECode))]
         public virtual CEManagement? CEManagement { get; set; }
-        public virtual ICollection<Division> Divisions { get; set; } = new List<Division>();
-        public virtual ICollection<OfficeManagement> OfficeManagements { get; set; } = new List<OfficeManagement>();
+        public virtual ICollection<Division> Divisions { get; set; } = new List<Division>(); 
     }
 }
