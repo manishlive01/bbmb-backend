@@ -25,6 +25,14 @@ namespace BBMB.BudgetService.Features.Works.Create
                 .Where(d => d.DivisionCode == divisionCode)
                 .Select(d => d.Id)
                 .FirstOrDefaultAsync(ct);
+            if(divId is 0)
+            {
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = $"Division with code '{divisionCode}' not found"
+                };
+            }
             // Get last work for this division
             var lastWorkCode = await _context.Works
                 .Where(w => w.DivisionId == divId)
