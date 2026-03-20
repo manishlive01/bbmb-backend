@@ -15,10 +15,9 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetByCECR
         }
 
         public async Task<List<GetDivisionByCECRResponseDto>> Handle(GetDivisionByCECRQuery request, CancellationToken ct)
-        {
-            var cr = await _context.CRManagements.Include(d => d.CEManagement).FirstOrDefaultAsync(d=>d.CEManagement.Id==request.ceId&&d.Id==request.crId);
+        { 
             return await _context.Divisions.Include(d=>d.DivSections)
-                .Where(d =>   d.CRId == cr.Id)
+                .Where(d =>   d.CRId == request.crId)
                 .Select(d => new GetDivisionByCECRResponseDto
                 {
                     DivisionCode = d.DivisionCode, 
