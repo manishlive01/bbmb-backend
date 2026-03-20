@@ -34,6 +34,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetById
                 CRCode = cr.CRCode,
                 CECode = cr.CECode,
                 Name = cr.Name,
+                DivSection = cr.DivSection,
                 Description = cr.Description,
                 Location = cr.Location,
                 Date = cr.Date,

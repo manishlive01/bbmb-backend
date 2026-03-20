@@ -674,6 +674,10 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("desc");
 
+                    b.Property<int>("DivSection")
+                        .HasColumnType("integer")
+                        .HasColumnName("div_section");
+
                     b.Property<string>("Location")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
@@ -729,6 +733,10 @@ namespace BBMB.BudgetService.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("desc");
+
+                    b.Property<int>("DivSection")
+                        .HasColumnType("integer")
+                        .HasColumnName("div_section");
 
                     b.Property<string>("Location")
                         .HasMaxLength(200)

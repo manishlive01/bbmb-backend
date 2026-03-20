@@ -46,6 +46,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
             // 🔄 Update fields
             cr.CECode = request.Dto.CECode;
             cr.Name = request.Dto.Name;
+            cr.DivSection = request.Dto.DivSection;
             cr.Description = request.Dto.Description;
             cr.Location = request.Dto.Location;
             cr.Status = request.Dto.Status;

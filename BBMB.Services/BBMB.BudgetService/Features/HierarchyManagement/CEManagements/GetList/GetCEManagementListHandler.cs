@@ -49,6 +49,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.GetList
                 CECode = x.CECode,
                 Name = x.Name,
                 ProjectCode = x.ProjectCode,
+                DivSection = x.DivSection,
                 Description = x.Description,
                 Location = x.Location,
                 Date = x.Date,

@@ -53,6 +53,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetList
                 CRCode = x.CRCode,
                 CECode = x.CECode,
                 Name = x.Name,
+                DivSection = x.DivSection,
                 Description = x.Description,
                 Location = x.Location,
                 Date = x.Date,

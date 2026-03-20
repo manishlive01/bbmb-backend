@@ -44,6 +44,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
             // 🔹 Map only allowed fields
             ce.Name = request.Dto.Name;
             ce.ProjectCode = request.Dto.ProjectCode;
+            ce.DivSection = request.Dto.DivSection;
             ce.Description = request.Dto.Description;
             ce.Location = request.Dto.Location;
             ce.Status = request.Dto.Status;
