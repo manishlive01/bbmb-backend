@@ -5,7 +5,7 @@ using MediatR;
 namespace BBMB.BudgetService.Features.Budgets.GetByWork
 {
     public sealed record GetBudgetEntriesByWorkQuery(
-        string WorkCode,
+        int WorkCode,
         int PageNumber,
         int PageSize
     ) : IRequest<PagedResponse<GetBudgetEntryListResponseDto>>;

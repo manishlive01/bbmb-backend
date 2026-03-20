@@ -21,7 +21,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetByDivision
             var query = _context.BudgetEntries
                 .Include(b => b.Division)
                 .Include(b => b.Work)
-                .Where(b => b.DivisionCode == request.DivisionCode);
+                .Where(b => b.Work.Division.DivisionCode == request.DivisionCode);
 
             var totalCount = await query.CountAsync(ct);
 
@@ -39,12 +39,12 @@ namespace BBMB.BudgetService.Features.Budgets.GetByDivision
                 items.Add(new GetBudgetEntryListResponseDto
                 {
                     Id = b.Id,
-                    DivisionCode = b.DivisionCode,
+                    //DivisionCode = b.DivisionCode,
                     DivisionDesc = b.Division?.DivisionDesc,
                     CalendarYear = b.CalendarYear,
                     AccountCode = $"{b.MajorAccCode}-{b.SubMajorAccCode}-{b.MinorAccCode}-{b.SubMinorAccCode}-{b.DetailAccCode}-{b.ObjectAccCode}",
                     AccountDescription = accountDescription,
-                    WorkCode = b.WorkCode,
+                    //WorkCode = b.WorkCode,
                     WorkDesc = b.Work?.WorkDesc,
                     BudgetDescription = b.BudgetDescription,
                     BudgetAmount = b.BudgetAmount,

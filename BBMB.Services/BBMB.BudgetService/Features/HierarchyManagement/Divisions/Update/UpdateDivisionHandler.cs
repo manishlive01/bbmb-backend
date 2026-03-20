@@ -17,7 +17,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
         public async Task<Response> Handle(UpdateDivisionCommand request, CancellationToken ct)
         {
             var division = await _context.Divisions
-                .FirstOrDefaultAsync(d => d.DivisionCode == request.Code && d.DivSection == request.dto.DivSection, ct);
+                .FirstOrDefaultAsync(d => d.DivisionCode == request.Code  , ct);
 
             if (division == null)
             {
@@ -29,7 +29,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
             }
 
             // Update fields
-            division.DivSection = request.dto.DivSection;
+            //division.DivSection = request.dto.DivSection;
             division.DivisionDesc = request.dto.DivisionDesc;
             division.CtrlOffice1 = request.dto.CtrlOffice1;
             division.CtrlOffice2 = request.dto.CtrlOffice2;
@@ -42,8 +42,8 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
             division.RegionCode = request.dto.RegionCode;
             division.DdoTds = request.dto.DdoTds;
             division.ParentDivisionCode = request.dto.ParentDivisionCode;
-            division.CECode = request.dto.CECode;
-            division.CRCode = request.dto.CRCode;
+            //division.CECode = request.dto.CECode;
+            //division.CRCode = request.dto.CRCode;
             division.UserCode = request.dto.UserCode;
             division.ModificationDate = DateTime.UtcNow;
 

@@ -16,19 +16,18 @@ namespace BBMB.BudgetService.Features.Works.Entities
     [Table("work")]
     public class Work
     {
-        [Key]
+        [Column("id")]
+        public int Id { get; set; }
+
         [Required]
         [MaxLength(8)]
         [Column("work_code")]
-        public string WorkCode { get; set; }
+        public int WorkCode { get; set; } // business key
 
-        [Required]
-        [Column("division_code")]
-        public int DivisionCode { get; set; }
-
-        [Required]
-        [Column("div_section")]
-        public int DivSection { get; set; }
+        [Column("division_id")]
+        public int DivisionId { get; set; } // ✅ FK
+        [Column("div_section_id")]
+        public int? DivSectionId { get; set; } // optional 
 
         [Required]
         [MaxLength(4)]
@@ -60,13 +59,7 @@ namespace BBMB.BudgetService.Features.Works.Entities
         [Column("object_acc_code")]
         public string ObjectAccCode { get; set; }
 
-        [Required]
-        [Column("ce_code")]
-        public int CECode { get; set; } 
-
-        [Required]
-        [Column("cr_code")]
-        public int CRCode { get; set; }
+ 
 
         [Column("original_budget")]
         public string OriginalBudget { get; set; } = string.Empty;

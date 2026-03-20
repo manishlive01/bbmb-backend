@@ -16,7 +16,7 @@ namespace BBMB.BudgetService.Features.Estimates.GetList
                 [FromQuery] int pageSize = 10,
                 [FromQuery] string? sortBy = null,
                 [FromQuery] bool sortDescending = false,
-                [FromQuery] string? workCode = null,
+                [FromQuery] int? workCode = null,
                 [FromQuery] int? divisionCode = null,
                 [FromQuery] int? finYearEnd = null) =>
             {

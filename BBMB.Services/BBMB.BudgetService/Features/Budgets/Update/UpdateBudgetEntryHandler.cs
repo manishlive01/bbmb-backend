@@ -37,7 +37,7 @@ namespace BBMB.BudgetService.Features.Budgets.Update
                 };
 
             // Validate work code if provided
-            if (!string.IsNullOrEmpty(request.dto.WorkCode))
+            if (!string.IsNullOrEmpty(request.dto.WorkCode.ToString()))
             {
                 var workExists = await _context.Works
                     .AnyAsync(w => w.WorkCode == request.dto.WorkCode, ct);
@@ -58,9 +58,9 @@ namespace BBMB.BudgetService.Features.Budgets.Update
                     IsSucced = false,
                     Message = $"Major head with code '{request.dto.MajorAccCode}' not found"
                 };
-
-            // Update fields
-            budgetEntry.DivisionCode = request.dto.DivisionCode;
+            var getWorkId=await _context.Works.AsNoTracking().Where(w=>w.WorkCode==request.dto.WorkCode).Select(w=>w.Id).FirstOrDefaultAsync(ct);
+             // Update fields
+            //budgetEntry.DivisionCode = request.dto.DivisionCode;
             budgetEntry.DivSection = request.dto.DivSection;
             budgetEntry.CalendarYear = request.dto.CalendarYear;
             budgetEntry.SequenceNo = request.dto.SequenceNo;
@@ -70,7 +70,7 @@ namespace BBMB.BudgetService.Features.Budgets.Update
             budgetEntry.SubMinorAccCode = request.dto.SubMinorAccCode;
             budgetEntry.DetailAccCode = request.dto.DetailAccCode;
             budgetEntry.ObjectAccCode = request.dto.ObjectAccCode;
-            budgetEntry.WorkCode = request.dto.WorkCode;
+            budgetEntry.WorkId = getWorkId;
             budgetEntry.BudgetDescription = request.dto.BudgetDescription;
             budgetEntry.BudgetAmount = request.dto.BudgetAmount;
             budgetEntry.RevisedAmount = request.dto.RevisedAmount;

@@ -28,7 +28,7 @@ namespace BBMB.BudgetService.Features.Works.Delete
 
             // Check for dependencies (budget entries)
             var hasBudgetEntries = await _context.BudgetEntries
-                .AnyAsync(b => b.WorkCode == request.Code, ct);
+                .AnyAsync(b => b.WorkId ==work.Id, ct);
 
             if (hasBudgetEntries)
                 return new Response

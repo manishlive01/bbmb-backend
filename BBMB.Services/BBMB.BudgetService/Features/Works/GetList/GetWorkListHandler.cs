@@ -38,7 +38,7 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 from w in _context.Works.AsNoTracking()
 
                 join d in _context.Divisions.AsNoTracking()
-                    on w.DivisionCode equals d.DivisionCode into divJoin
+                    on w.DivisionId equals d.DivisionCode into divJoin
                 from d in divJoin.DefaultIfEmpty()
 
                 join mh in _context.MajorHeads.AsNoTracking()
@@ -69,13 +69,15 @@ namespace BBMB.BudgetService.Features.Works.GetList
                     on w.ObjectAccCode equals obj.ObjectAccCode into objJoin
                 from obj in objJoin.DefaultIfEmpty()
 
+                join cr in _context.CRManagements.AsNoTracking()
+                 on d.CRId equals cr.Id into crJoin
+                from cr in crJoin.DefaultIfEmpty()
+
                 join ce in _context.CEManagements.AsNoTracking()
-                    on w.CECode equals ce.CECode into ceJoin
+                    on cr.CEId equals ce.Id into ceJoin
                 from ce in ceJoin.DefaultIfEmpty()
 
-                join cr in _context.CRManagements.AsNoTracking()
-                    on w.CRCode equals cr.CRCode into crJoin
-                from cr in crJoin.DefaultIfEmpty()
+             
 
                 select new
                 {
@@ -95,26 +97,26 @@ namespace BBMB.BudgetService.Features.Works.GetList
 
             if (charge != null)
             {
-                if (charge.DivisionCode != null)
-                    query = query.Where(x => x.w.DivisionCode == charge.DivisionCode);
+                //if (charge.DivisionCode != null)
+                //    query = query.Where(x => x.w.DivisionCode == charge.DivisionCode);
 
-                if (charge.CECode != null)
-                    query = query.Where(x => x.w.CECode == charge.CECode);
+                //if (charge.CECode != null)
+                //    query = query.Where(x => x.w.CECode == charge.CECode);
 
-                if (charge.CRCode != null)
-                    query = query.Where(x => x.w.CRCode == charge.CRCode);
+                //if (charge.CRCode != null)
+                //    query = query.Where(x => x.w.CRCode == charge.CRCode);
             }
 
             // ================= REQUEST FILTERS =================
 
-            if (!string.IsNullOrWhiteSpace(request.WorkCode))
-                query = query.Where(x => x.w.WorkCode.Contains(request.WorkCode));
+            //if (!string.IsNullOrWhiteSpace(request.WorkCode))
+            //    query = query.Where(x => x.w.WorkCode.Contains(request.WorkCode));
 
-            if (!string.IsNullOrWhiteSpace(request.WorkDesc))
-                query = query.Where(x => x.w.WorkDesc.Contains(request.WorkDesc));
+            //if (!string.IsNullOrWhiteSpace(request.WorkDesc))
+            //    query = query.Where(x => x.w.WorkDesc.Contains(request.WorkDesc));
 
-            if (request.DivisionCode.HasValue)
-                query = query.Where(x => x.w.DivisionCode == request.DivisionCode);
+            //if (request.DivisionCode.HasValue)
+            //    query = query.Where(x => x.w.DivisionCode == request.DivisionCode);
 
             if (!string.IsNullOrWhiteSpace(request.Status))
                 query = query.Where(x => x.w.Status == request.Status);
@@ -136,12 +138,12 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 .Take(pageSize)
                 .Select(x => new GetWorkListResponseDto
                 {
-                    WorkCode = x.w.WorkCode,
+                    //WorkCode = x.w.WorkCode,
                     WorkDesc = x.w.WorkDesc,
 
-                    DivisionCode = x.w.DivisionCode,
+                    //DivisionCode = x.w.DivisionCode,
                     DivisionDesc = x.d != null ? x.d.DivisionDesc : null,
-                    DivSection = x.w.DivSection,
+                    //DivSection = x.w.DivSection,
 
                     MajorAccCode = x.w.MajorAccCode,
                     MajorAccDesc = x.mh != null ? x.mh.MajorAccDesc : null,
@@ -174,10 +176,10 @@ namespace BBMB.BudgetService.Features.Works.GetList
 
                     UserCode = x.w.UserCode,
 
-                    CECode = x.w.CECode,
+                    //CECode = x.w.CECode,
                     CEName = x.ce != null ? x.ce.Name : null,
 
-                    CRCode = x.w.CRCode,
+                    //CRCode = x.w.CRCode,
                     CRName = x.cr != null ? x.cr.Name : null,
 
                     OriginalBudget = x.w.OriginalBudget,
@@ -230,9 +232,9 @@ namespace BBMB.BudgetService.Features.Works.GetList
                     ? query.OrderByDescending(w => w.WorkDesc)
                     : query.OrderBy(w => w.WorkDesc),
 
-                "divisioncode" => sortDescending
-                    ? query.OrderByDescending(w => w.DivisionCode)
-                    : query.OrderBy(w => w.DivisionCode),
+                //"divisioncode" => sortDescending
+                //    ? query.OrderByDescending(w => w.DivisionCode)
+                //    : query.OrderBy(w => w.DivisionCode),
 
                 _ => query.OrderBy(w => w.WorkCode)
             };

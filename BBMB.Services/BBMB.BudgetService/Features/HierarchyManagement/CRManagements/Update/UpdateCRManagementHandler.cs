@@ -19,7 +19,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
         public async Task<Response> Handle(UpdateCRManagementCommand request, CancellationToken ct)
         {
             var cr = await _context.CRManagements
-                .FirstOrDefaultAsync(x => x.CRCode == request.crCode && x.DivSection == request.Dto.DivSection, ct);
+                .FirstOrDefaultAsync(x => x.CRCode == request.crCode  , ct);
 
             if (cr == null)
             {
@@ -32,7 +32,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
 
             // ✅ Validate CE exists
             var ceExists = await _context.CEManagements
-                .AnyAsync(x => x.CECode == request.Dto.CECode, ct);
+                .AnyAsync(x => x.CECode == request.Dto.CECode , ct);
 
             if (!ceExists)
             {
@@ -44,9 +44,9 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Update
             }
 
             // 🔄 Update fields
-            cr.CECode = request.Dto.CECode;
+            //cr.CECode = request.Dto.CECode;
             cr.Name = request.Dto.Name;
-            cr.DivSection = request.Dto.DivSection;
+            //cr.CRSection = request.Dto.CRSection;
             cr.Description = request.Dto.Description;
             cr.Location = request.Dto.Location;
             cr.Status = request.Dto.Status;

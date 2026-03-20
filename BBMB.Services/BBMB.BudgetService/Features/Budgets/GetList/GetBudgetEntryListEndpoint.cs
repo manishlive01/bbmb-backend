@@ -20,7 +20,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
                 [FromQuery] int? divisionCode = null,
                 [FromQuery] int? calendarYear = null,
                 [FromQuery] BudgetType? budgetType = null,
-                [FromQuery] string? workCode = null) =>
+                [FromQuery] int? workCode = null) =>
             {
                 var query = new GetBudgetEntryListQuery(
                     pageNumber,

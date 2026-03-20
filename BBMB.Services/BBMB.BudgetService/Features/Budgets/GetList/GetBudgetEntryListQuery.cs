@@ -13,6 +13,6 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
         int? DivisionCode,
         int? CalendarYear,
         BudgetType? BudgetType,
-        string? WorkCode
+        int? WorkCode
     ) : IRequest<PagedResponse<GetBudgetEntryListResponseDto>>;
 }

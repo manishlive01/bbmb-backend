@@ -1,6 +1,5 @@
 ﻿using BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
-using BBMB.BudgetService.Features.Offices.OfficeManagements.Entities;
 using BBMB.BudgetService.Features.Projects.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,13 +9,12 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities
     [Table("ce_management")]
     public class CEManagement
     {
-        [Key]
+        [Column("id")]
+        public int Id { get; set; } // ✅ PK
+
         [Required]
         [Column("ce_code")]
-        public int CECode { get; set; }
-        [Required]
-        [Column("div_section")]
-        public int DivSection { get; set; }
+        public int CECode { get; set; } // ✅ business key
         [Required]
         [MaxLength(200)]
         [Column("name")]

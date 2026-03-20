@@ -1,6 +1,6 @@
 ﻿using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.CRSectionManagements.Entites;
 using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
-using BBMB.BudgetService.Features.Offices.OfficeManagements.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -9,18 +9,17 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities
     [Table("cr_management")]
     public class CRManagement
     {
-        [Key]
+        [Column("id")]
+        public int Id { get; set; } 
+
         [Required]
         [Column("cr_code")]
-        public int CRCode { get; set; }
-
+        public int CRCode { get; set; } 
 
         [Required]
-        [Column("ce_code")]
-        public int CECode { get; set; }
-        [Required]
-        [Column("div_section")]
-        public int DivSection { get; set; }
+        [Column("ce_id")]
+
+        public int CEId { get; set; } // ✅ FK
         [Required]
         [MaxLength(200)]
         [Column("name")]
@@ -44,10 +43,9 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities
         [Required]
         [MaxLength(6)]
         [Column("user_code")]
-        public string UserCode { get; set; } = string.Empty;
-
-        [ForeignKey(nameof(CECode))]
+        public string UserCode { get; set; } = string.Empty; 
         public virtual CEManagement? CEManagement { get; set; }
-        public virtual ICollection<Division> Divisions { get; set; } = new List<Division>(); 
+        public virtual ICollection<Division> Divisions { get; set; } = new List<Division>();
+        public virtual ICollection<CRSection> CRSections { get; set; } = new List<CRSection>();
     }
 }

@@ -32,9 +32,9 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetById
             return new GetCRManagementByIdResponseDto
             {
                 CRCode = cr.CRCode,
-                CECode = cr.CECode,
+                //CECode = cr.CECode,
                 Name = cr.Name,
-                DivSection = cr.DivSection,
+                //DivSection = cr.CRSection,
                 Description = cr.Description,
                 Location = cr.Location,
                 Date = cr.Date,

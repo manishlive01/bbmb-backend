@@ -29,17 +29,17 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Delete
                 };
             }
 
-            // Example: If CR is referenced somewhere else
-            var isUsed = await _context.Divisions
-                .AnyAsync(x => x.CECode == request.ceCode, ct);
-            if (isUsed)
-            {
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = "CE cannot be deleted because it is use in Division."
-                };
-            }
+            //// Example: If CR is referenced somewhere else
+            //var isUsed = await _context.Divisions
+            //    .AnyAsync(x => x.CECode == request.ceCode, ct);
+            //if (isUsed)
+            //{
+            //    return new Response
+            //    {
+            //        IsSucced = false,
+            //        Message = "CE cannot be deleted because it is use in Division."
+            //    };
+            //}
 
             _context.CEManagements.Remove(ce);
             await _context.SaveChangesAsync(ct);

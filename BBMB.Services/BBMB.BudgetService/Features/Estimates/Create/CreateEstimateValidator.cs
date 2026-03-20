@@ -14,9 +14,10 @@ namespace BBMB.BudgetService.Features.Estimates.Create
             _context = context;
 
             RuleFor(x => x.WorkCode)
-                .NotEmpty().WithMessage("Work code is required")
-                .MaximumLength(8).WithMessage("Work code must not exceed 8 characters")
-                .MustAsync(async (code, ct) => await _context.Works.AnyAsync(w => w.WorkCode == code, ct))
+                .NotNull().WithMessage("Work code is required")
+                .GreaterThan(0).WithMessage("Work code must be valid")
+                .MustAsync(async (code, ct) =>
+                    await _context.Works.AnyAsync(w => w.WorkCode == code, ct))
                 .WithMessage("Work code does not exist");
 
             RuleFor(x => x.EstimateCode)

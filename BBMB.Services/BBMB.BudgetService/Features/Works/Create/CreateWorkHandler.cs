@@ -21,20 +21,23 @@ namespace BBMB.BudgetService.Features.Works.Create
             // ================= AUTO GENERATE WORK CODE =================
 
             var divisionCode = request.dto.DivisionCode;
-
+            var divId= await _context.Divisions
+                .Where(d => d.DivisionCode == divisionCode)
+                .Select(d => d.Id)
+                .FirstOrDefaultAsync(ct);
             // Get last work for this division
             var lastWorkCode = await _context.Works
-                .Where(w => w.DivisionCode == divisionCode)
+                .Where(w => w.DivisionId == divId)
                 .OrderByDescending(w => w.WorkCode)
                 .Select(w => w.WorkCode)
                 .FirstOrDefaultAsync(ct);
 
             int nextNumber = 1;
 
-            if (!string.IsNullOrEmpty(lastWorkCode))
+            if (!string.IsNullOrEmpty(lastWorkCode.ToString()))
             {
                 // Extract numeric suffix (after division code)
-                var numericPart = lastWorkCode.Substring(divisionCode.ToString().Length);
+                var numericPart = lastWorkCode.ToString().Substring(divisionCode.ToString().Length);
 
                 if (int.TryParse(numericPart, out int lastNumber))
                 {

@@ -1107,7 +1107,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     list.Add(new CRManagement
                     {
-                        CECode = ceCode,
+                        CEId = ceCode,
                         CRCode = crCode,
                         Name = name,
                         Description = desc,
@@ -1312,10 +1312,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     list.Add(new Division
                     {
                         DivisionCode = divisionCode,
-                        DivSection = divSection,
+                        //DivSection = divSection,
                         DivisionDesc = divisionDesc,
-                        CECode = ceCode,
-                        CRCode = crCode,
+                        //CECode = ceCode,
+                        //CRCode = crCode,
                         MajorAccCode = majorAccCode,
                         RoCode = roCode,
                         AccOffice = accOffice,
@@ -1385,7 +1385,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 // 🔥 PRELOAD DATA (ONE TIME DB HITS)
 
-                var workSet = new HashSet<string>(
+                var workSet = new HashSet<int>(
                     await _context.Set<Work>()
                         .AsNoTracking()
                         .Select(x => x.WorkCode)
@@ -1494,7 +1494,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     if (!duplicateExcelCheck.Add(workCode))
                         throw new Exception($"Duplicate WorkCode in Excel: {workCode}");
 
-                    if (workSet.Contains(workCode))
+                    if (workSet.Contains(Convert.ToInt32(workCode)))
                         throw new Exception($"WorkCode already exists: {workCode}");
 
                     // FK validations
@@ -1524,14 +1524,14 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         throw new Exception($"Invalid DesignationCode at row {row}");
 
                     if (!string.IsNullOrWhiteSpace(refWorkCode) &&
-                        !workSet.Contains(refWorkCode))
+                        !workSet.Contains(Convert.ToInt32(refWorkCode)))
                         throw new Exception($"Invalid RefWorkCode at row {row}");
 
                     list.Add(new Work
                     {
-                        WorkCode = workCode,
-                        DivisionCode = divisionCode,
-                        DivSection = divSection,
+                        //WorkCode = workCode,
+                        //DivisionCode = divisionCode,
+                        //DivSection = divSection,
                         MajorAccCode = majorCode,
                         SubMajorAccCode = subMajorCode,
                         MinorAccCode = minorCode,

@@ -2,14 +2,13 @@
 using BBMB.BudgetService.Features.Budgets.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.DivisonSectionManagements.Entities;
 using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
-using BBMB.BudgetService.Features.Offices.OfficeManagements.Entities;
 using BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities;
 using BBMB.BudgetService.Features.Pools.Entities;
 using BBMB.BudgetService.Features.Regions.Entities;
 using BBMB.BudgetService.Features.Units.Entities;
 using BBMB.BudgetService.Features.Works.Entities;
-using MediatR;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -18,14 +17,15 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities
     [Table("division")]
     public class Division
     {
-        [Key]
+        [Column("id")]
+        public int Id { get; set; }
+
         [Required]
         [Column("division_code")]
         public int DivisionCode { get; set; }
 
-        [Required]
-        [Column("div_section")]
-        public int DivSection { get; set; }
+        [Column("cr_id")]
+        public int CRId { get; set; } // ✅ FK
 
         [Required]
         [MaxLength(200)]
@@ -76,15 +76,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities
 
         [Column("parent_division_code")]
         public int? ParentDivisionCode { get; set; }
-
-
-        [Required]
-        [Column("ce_code")]
-        public int CECode { get; set; }
-
-        [Required]
-        [Column("cr_code")]
-        public int CRCode { get; set; }
+         
 
         [Required]
         [MaxLength(6)]
@@ -97,14 +89,10 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities
         public virtual AccountOffice? AccountOffice { get; set; }
         public virtual UnitMaster? UnitMasters { get; set; }
         public virtual Pool? Pool { get; set; }
-        public virtual Region? Region { get; set; }
-
-        [ForeignKey(nameof(CECode))]
-        public virtual CEManagement? CEManagement { get; set; }
-
-        [ForeignKey(nameof(CRCode))]
+        public virtual Region? Region { get; set; }  
         public virtual CRManagement? CRManagement { get; set; } 
         public ICollection<BudgetEntry> BudgetEntries { get; set; } = new List<BudgetEntry>();
         public ICollection<Work> Works { get; set; } = new List<Work>();
+        public virtual ICollection<DivSection> DivSections { get; set; } = new List<DivSection>();
     }
 }

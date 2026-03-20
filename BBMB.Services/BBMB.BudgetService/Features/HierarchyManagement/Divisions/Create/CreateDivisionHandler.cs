@@ -20,7 +20,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Create
         {
             // Check for duplicate
             var exists = await _context.Divisions
-                .AnyAsync(d => d.DivisionCode == request.dto.DivisionCode&&d.DivSection==request.dto.DivSection, ct);
+                .AnyAsync(d => d.DivisionCode == request.dto.DivisionCode , ct);
 
             if (exists)
             {

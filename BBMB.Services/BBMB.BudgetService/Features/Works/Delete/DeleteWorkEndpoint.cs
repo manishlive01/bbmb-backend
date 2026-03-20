@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Features.Works.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/works/{code}", async (string code, IMediator mediator) =>
+            app.MapDelete("/api/works/{code}", async (int code, IMediator mediator) =>
             {
                 var command = new DeleteWorkCommand(code);
                 var response = await mediator.Send(command);

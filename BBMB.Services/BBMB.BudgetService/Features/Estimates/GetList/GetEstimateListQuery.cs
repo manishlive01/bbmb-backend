@@ -9,7 +9,7 @@ namespace BBMB.BudgetService.Features.Estimates.GetList
         int PageSize,
         string? SortBy,
         bool SortDescending,
-        string? WorkCode,
+        int? WorkCode,
         int? DivisionCode,
         int? FinYearEnd
     ) : IRequest<PagedResponse<GetEstimateListResponseDto>>;

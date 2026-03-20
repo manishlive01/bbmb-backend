@@ -3,5 +3,5 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.Works.Delete
 {
-    public sealed record DeleteWorkCommand(string Code) : IRequest<Response>;
+    public sealed record DeleteWorkCommand(int Code) : IRequest<Response>;
 }

@@ -31,7 +31,7 @@ namespace BBMB.BudgetService.Features.Budgets.Create
             }
 
             // Validate work code if provided
-            if (!string.IsNullOrEmpty(request.dto.WorkCode))
+            if (!string.IsNullOrWhiteSpace(request.dto.WorkCode.ToString()))
             {
                 var workExists = await _context.Works
                     .AnyAsync(w => w.WorkCode == request.dto.WorkCode, ct);

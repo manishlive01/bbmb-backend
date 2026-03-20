@@ -25,9 +25,9 @@ namespace BBMB.BudgetService.Features.Works.GenerateWorkCodes
 
             // 🔎 Validate Division Exists
             var divisionExists = await _context.Divisions
-                .AnyAsync(x => x.DivisionCode == request.DivisionCode, cancellationToken);
+                .FirstOrDefaultAsync(x => x.DivisionCode == request.DivisionCode, cancellationToken);
 
-            if (!divisionExists)
+            if ( divisionExists is null)
             {
                 response.IsSucced = false;
                 response.Message = $"DivisionCode {request.DivisionCode} does not exist";
@@ -36,20 +36,20 @@ namespace BBMB.BudgetService.Features.Works.GenerateWorkCodes
 
             // 🔎 Get Last WorkCode for that Division
             var lastWorkCode = await _context.Set<Work>()
-                .Where(x => x.DivisionCode == request.DivisionCode)
+                .Where(x => x.DivisionId == divisionExists.Id)
                 .OrderByDescending(x => x.WorkCode)
                 .Select(x => x.WorkCode)
                 .FirstOrDefaultAsync(cancellationToken);
 
             int nextSequence = 1;
 
-            if (!string.IsNullOrWhiteSpace(lastWorkCode))
+            if (!string.IsNullOrWhiteSpace(lastWorkCode.ToString()))
             {
                 var divisionLength = request.DivisionCode.ToString().Length;
 
-                if (lastWorkCode.Length > divisionLength)
+                if (lastWorkCode.ToString().Length > divisionLength)
                 {
-                    var sequencePart = lastWorkCode.Substring(divisionLength);
+                    var sequencePart = lastWorkCode.ToString().Substring(divisionLength);
 
                     if (int.TryParse(sequencePart, out var parsed))
                     {

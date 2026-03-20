@@ -56,13 +56,13 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetList
                 .Select(d => new GetDivisionListResponseDto
                 {
                     DivisionCode = d.DivisionCode,
-                    DivSection = d.DivSection,
+                    //DivSection = d.DivSection,
                     DivisionDesc = d.DivisionDesc,
                     RegionCode = d.RegionCode,
                     PoolCode = d.PoolCode,
                     ModificationDate = d.ModificationDate,
-                    CECode = d.CECode,
-                    CRCode = d.CRCode,
+                    //CECode = d.CECode,
+                    //CRCode = d.CRCode,
                     UserCode = d.UserCode
                 })
                 .ToListAsync(ct);

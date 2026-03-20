@@ -132,8 +132,8 @@ namespace BBMB.BudgetService.Features.Works.Update
             // ================= UPDATE ALL FIELDS =================
 
             work.WorkDesc = request.dto.WorkDesc;
-            work.DivisionCode = request.dto.DivisionCode;
-            work.DivSection = request.dto.DivSection;
+            //work.DivisionCode = request.dto.DivisionCode;
+            //work.DivSection = request.dto.DivSection;
             work.MajorAccCode = request.dto.MajorAccCode;
             work.SubMajorAccCode = request.dto.SubMajorAccCode;
             work.MinorAccCode = request.dto.MinorAccCode;
@@ -141,8 +141,8 @@ namespace BBMB.BudgetService.Features.Works.Update
             work.DetailAccCode = request.dto.DetailAccCode;
             work.ObjectAccCode = request.dto.ObjectAccCode;
 
-            work.CECode = request.dto.CECode;
-            work.CRCode = request.dto.CRCode;
+            //work.CECode = request.dto.CECode;
+            //work.CRCode = request.dto.CRCode;
 
             work.OriginalBudget = request.dto.OriginalBudget ?? string.Empty;
             work.RevisedBudget = request.dto.RevisedBudget ?? string.Empty;

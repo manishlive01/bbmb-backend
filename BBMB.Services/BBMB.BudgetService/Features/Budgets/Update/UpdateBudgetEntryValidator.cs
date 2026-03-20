@@ -45,9 +45,9 @@ namespace BBMB.BudgetService.Features.Budgets.Update
                 .NotEmpty().WithMessage("Object account code is required")
                 .MaximumLength(3).WithMessage("Object account code must not exceed 3 characters");
 
-            RuleFor(x => x.WorkCode)
-                .MaximumLength(8).WithMessage("Work code must not exceed 8 characters")
-                .When(x => !string.IsNullOrEmpty(x.WorkCode));
+            //RuleFor(x => x.WorkCode)
+            //    .MaximumLength(8).WithMessage("Work code must not exceed 8 characters")
+            //    .When(x => !string.IsNullOrEmpty(x.WorkCode));
 
             RuleFor(x => x.BudgetDescription)
                 .NotEmpty().WithMessage("Budget description is required")

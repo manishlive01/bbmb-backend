@@ -10,7 +10,7 @@ namespace BBMB.BudgetService.Features.Estimates.Update
         public static void MapUpdateEstimateEndpoint(this IEndpointRouteBuilder app)
         {
             app.MapPut("/api/estimates/{workCode}/{estimateCode}", async (
-                [FromRoute] string workCode,
+                [FromRoute] int workCode,
                 [FromRoute] string estimateCode,
                 [FromBody] UpdateEstimateDto dto,
                 [FromServices] IMediator mediator) =>

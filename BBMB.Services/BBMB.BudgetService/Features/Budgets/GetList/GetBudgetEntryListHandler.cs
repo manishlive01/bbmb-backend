@@ -25,7 +25,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
 
             // Apply filters
             if (request.DivisionCode.HasValue)
-                query = query.Where(b => b.DivisionCode == request.DivisionCode.Value);
+                query = query.Where(b => b.Division.DivisionCode == request.DivisionCode.Value);
 
             if (request.CalendarYear.HasValue)
                 query = query.Where(b => b.CalendarYear == request.CalendarYear.Value);
@@ -33,8 +33,8 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
             if (request.BudgetType.HasValue)
                 query = query.Where(b => b.BudgetType == request.BudgetType.Value);
 
-            if (!string.IsNullOrEmpty(request.WorkCode))
-                query = query.Where(b => b.WorkCode == request.WorkCode);
+            if (!string.IsNullOrEmpty(request.WorkCode.ToString()))
+                query = query.Where(b => b.Work.WorkCode == request.WorkCode);
 
             // Get total count
             var totalCount = await query.CountAsync(ct);
@@ -57,12 +57,12 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
                 items.Add(new GetBudgetEntryListResponseDto
                 {
                     Id = b.Id,
-                    DivisionCode = b.DivisionCode,
+                    DivisionCode = b.Division.DivisionCode,
                     DivisionDesc = b.Division?.DivisionDesc,
                     CalendarYear = b.CalendarYear,
                     AccountCode = $"{b.MajorAccCode}-{b.SubMajorAccCode}-{b.MinorAccCode}-{b.SubMinorAccCode}-{b.DetailAccCode}-{b.ObjectAccCode}",
                     AccountDescription = accountDescription,
-                    WorkCode = b.WorkCode,
+                    WorkCode = b.Work.WorkCode,
                     WorkDesc = b.Work?.WorkDesc,
                     BudgetDescription = b.BudgetDescription,
                     BudgetAmount = b.BudgetAmount,
@@ -98,7 +98,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
             {
                 "id" => sortDescending ? query.OrderByDescending(b => b.Id) : query.OrderBy(b => b.Id),
                 "calendaryear" => sortDescending ? query.OrderByDescending(b => b.CalendarYear) : query.OrderBy(b => b.CalendarYear),
-                "divisioncode" => sortDescending ? query.OrderByDescending(b => b.DivisionCode) : query.OrderBy(b => b.DivisionCode),
+                "divisioncode" => sortDescending ? query.OrderByDescending(b => b.Division.DivisionCode) : query.OrderBy(b => b.Division.DivisionCode),
                 "budgetamount" => sortDescending ? query.OrderByDescending(b => b.BudgetAmount) : query.OrderBy(b => b.BudgetAmount),
                 _ => query.OrderBy(b => b.Id)
             };

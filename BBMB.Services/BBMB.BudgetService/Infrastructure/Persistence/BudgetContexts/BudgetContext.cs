@@ -13,7 +13,9 @@ using BBMB.BudgetService.Features.Geographical.States.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.CRSectionManagements.Entites;
 using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.DivisonSectionManagements.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entites;
 using BBMB.BudgetService.Features.ObjectClassifications.Entities;
 using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
@@ -44,6 +46,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<Designation> Designations { get; set; }
         public DbSet<DetailHead> DetailHeads { get; set; }
         public DbSet<Division> Divisions { get; set; }
+        public DbSet<DivSection> DivSections { get; set; }
         public DbSet<Estimate> Estimates { get; set; }
         public DbSet<FinancialYear> FinancialYears { get; set; }
         public DbSet<HeadOfAccount> HeadOfAccounts { get; set; }
@@ -61,6 +64,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<Work> Works { get; set; }
         public DbSet<CEManagement> CEManagements { get; set; }
         public DbSet<CRManagement> CRManagements { get; set; }
+        public DbSet<CRSection> CRSections { get; set; }
         public DbSet<Levels> Levels { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -78,53 +82,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 .WithMany()
                 .HasForeignKey(e => e.WorkCode)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            // BudgetEntry → Division
-            modelBuilder.Entity<BudgetEntry>()
-                .HasOne(b => b.Division)
-                .WithMany(d => d.BudgetEntries)
-                .HasForeignKey(b => b.DivisionCode)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // BudgetEntry → Work
-            modelBuilder.Entity<BudgetEntry>()
-                .HasOne(b => b.Work)
-                .WithMany(w => w.BudgetEntries)
-                .HasForeignKey(b => b.WorkCode)
-                .HasPrincipalKey(w => w.WorkCode)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Work → Division
-            modelBuilder.Entity<Work>()
-                .HasOne(w => w.Division)
-                .WithMany(d => d.Works)
-                .HasForeignKey(w => w.DivisionCode)
-                .HasPrincipalKey(d => d.DivisionCode)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Division → Pool
-            modelBuilder.Entity<Division>()
-                .HasOne(d => d.Pool)
-                .WithMany(p => p.Divisions)
-                .HasForeignKey(d => d.PoolCode)
-                .HasPrincipalKey(p => p.PoolCode)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Division → Region
-            modelBuilder.Entity<Division>()
-                .HasOne(d => d.Region)
-                .WithMany(r => r.Divisions)
-                .HasForeignKey(d => d.RegionCode)
-                .HasPrincipalKey(r => r.RegionCode)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Work → Designation
-            modelBuilder.Entity<Work>()
-                .HasOne(w => w.Designation)
-                .WithMany(d => d.Works)
-                .HasForeignKey(w => w.DesignationCode)
-                .HasPrincipalKey(d => d.DesignationCode)
-                .OnDelete(DeleteBehavior.Restrict);
+             
             // =====================================================
             // SubMajorHead Configuration
             // =====================================================
@@ -243,26 +201,122 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .WithMany()
                       .HasForeignKey(x => x.ObjectAccCode)
                       .OnDelete(DeleteBehavior.Restrict);
+                 
+            });
 
-                modelBuilder.Entity<CEManagement>()
-                    .HasKey(c => new { c.CECode, c.DivSection });
-                //CE → CR
-                modelBuilder.Entity<CRManagement>()
-                    .HasOne(x => x.CEManagement)
-                    .WithMany(x => x.CRManagements)
-                    .HasForeignKey(x => new { x.CECode, x.DivSection });
-                //CE → Division
-                modelBuilder.Entity<Division>()
-                .HasOne(d => d.CEManagement)
-                .WithMany(c => c.Divisions) 
-                .HasForeignKey(d => new { d.CECode, d.DivSection });
-                //CE → Office
-              
+            // =============================
+            // CE
+            // =============================
+            modelBuilder.Entity<CEManagement>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // ✅ business key
+                entity.HasAlternateKey(e => e.CECode);
+                entity.HasIndex(e => e.CECode).IsUnique();
             });
 
 
+            // =============================
+            // CR
+            // =============================
+            modelBuilder.Entity<CRManagement>(entity =>
+            {
+                entity.HasKey(e => e.Id);
 
-            // modelBuilder.ApplyConfigurationsFromAssembly(typeof(BudgetContext).Assembly);
+                // ✅ business key
+                entity.HasAlternateKey(e => e.CRCode);
+                entity.HasIndex(e => e.CRCode).IsUnique();
+
+                // ✅ FK → CE (Id based)
+                entity.HasOne(e => e.CEManagement)
+                      .WithMany(c => c.CRManagements)
+                      .HasForeignKey(e => e.CEId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+            modelBuilder.Entity<CRSection>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.CRManagement)
+                      .WithMany(c => c.CRSections)
+                      .HasForeignKey(e => e.CRId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelBuilder.Entity<Division>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // ✅ business key
+                entity.HasAlternateKey(e => e.DivisionCode);
+                entity.HasIndex(e => e.DivisionCode).IsUnique();
+
+                // ✅ FK → CR
+                entity.HasOne(d => d.CRManagement)
+                      .WithMany(c => c.Divisions)
+                      .HasForeignKey(d => d.CRId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+            modelBuilder.Entity<Division>()
+    .HasOne(d => d.Pool)
+    .WithMany(p => p.Divisions)
+    .HasForeignKey(d => d.PoolCode)
+    .HasPrincipalKey(p => p.PoolCode);
+            modelBuilder.Entity<Division>()
+    .HasOne(d => d.Region)
+    .WithMany(r => r.Divisions)
+    .HasForeignKey(d => d.RegionCode)
+    .HasPrincipalKey(r => r.RegionCode);
+            modelBuilder.Entity<DivSection>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.Division)
+                      .WithMany(d => d.DivSections)
+                      .HasForeignKey(e => e.DivisionId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelBuilder.Entity<BudgetEntry>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // ✅ Division FK
+                entity.HasOne(b => b.Division)
+                      .WithMany(d => d.BudgetEntries)
+                      .HasForeignKey(b => b.DivisionId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // ✅ Work FK
+                entity.HasOne(b => b.Work)
+                      .WithMany(w => w.BudgetEntries)
+                      .HasForeignKey(b => b.WorkId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // ✅ Optional business rule (avoid duplicate entries)
+                entity.HasIndex(e => new { e.DivisionId, e.CalendarYear, e.SequenceNo })
+                      .IsUnique();
+            });
+            modelBuilder.Entity<Work>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                // ✅ business key
+                entity.HasAlternateKey(e => e.WorkCode);
+                entity.HasIndex(e => e.WorkCode).IsUnique();
+
+                // ✅ FK → Division
+                entity.HasOne(w => w.Division)
+                      .WithMany(d => d.Works)
+                      .HasForeignKey(w => w.DivisionId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // ✅ FK → Designation
+                entity.HasOne(w => w.Designation)
+                      .WithMany(d => d.Works)
+                      .HasForeignKey(w => w.DesignationCode)
+                      .HasPrincipalKey(d => d.DesignationCode)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
         }
     }
 }

@@ -31,16 +31,16 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Delete
             }
 
             // Example: If CR is referenced somewhere else
-            var isUsed = await _context.Divisions
-                .AnyAsync(x => x.CRCode == request.crCode, ct);
-            if (isUsed)
-            {
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = "CR cannot be deleted because it is use in Division."
-                };
-            }
+            //var isUsed = await _context.Divisions
+            //    .AnyAsync(x => x.CRCode == request.crCode, ct);
+            //if (isUsed)
+            //{
+            //    return new Response
+            //    {
+            //        IsSucced = false,
+            //        Message = "CR cannot be deleted because it is use in Division."
+            //    };
+            //}
 
             // ✅ Hard Delete
             _context.CRManagements.Remove(cr);

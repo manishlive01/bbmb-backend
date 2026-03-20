@@ -11,7 +11,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetByWork
         public void Map(IEndpointRouteBuilder app)
         {
             app.MapGet("/api/budgets/by-work/{workCode}", async (
-                string workCode,
+                int workCode,
                 [FromQuery] int pageNumber,
                 [FromQuery] int pageSize,
                 IMediator mediator) =>

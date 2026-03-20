@@ -17,9 +17,10 @@ namespace BBMB.BudgetService.Features.Works.GetByDivision
 
         public async Task<PagedResponse<GetWorkListResponseDto>> Handle(GetWorksByDivisionQuery request, CancellationToken ct)
         {
+            var divisionExists = await _context.Divisions.FirstOrDefaultAsync(d => d.DivisionCode == request.DivisionCode, ct);
             var query = _context.Works
                 .Include(w => w.Division)
-                .Where(w => w.DivisionCode == request.DivisionCode);
+                .Where(w => w.DivisionId == divisionExists.Id);
 
             var totalCount = await query.CountAsync(ct);
 
@@ -29,9 +30,9 @@ namespace BBMB.BudgetService.Features.Works.GetByDivision
                 .Take(pageSize)
                 .Select(w => new GetWorkListResponseDto
                 {
-                    WorkCode = w.WorkCode,
+                    //WorkCode = w.WorkCode,
                     WorkDesc = w.WorkDesc,
-                    DivisionCode = w.DivisionCode,
+                    //DivisionCode = w.DivisionCode,
                     DivisionDesc = w.Division != null ? w.Division.DivisionDesc : null,
                     AccountCode = $"{w.MajorAccCode}-{w.SubMajorAccCode}-{w.MinorAccCode}-{w.SubMinorAccCode}-{w.DetailAccCode}-{w.ObjectAccCode}",
                     Status = w.Status,

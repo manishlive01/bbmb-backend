@@ -9,7 +9,7 @@ namespace BBMB.BudgetService.Features.Works.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/works/{code}", async (string code, UpdateWorkDto dto, IMediator mediator) =>
+            app.MapPut("/api/works/{code}", async (int code, UpdateWorkDto dto, IMediator mediator) =>
             {
                 var command = new UpdateWorkCommand(code, dto);
                 var response = await mediator.Send(command);

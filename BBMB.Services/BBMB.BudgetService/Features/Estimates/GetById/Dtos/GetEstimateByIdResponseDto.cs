@@ -2,7 +2,7 @@ namespace BBMB.BudgetService.Features.Estimates.GetById.Dtos
 {
     public class GetEstimateByIdResponseDto
     {
-        public string WorkCode { get; set; } = string.Empty;
+        public int WorkCode { get; set; }  
         public string EstimateCode { get; set; } = string.Empty;
         public string? EstimateDesc { get; set; }
         public decimal? EstimateAmt { get; set; }

@@ -4,5 +4,5 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.Estimates.GetById
 {
-    public record GetEstimateByIdQuery(string WorkCode, string EstimateCode) : IRequest<Response<GetEstimateByIdResponseDto>>;
+    public record GetEstimateByIdQuery(int WorkCode, string EstimateCode) : IRequest<Response<GetEstimateByIdResponseDto>>;
 }

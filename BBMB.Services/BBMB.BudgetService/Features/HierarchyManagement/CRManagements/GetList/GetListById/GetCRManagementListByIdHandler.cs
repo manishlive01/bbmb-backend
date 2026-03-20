@@ -21,13 +21,13 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetList.
       GetCRManagementListById request,
       CancellationToken cancellationToken)
         {
-            return await _context.CRManagements
+            return await _context.CRManagements.Include(d=>d.CEManagement)
                 .AsNoTracking()
-                .Where(x => x.CECode == request.RequestDto.Id)
+                .Where(x => x.CEId == request.RequestDto.Id)
                 .Select(x => new GetCRManagementListResponseDto
                 {
                     CRCode = x.CRCode,
-                    CECode = x.CECode,
+                    CECode = x.CEManagement.CECode,
                     Name = x.Name,
                     Description = x.Description,
                     Location = x.Location,

@@ -20,7 +20,7 @@ namespace BBMB.BudgetService.Features.Estimates.Create
         {
             // Check for duplicate composite key
             var exists = await _context.Estimates
-                .AnyAsync(e => e.WorkCode == request.dto.WorkCode &&
+                .AnyAsync(e => e.WorkCode == request.dto.WorkCode  &&
                               e.EstimateCode == request.dto.EstimateCode, ct);
 
             if (exists)

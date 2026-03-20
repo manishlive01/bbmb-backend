@@ -14,15 +14,13 @@ namespace BBMB.BudgetService.Features.Budgets.Entities
 {
     [Table("budget_table")]
     public class BudgetEntry
-    {
-        [Key]
+    { 
         [Column("id")]
         public int Id { get; set; }
-
-        [Required]
-        [Column("division_code")]
-        public int DivisionCode { get; set; }
-
+        [Column("division_id")]
+        public int DivisionId { get; set; } // ✅ FK
+        [Column("work_id")]
+        public int? WorkId { get; set; } // ✅ FK (nullable if optional)
         [Required]
         [Column("div_section")]
         public int DivSection { get; set; }
@@ -64,10 +62,7 @@ namespace BBMB.BudgetService.Features.Budgets.Entities
         [MaxLength(3)]
         [Column("object_acc_code")]
         public string ObjectAccCode { get; set; } = string.Empty;
-
-        [MaxLength(8)]
-        [Column("work_code")]
-        public string? WorkCode { get; set; }
+ 
 
         [Required]
         [MaxLength(100)]

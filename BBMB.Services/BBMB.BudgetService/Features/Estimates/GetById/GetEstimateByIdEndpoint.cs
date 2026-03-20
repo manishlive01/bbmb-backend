@@ -10,7 +10,7 @@ namespace BBMB.BudgetService.Features.Estimates.GetById
         public static void MapGetEstimateByIdEndpoint(this IEndpointRouteBuilder app)
         {
             app.MapGet("/api/estimates/{workCode}/{estimateCode}", async (
-                [FromRoute] string workCode,
+                [FromRoute] int workCode,
                 [FromRoute] string estimateCode,
                 [FromServices] IMediator mediator) =>
             {

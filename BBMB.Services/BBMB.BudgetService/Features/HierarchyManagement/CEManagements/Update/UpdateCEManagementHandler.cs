@@ -18,7 +18,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
         public async Task<Response> Handle(UpdateCEManagementCommand request, CancellationToken ct)
         {
             var ce = await _context.CEManagements
-                .FirstOrDefaultAsync(x => x.CECode == request.ceCode && x.DivSection == request.Dto.DivSection, ct);
+                .FirstOrDefaultAsync(x => x.CECode == request.ceCode  , ct);
 
             if (ce == null)
             {
@@ -44,7 +44,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
             // 🔹 Map only allowed fields
             ce.Name = request.Dto.Name;
             ce.ProjectCode = request.Dto.ProjectCode;
-            ce.DivSection = request.Dto.DivSection;
+            //ce.CESection = request.Dto.DivSection;
             ce.Description = request.Dto.Description;
             ce.Location = request.Dto.Location;
             ce.Status = request.Dto.Status;

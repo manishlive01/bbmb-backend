@@ -14,7 +14,7 @@ namespace BBMB.BudgetService.Features.Budgets.Create.Dtos
         public string SubMinorAccCode { get; set; } = string.Empty;
         public string DetailAccCode { get; set; } = string.Empty;
         public string ObjectAccCode { get; set; } = string.Empty;
-        public string? WorkCode { get; set; }
+        public int? WorkCode { get; set; }
         public string BudgetDescription { get; set; } = string.Empty;
         public decimal? BudgetAmount { get; set; }
         public decimal? RevisedAmount { get; set; }

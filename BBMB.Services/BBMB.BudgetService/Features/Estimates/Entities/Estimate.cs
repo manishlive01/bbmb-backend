@@ -12,7 +12,7 @@ namespace BBMB.BudgetService.Features.Estimates.Entities
         [Required]
         [MaxLength(8)]
         [Column("work_code")]
-        public string WorkCode { get; set; } = string.Empty;
+        public int WorkCode { get; set; }  
 
         [Key]
         [Required]

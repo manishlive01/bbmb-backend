@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Features.Works.GetById
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/works/{code}", async (string code, IMediator mediator) =>
+            app.MapGet("/api/works/{code}", async (int code, IMediator mediator) =>
             {
                 try
                 {

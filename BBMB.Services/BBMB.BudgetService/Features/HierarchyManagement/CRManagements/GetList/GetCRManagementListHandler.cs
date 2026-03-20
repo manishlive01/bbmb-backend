@@ -25,11 +25,11 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetList
                 .Include(x => x.CEManagement)
                 .AsQueryable();
 
-            // 🔎 Apply Filters
-            if (request.ceCode.HasValue)
-            {
-                query = query.Where(x => x.CECode == request.ceCode.Value);
-            }
+            //// 🔎 Apply Filters
+            //if (request.ceCode.HasValue)
+            //{
+            //    query = query.Where(x => x.CECode == request.ceCode.Value);
+            //}
 
             if (request.Status.HasValue)
                 query = query.Where(x => x.Status == request.Status.Value);
@@ -50,10 +50,10 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetList
 
             var items = crList.Select(x => new GetCRManagementListResponseDto
             {
-                CRCode = x.CRCode,
-                CECode = x.CECode,
+                //CRCode = x.CRCode,
+                //CECode = x.CECode,
                 Name = x.Name,
-                DivSection = x.DivSection,
+                //DivSection = x.CRSection,
                 Description = x.Description,
                 Location = x.Location,
                 Date = x.Date,
@@ -90,7 +90,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRManagements.GetList
             return sortBy.ToLower() switch
             {
                 "name" => sortDescending ? query.OrderByDescending(x => x.Name) : query.OrderBy(x => x.Name),
-                "ceCode" => sortDescending ? query.OrderByDescending(x => x.CECode) : query.OrderBy(x => x.CECode),
+                //"ceCode" => sortDescending ? query.OrderByDescending(x => x.CECode) : query.OrderBy(x => x.CECode),
                 "crCode" => sortDescending ? query.OrderByDescending(x => x.CRCode) : query.OrderBy(x => x.CRCode),
                 "date" => sortDescending ? query.OrderByDescending(x => x.Date) : query.OrderBy(x => x.Date),
                 "status" => sortDescending ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status),

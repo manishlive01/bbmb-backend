@@ -23,7 +23,7 @@ namespace BBMB.BudgetService.Features.Estimates.GetList
                 .AsQueryable();
 
             // Apply filters
-            if (!string.IsNullOrEmpty(request.WorkCode))
+            if (!string.IsNullOrEmpty(request.WorkCode.ToString()))
                 query = query.Where(e => e.WorkCode == request.WorkCode);
 
             if (request.DivisionCode.HasValue)
