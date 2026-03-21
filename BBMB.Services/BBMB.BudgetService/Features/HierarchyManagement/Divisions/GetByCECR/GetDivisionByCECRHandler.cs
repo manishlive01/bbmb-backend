@@ -16,16 +16,19 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetByCECR
 
         public async Task<List<GetDivisionByCECRResponseDto>> Handle(GetDivisionByCECRQuery request, CancellationToken ct)
         { 
-            return await _context.Divisions.Include(d=>d.DivSections)
+            return await _context.Divisions.Include(d=>d.CRManagement).ThenInclude(d=>d.CEManagement)    
                 .Where(d =>   d.CRId == request.crId)
                 .Select(d => new GetDivisionByCECRResponseDto
                 {
+                    DivisionId = d.CRId,
                     DivisionCode = d.DivisionCode, 
                     DivisionDesc = d.DivisionDesc,
                     RegionCode = d.RegionCode,
                     PoolCode = d.PoolCode,
                     ModificationDate = d.ModificationDate, 
-                    UserCode = d.UserCode
+                    UserCode = d.UserCode,
+                    CECode = d.CRManagement.CEManagement.CECode,
+                    CRCode = d.CRManagement.CRCode
                 })
                 .ToListAsync(ct);
         }
