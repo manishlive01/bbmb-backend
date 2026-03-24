@@ -13,15 +13,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.DivisonSectionManageme
         public int DivisionId { get; set; } // ✅ FK
 
         [Required]
-        public int DivisionCode { get; set; }   // FK
-
-        [Required]
-        [Column("ce_code")]
-        public int CECode { get; set; }
-
-        [Required]
-        [Column("cr_code")]
-        public int CRCode { get; set; }
+        public int DivSectionCode { get; set; }  
 
         [Required]
         [MaxLength(200)]

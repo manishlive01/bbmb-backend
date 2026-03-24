@@ -955,14 +955,6 @@ namespace BBMB.BudgetService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CECode")
-                        .HasColumnType("integer")
-                        .HasColumnName("ce_code");
-
-                    b.Property<int>("CRCode")
-                        .HasColumnType("integer")
-                        .HasColumnName("cr_code");
-
                     b.Property<DateTime?>("Date")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date");
@@ -972,7 +964,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("desc");
 
-                    b.Property<int>("DivisionCode")
+                    b.Property<int>("DivSectionCode")
                         .HasColumnType("integer");
 
                     b.Property<int>("DivisionId")
