@@ -1,6 +1,7 @@
 ﻿using BBMB.BudgetService.Shared.Endpoints;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Delete
 {
@@ -8,9 +9,9 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/ce-management/{ceId}",
+            app.MapDelete("/api/ce-management/{ceId:int}",   // ✅ add type constraint
                 async (
-                    int ceId,
+                    [FromRoute] int ceId,                  // ✅ explicit binding
                     IMediator mediator) =>
                 {
                     if (ceId <= 0)

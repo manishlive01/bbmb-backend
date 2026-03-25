@@ -1,5 +1,7 @@
 using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Delete
 {
@@ -7,28 +9,41 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/divisions/{code:int}", async (int code, IMediator mediator) =>
-            {
-                var command = new DeleteDivisionCommand(code);
-                var response = await mediator.Send(command);
-
-                if (!response.IsSucced)
+            app.MapDelete("/api/divisions/{divId:int}",
+                async ([FromRoute] int divId, IMediator mediator) =>
                 {
-                    if (response.Message.Contains("not found"))
-                        return Results.NotFound(response);
-                    else
-                        return Results.Conflict(response);
-                }
+                    if (divId <= 0)
+                    {
+                        return Results.BadRequest(new
+                        {
+                            IsSucced = false,
+                            Message = "Division code is required"
+                        });
+                    }
 
-                return Results.NoContent();
-            })
+                    var command = new DeleteDivisionCommand(divId);
+                    var response = await mediator.Send(command);
+
+                    if (!response.IsSucced)
+                    {
+                        // ✅ safer null check
+                        if (!string.IsNullOrEmpty(response.Message) &&
+                            response.Message.Contains("not found", StringComparison.OrdinalIgnoreCase))
+                            return Results.NotFound(response);
+
+                        return Results.Conflict(response);
+                    }
+
+                    return Results.Ok(response);
+                })
             .WithName("DeleteDivision")
             .WithTags("Divisions")
             .WithSummary("Delete a division")
             .WithDescription("Deletes a division")
-            .Produces(StatusCodes.Status204NoContent)
+            .Produces<Response>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
-            .Produces(StatusCodes.Status409Conflict);
+            .Produces(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status400BadRequest); // ✅ added
         }
     }
 }

@@ -17,14 +17,14 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Delete
         public async Task<Response> Handle(DeleteDivisionCommand request, CancellationToken ct)
         {
             var division = await _context.Divisions
-                .FirstOrDefaultAsync(d => d.DivisionCode == request.Code, ct);
+                .FirstOrDefaultAsync(d => d.Id == request.divId, ct);
 
             if (division == null)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Division with code '{request.Code}' not found"
+                    Message = $"Division with Id '{request.divId}' not found"
                 };
             }
 
