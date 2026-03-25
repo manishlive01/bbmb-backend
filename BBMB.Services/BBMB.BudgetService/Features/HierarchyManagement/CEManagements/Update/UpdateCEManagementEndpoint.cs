@@ -2,6 +2,7 @@
 using BBMB.BudgetService.Shared.Endpoints;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
 {
@@ -9,10 +10,10 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/ce-management/{ceId}",
+            app.MapPut("/api/ce-management/{ceId:int}",
                     async (
-                        int ceId,
-                        UpdateCEManagementDto dto,
+                       [FromRoute] int ceId,
+                      [FromBody] UpdateCEManagementDto dto,
                         IMediator mediator) =>
                     {
                         if (ceId <= 0)
