@@ -27,9 +27,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
                     Message = $"Division  not found"
                 };
             }
-
-            // Update fields
-            //division.DivSection = request.dto.DivSection;
+             
             division.DivisionDesc = request.dto.DivisionDesc;
             division.CtrlOffice1 = request.dto.CtrlOffice1;
             division.CtrlOffice2 = request.dto.CtrlOffice2;

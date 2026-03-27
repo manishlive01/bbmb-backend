@@ -6,8 +6,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update
     {
         public UpdateDivisionValidator()
         {
-            RuleFor(x => x.dto.DivSection)
-                .NotEmpty().WithMessage("Division section is required");
+  
 
             RuleFor(x => x.dto.DivisionDesc)
                 .NotEmpty().WithMessage("Division description is required")

@@ -1,8 +1,7 @@
 namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.Update.Dtos
 {
     public class UpdateDivisionDto
-    {
-        public int DivSection { get; set; }
+    { 
         public int CRId { get; set; }
         public string DivisionDesc { get; set; } = string.Empty;
         public int? CtrlOffice1 { get; set; }
