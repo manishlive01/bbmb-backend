@@ -1133,20 +1133,20 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     .Select(x => new { x.CRCode, x.Id })
                     .ToDictionaryAsync(x => x.CRCode, x => x.Id, cancellationToken);
 
-                // 🔥 STEP 2: Existing CRSection Codes
-                var existingCRSectionSet = new HashSet<int>(
+                // 🔥 STEP 2: Existing DB composite keys (CRId + CRSectionCode)
+                var existingCRSectionSet = new HashSet<(int CRId, int CRSectionCode)>(
                     await _context.Set<CRSection>()
                         .AsNoTracking()
-                        .Select(x => x.CRSectionCode)
+                        .Select(x => new ValueTuple<int, int>(x.CRId, x.CRSectionCode))
                         .ToListAsync(cancellationToken));
 
-                var duplicateExcelCheck = new HashSet<int>();
+                // 🔥 STEP 3: Excel duplicate check (composite)
+                var duplicateExcelCheck = new HashSet<(int CRId, int CRSectionCode)>();
 
-                // 🔥 STEP 3: DB Connection
+                // 🔥 STEP 4: DB Connection
                 var conn = (Npgsql.NpgsqlConnection)_context.Database.GetDbConnection();
                 await conn.OpenAsync(cancellationToken);
 
-                // 🔥 STEP 4: COPY
                 using var writer = conn.BeginBinaryImport(@"
             COPY budget.cr_section
             (cr_id, cr_section_code, name, ""desc"", location, date, status)
@@ -1154,39 +1154,42 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 int successCount = 0;
 
-                // 🔥 STEP 5: STREAM processing
+                // 🔥 STEP 5: Process Excel rows
                 for (int row = 2; row <= rowCount; row++)
                 {
-                    var crSectionCodeValue = worksheet.Cells[row, 1].Value;
-                    var crCodeValue = worksheet.Cells[row, 2].Value;
+                    var crCodeValue = worksheet.Cells[row, 1].Value;
+                    var crSectionCodeValue = worksheet.Cells[row, 2].Value;
 
                     var name = worksheet.Cells[row, 3].Text?.Trim();
                     var desc = worksheet.Cells[row, 4].Text?.Trim();
                     var location = worksheet.Cells[row, 5].Text?.Trim();
 
-                    // 🔹 CRSectionCode validation
-                    if (crSectionCodeValue == null || !int.TryParse(crSectionCodeValue.ToString(), out int crSectionCode))
-                        throw new Exception($"Invalid CRSectionCode at row {row}");
-
-                    // 🔹 CRCode validation
+                    // 🔹 Validate CRCode
                     if (crCodeValue == null || !int.TryParse(crCodeValue.ToString(), out int crCode))
                         throw new Exception($"Invalid CRCode at row {row}");
+
+                    // 🔹 Map CRId FIRST (⚠️ important)
+                    if (!crDictionary.TryGetValue(crCode, out int crId))
+                        throw new Exception($"CRCode not found: {crCode} at row {row}");
+
+                    // 🔹 Validate CRSectionCode
+                    if (crSectionCodeValue == null || !int.TryParse(crSectionCodeValue.ToString(), out int crSectionCode))
+                        throw new Exception($"Invalid CRSectionCode at row {row}");
 
                     // 🔹 Required validation
                     if (string.IsNullOrWhiteSpace(name))
                         throw new Exception($"Name is required at row {row}");
 
-                    // 🔹 Excel duplicate
-                    if (!duplicateExcelCheck.Add(crSectionCode))
-                        throw new Exception($"Duplicate CRSectionCode in Excel: {crSectionCode}");
+                    // 🔹 Create composite key
+                    var key = (crId, crSectionCode);
 
-                    // 🔹 DB duplicate
-                    if (existingCRSectionSet.Contains(crSectionCode))
-                        throw new Exception($"CRSectionCode already exists: {crSectionCode}");
+                    // 🔹 Excel duplicate check
+                    if (!duplicateExcelCheck.Add(key))
+                        throw new Exception($"Duplicate CRId + CRSectionCode in Excel: {crId}-{crSectionCode} (row {row})");
 
-                    // 🔹 FK mapping (CRCode → CRId)
-                    if (!crDictionary.TryGetValue(crCode, out int crId))
-                        throw new Exception($"CRCode not found: {crCode}");
+                    // 🔹 DB duplicate check
+                    if (existingCRSectionSet.Contains(key))
+                        throw new Exception($"CRSection already exists for CRId: {crId} and Code: {crSectionCode} (row {row})");
 
                     // 🔥 WRITE ROW
                     writer.StartRow();
@@ -1220,132 +1223,6 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 };
             }
         }
-        //   private async Task<Response> UploadCRManagementMaster(
-        //ExcelWorksheet worksheet,
-        //int rowCount,
-        //CancellationToken cancellationToken)
-        //   {
-        //       await using var transaction =
-        //           await _context.Database.BeginTransactionAsync(cancellationToken);
-
-        //       _context.ChangeTracker.AutoDetectChangesEnabled = false;
-
-        //       try
-        //       {
-        //           var list = new List<CRManagement>();
-        //           var duplicateExcelCheck = new HashSet<int>();
-
-        //           // 🔥 ONE DB HIT – Existing CR Codes
-        //           var crSet = new HashSet<int>(
-        //               await _context.Set<CRManagement>()
-        //                   .AsNoTracking()
-        //                   .Select(x => x.CRCode)
-        //                   .ToListAsync(cancellationToken));
-
-        //           // 🔥 ONE DB HIT – Existing CE Codes (FK validation)
-        //           var ceSet = new HashSet<int>(
-        //               await _context.Set<CEManagement>()
-        //                   .AsNoTracking()
-        //                   .Select(x => x.CECode)
-        //                   .ToListAsync(cancellationToken));
-
-        //           for (int row = 2; row <= rowCount; row++)
-        //           {
-        //               var ceCodeValue = worksheet.Cells[row, 1].Value;
-        //               var crCodeValue = worksheet.Cells[row, 2].Value;
-
-        //               var name = worksheet.Cells[row, 3].Text?.Trim();
-        //               var desc = worksheet.Cells[row, 4].Text?.Trim();
-        //               var location = worksheet.Cells[row, 5].Text?.Trim();
-
-        //               // 🔹 Convert CECode
-        //               if (ceCodeValue == null || !int.TryParse(ceCodeValue.ToString(), out int ceCode))
-        //               {
-        //                   throw new Exception($"Invalid CECode at row {row}");
-        //               }
-
-        //               // 🔹 Convert CRCode
-        //               if (crCodeValue == null || !int.TryParse(crCodeValue.ToString(), out int crCode))
-        //               {
-        //                   throw new Exception($"Invalid CRCode at row {row}");
-        //               }
-
-        //               // 🔹 Required validation
-        //               if (string.IsNullOrWhiteSpace(name))
-        //               {
-        //                   throw new Exception($"Required fields missing at row {row}");
-        //               }
-
-        //               // 🔹 Excel duplicate check
-        //               if (!duplicateExcelCheck.Add(crCode))
-        //               {
-        //                   throw new Exception($"Duplicate CRCode in Excel: {crCode}");
-        //               }
-
-        //               // 🔹 DB duplicate check
-        //               if (crSet.Contains(crCode))
-        //               {
-        //                   throw new Exception($"CRCode already exists in database: {crCode}");
-        //               }
-
-        //               // 🔹 FK validation
-        //               if (!ceSet.Contains(ceCode))
-        //               {
-        //                   throw new Exception($"CECode does not exist: {ceCode}");
-        //               }
-
-        //               list.Add(new CRManagement
-        //               {
-        //                   CEId = ceCode,
-        //                   CRCode = crCode,
-        //                   Name = name,
-        //                   Description = desc,
-        //                   Location = location,
-        //                   Date = DateTime.UtcNow,
-        //                   Status = true,
-        //                   UserCode = "SYSTEM"
-        //               });
-        //           }
-
-        //           // 🔥 BATCH INSERT
-        //           const int batchSize = 5000;
-
-        //           for (int i = 0; i < list.Count; i += batchSize)
-        //           {
-        //               var batch = list.Skip(i).Take(batchSize).ToList();
-
-        //               await _context.Set<CRManagement>()
-        //                   .AddRangeAsync(batch, cancellationToken);
-
-        //               await _context.SaveChangesAsync(cancellationToken);
-
-        //               _context.ChangeTracker.Clear();
-        //           }
-
-        //           await transaction.CommitAsync(cancellationToken);
-
-        //           _context.ChangeTracker.AutoDetectChangesEnabled = true;
-
-        //           return new Response
-        //           {
-        //               IsSucced = true,
-        //               Message = $"{list.Count} CRManagement records uploaded successfully"
-        //           };
-        //       }
-        //       catch (Exception ex)
-        //       {
-        //           await transaction.RollbackAsync(cancellationToken);
-
-        //           _context.ChangeTracker.AutoDetectChangesEnabled = true;
-
-        //           return new Response
-        //           {
-        //               IsSucced = false,
-        //               Message = ex.Message
-        //           };
-        //       }
-        //   }
-
 
 
         // ============================================================
@@ -1485,9 +1362,9 @@ namespace BBMB.BudgetService.Features.BulkUploads
             }
         }
         private async Task<Response> UploadDivSectionMaster(
-       ExcelWorksheet worksheet,
-       int rowCount,
-       CancellationToken cancellationToken)
+      ExcelWorksheet worksheet,
+      int rowCount,
+      CancellationToken cancellationToken)
         {
             try
             {
@@ -1497,20 +1374,20 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     .Select(x => new { x.DivisionCode, x.Id })
                     .ToDictionaryAsync(x => x.DivisionCode, x => x.Id, cancellationToken);
 
-                // 🔥 STEP 2: Existing DivSection Codes
-                var existingSet = new HashSet<int>(
+                // 🔥 STEP 2: Existing composite keys (DivisionId + DivSectionCode)
+                var existingSet = new HashSet<(int DivisionId, int DivSectionCode)>(
                     await _context.Set<DivSection>()
                         .AsNoTracking()
-                        .Select(x => x.DivSectionCode)
+                        .Select(x => new ValueTuple<int, int>(x.DivisionId, x.DivSectionCode))
                         .ToListAsync(cancellationToken));
 
-                var duplicateExcelCheck = new HashSet<int>();
+                // 🔥 STEP 3: Excel duplicate check (composite)
+                var duplicateExcelCheck = new HashSet<(int DivisionId, int DivSectionCode)>();
 
-                // 🔥 STEP 3: DB Connection
+                // 🔥 STEP 4: DB Connection
                 var conn = (Npgsql.NpgsqlConnection)_context.Database.GetDbConnection();
                 await conn.OpenAsync(cancellationToken);
 
-                // 🔥 STEP 4: COPY
                 using var writer = conn.BeginBinaryImport(@"
             COPY budget.div_section
             (division_id, div_section_code, name, ""desc"", location, date, status)
@@ -1518,39 +1395,42 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 int successCount = 0;
 
-                // 🔥 STEP 5: STREAM processing
+                // 🔥 STEP 5: Process rows
                 for (int row = 2; row <= rowCount; row++)
                 {
-                    var divSectionCodeValue = worksheet.Cells[row, 1].Value;
-                    var divisionCodeValue = worksheet.Cells[row, 2].Value;
+                    var divisionCodeValue = worksheet.Cells[row, 1].Value;
+                    var divSectionCodeValue = worksheet.Cells[row, 2].Value;
 
                     var name = worksheet.Cells[row, 3].Text?.Trim();
                     var desc = worksheet.Cells[row, 4].Text?.Trim();
                     var location = worksheet.Cells[row, 5].Text?.Trim();
 
-                    // 🔹 DivSectionCode validation
-                    if (divSectionCodeValue == null || !int.TryParse(divSectionCodeValue.ToString(), out int divSectionCode))
-                        throw new Exception($"Invalid DivSectionCode at row {row}");
-
-                    // 🔹 DivisionCode validation
+                    // 🔹 Validate DivisionCode
                     if (divisionCodeValue == null || !int.TryParse(divisionCodeValue.ToString(), out int divisionCode))
                         throw new Exception($"Invalid DivisionCode at row {row}");
+
+                    // 🔹 Map DivisionId FIRST
+                    if (!divisionDict.TryGetValue(divisionCode, out int divisionId))
+                        throw new Exception($"DivisionCode not found: {divisionCode} at row {row}");
+
+                    // 🔹 Validate DivSectionCode
+                    if (divSectionCodeValue == null || !int.TryParse(divSectionCodeValue.ToString(), out int divSectionCode))
+                        throw new Exception($"Invalid DivSectionCode at row {row}");
 
                     // 🔹 Required validation
                     if (string.IsNullOrWhiteSpace(name))
                         throw new Exception($"Name is required at row {row}");
 
-                    // 🔹 Excel duplicate
-                    if (!duplicateExcelCheck.Add(divSectionCode))
-                        throw new Exception($"Duplicate DivSectionCode in Excel: {divSectionCode}");
+                    // 🔹 Composite key
+                    var key = (divisionId, divSectionCode);
 
-                    // 🔹 DB duplicate
-                    if (existingSet.Contains(divSectionCode))
-                        throw new Exception($"DivSectionCode already exists: {divSectionCode}");
+                    // 🔹 Excel duplicate check
+                    if (!duplicateExcelCheck.Add(key))
+                        throw new Exception($"Duplicate DivisionId + DivSectionCode in Excel: {divisionId}-{divSectionCode} (row {row})");
 
-                    // 🔹 FK mapping (DivisionCode → DivisionId)
-                    if (!divisionDict.TryGetValue(divisionCode, out int divisionId))
-                        throw new Exception($"DivisionCode not found: {divisionCode}");
+                    // 🔹 DB duplicate check
+                    if (existingSet.Contains(key))
+                        throw new Exception($"DivSection already exists for DivisionId: {divisionId} and Code: {divSectionCode} (row {row})");
 
                     // 🔥 WRITE ROW
                     writer.StartRow();
