@@ -10,6 +10,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRSectionManagements.C
         {
             config.NewConfig<CreateCRSectionManagementDto, CRSection>()
                 .Map(dest => dest.CRId, src => src.CRId)
+                .Map(dest => dest.CRSectionCode, src => src.CRSectionCode)
                 .Map(dest => dest.Name, src => src.Name)
                 .Map(dest => dest.Description, src => src.Description)
                 .Map(dest => dest.Location, src => src.Location)

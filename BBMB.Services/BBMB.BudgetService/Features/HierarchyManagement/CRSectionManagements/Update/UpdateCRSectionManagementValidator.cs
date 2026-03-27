@@ -14,6 +14,11 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRSectionManagements.U
             RuleFor(x => x.dto.CRId)
                 .GreaterThan(0)
                 .WithMessage("CRId must be greater than 0");
+            RuleFor(x => x.dto.CRSectionCode)
+                .GreaterThan(0)
+                .NotEmpty()
+                .NotNull()
+                .WithMessage("Code must be greater than 0");
 
             RuleFor(x => x.dto.Name)
                 .NotEmpty()

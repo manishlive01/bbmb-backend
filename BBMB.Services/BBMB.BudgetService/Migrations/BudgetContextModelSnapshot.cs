@@ -789,6 +789,10 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("cr_id");
 
+                    b.Property<int>("CRSectionCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("cr_section_code");
+
                     b.Property<DateTime?>("Date")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date");
@@ -965,7 +969,8 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("desc");
 
                     b.Property<int>("DivSectionCode")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("div_section_code");
 
                     b.Property<int>("DivisionId")
                         .HasColumnType("integer")

@@ -8,7 +8,9 @@ using BBMB.BudgetService.Features.DetailHeads.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.CRSectionManagements.Entites;
 using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
+using BBMB.BudgetService.Features.HierarchyManagement.DivisonSectionManagements.Entities;
 using BBMB.BudgetService.Features.ObjectClassifications.Entities;
 using BBMB.BudgetService.Features.Offices.AccountOffices.Entities;
 using BBMB.BudgetService.Features.Offices.RemittanceOffices.Entities;
@@ -92,7 +94,9 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     "headofaccountmaster" => await UploadHeadOfAccountMaster(worksheet, rowCount, cancellationToken),
                     "cemaster" => await UploadCEManagementMaster(worksheet, rowCount, cancellationToken),
                     "circlemaster" => await UploadCRManagementMaster(worksheet, rowCount, cancellationToken),
+                    "circlesectionmaster" => await UploadCRSectionMaster(worksheet, rowCount, cancellationToken),
                     "divisionmaster" => await UploadDivisionMaster(worksheet, rowCount, cancellationToken),
+                    "divisionsectionmaster" => await UploadDivSectionMaster(worksheet, rowCount, cancellationToken),
                     "workmaster" => await UploadWorkMaster(worksheet, rowCount, cancellationToken),
                     _ => new Response
                     {
@@ -1111,6 +1115,111 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 };
             }
         }
+
+        // ============================================================
+        // CR Section MASTER
+        // ============================================================
+
+        private async Task<Response> UploadCRSectionMaster(
+     ExcelWorksheet worksheet,
+     int rowCount,
+     CancellationToken cancellationToken)
+        {
+            try
+            {
+                // 🔥 STEP 1: CRCode → CRId mapping
+                var crDictionary = await _context.Set<CRManagement>()
+                    .AsNoTracking()
+                    .Select(x => new { x.CRCode, x.Id })
+                    .ToDictionaryAsync(x => x.CRCode, x => x.Id, cancellationToken);
+
+                // 🔥 STEP 2: Existing CRSection Codes
+                var existingCRSectionSet = new HashSet<int>(
+                    await _context.Set<CRSection>()
+                        .AsNoTracking()
+                        .Select(x => x.CRSectionCode)
+                        .ToListAsync(cancellationToken));
+
+                var duplicateExcelCheck = new HashSet<int>();
+
+                // 🔥 STEP 3: DB Connection
+                var conn = (Npgsql.NpgsqlConnection)_context.Database.GetDbConnection();
+                await conn.OpenAsync(cancellationToken);
+
+                // 🔥 STEP 4: COPY
+                using var writer = conn.BeginBinaryImport(@"
+            COPY budget.cr_section
+            (cr_id, cr_section_code, name, ""desc"", location, date, status)
+            FROM STDIN (FORMAT BINARY)");
+
+                int successCount = 0;
+
+                // 🔥 STEP 5: STREAM processing
+                for (int row = 2; row <= rowCount; row++)
+                {
+                    var crSectionCodeValue = worksheet.Cells[row, 1].Value;
+                    var crCodeValue = worksheet.Cells[row, 2].Value;
+
+                    var name = worksheet.Cells[row, 3].Text?.Trim();
+                    var desc = worksheet.Cells[row, 4].Text?.Trim();
+                    var location = worksheet.Cells[row, 5].Text?.Trim();
+
+                    // 🔹 CRSectionCode validation
+                    if (crSectionCodeValue == null || !int.TryParse(crSectionCodeValue.ToString(), out int crSectionCode))
+                        throw new Exception($"Invalid CRSectionCode at row {row}");
+
+                    // 🔹 CRCode validation
+                    if (crCodeValue == null || !int.TryParse(crCodeValue.ToString(), out int crCode))
+                        throw new Exception($"Invalid CRCode at row {row}");
+
+                    // 🔹 Required validation
+                    if (string.IsNullOrWhiteSpace(name))
+                        throw new Exception($"Name is required at row {row}");
+
+                    // 🔹 Excel duplicate
+                    if (!duplicateExcelCheck.Add(crSectionCode))
+                        throw new Exception($"Duplicate CRSectionCode in Excel: {crSectionCode}");
+
+                    // 🔹 DB duplicate
+                    if (existingCRSectionSet.Contains(crSectionCode))
+                        throw new Exception($"CRSectionCode already exists: {crSectionCode}");
+
+                    // 🔹 FK mapping (CRCode → CRId)
+                    if (!crDictionary.TryGetValue(crCode, out int crId))
+                        throw new Exception($"CRCode not found: {crCode}");
+
+                    // 🔥 WRITE ROW
+                    writer.StartRow();
+                    writer.Write(crId);
+                    writer.Write(crSectionCode);
+                    writer.Write(name);
+                    writer.Write(string.IsNullOrWhiteSpace(desc) ? (object)DBNull.Value : desc);
+                    writer.Write(string.IsNullOrWhiteSpace(location) ? (object)DBNull.Value : location);
+                    writer.Write(DateTime.UtcNow);
+                    writer.Write(true);
+
+                    successCount++;
+                }
+
+                // 🔥 FINAL COMMIT
+                await writer.CompleteAsync(cancellationToken);
+                await conn.CloseAsync();
+
+                return new Response
+                {
+                    IsSucced = true,
+                    Message = $"{successCount} CRSection records uploaded successfully (BULK)"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = ex.Message
+                };
+            }
+        }
         //   private async Task<Response> UploadCRManagementMaster(
         //ExcelWorksheet worksheet,
         //int rowCount,
@@ -1364,6 +1473,106 @@ namespace BBMB.BudgetService.Features.BulkUploads
                 {
                     IsSucced = true,
                     Message = $"{successCount} Division uploaded successfully"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = ex.Message
+                };
+            }
+        }
+        private async Task<Response> UploadDivSectionMaster(
+       ExcelWorksheet worksheet,
+       int rowCount,
+       CancellationToken cancellationToken)
+        {
+            try
+            {
+                // 🔥 STEP 1: DivisionCode → DivisionId mapping
+                var divisionDict = await _context.Set<Division>()
+                    .AsNoTracking()
+                    .Select(x => new { x.DivisionCode, x.Id })
+                    .ToDictionaryAsync(x => x.DivisionCode, x => x.Id, cancellationToken);
+
+                // 🔥 STEP 2: Existing DivSection Codes
+                var existingSet = new HashSet<int>(
+                    await _context.Set<DivSection>()
+                        .AsNoTracking()
+                        .Select(x => x.DivSectionCode)
+                        .ToListAsync(cancellationToken));
+
+                var duplicateExcelCheck = new HashSet<int>();
+
+                // 🔥 STEP 3: DB Connection
+                var conn = (Npgsql.NpgsqlConnection)_context.Database.GetDbConnection();
+                await conn.OpenAsync(cancellationToken);
+
+                // 🔥 STEP 4: COPY
+                using var writer = conn.BeginBinaryImport(@"
+            COPY budget.div_section
+            (division_id, div_section_code, name, ""desc"", location, date, status)
+            FROM STDIN (FORMAT BINARY)");
+
+                int successCount = 0;
+
+                // 🔥 STEP 5: STREAM processing
+                for (int row = 2; row <= rowCount; row++)
+                {
+                    var divSectionCodeValue = worksheet.Cells[row, 1].Value;
+                    var divisionCodeValue = worksheet.Cells[row, 2].Value;
+
+                    var name = worksheet.Cells[row, 3].Text?.Trim();
+                    var desc = worksheet.Cells[row, 4].Text?.Trim();
+                    var location = worksheet.Cells[row, 5].Text?.Trim();
+
+                    // 🔹 DivSectionCode validation
+                    if (divSectionCodeValue == null || !int.TryParse(divSectionCodeValue.ToString(), out int divSectionCode))
+                        throw new Exception($"Invalid DivSectionCode at row {row}");
+
+                    // 🔹 DivisionCode validation
+                    if (divisionCodeValue == null || !int.TryParse(divisionCodeValue.ToString(), out int divisionCode))
+                        throw new Exception($"Invalid DivisionCode at row {row}");
+
+                    // 🔹 Required validation
+                    if (string.IsNullOrWhiteSpace(name))
+                        throw new Exception($"Name is required at row {row}");
+
+                    // 🔹 Excel duplicate
+                    if (!duplicateExcelCheck.Add(divSectionCode))
+                        throw new Exception($"Duplicate DivSectionCode in Excel: {divSectionCode}");
+
+                    // 🔹 DB duplicate
+                    if (existingSet.Contains(divSectionCode))
+                        throw new Exception($"DivSectionCode already exists: {divSectionCode}");
+
+                    // 🔹 FK mapping (DivisionCode → DivisionId)
+                    if (!divisionDict.TryGetValue(divisionCode, out int divisionId))
+                        throw new Exception($"DivisionCode not found: {divisionCode}");
+
+                    // 🔥 WRITE ROW
+                    writer.StartRow();
+                    writer.Write(divisionId);
+                    writer.Write(divSectionCode);
+                    writer.Write(name);
+                    writer.Write(string.IsNullOrWhiteSpace(desc) ? (object)DBNull.Value : desc);
+                    writer.Write(string.IsNullOrWhiteSpace(location) ? (object)DBNull.Value : location);
+                    writer.Write(DateTime.UtcNow);
+                    writer.Write(true);
+
+                    successCount++;
+                }
+
+                // 🔥 FINAL COMMIT
+                await writer.CompleteAsync(cancellationToken);
+                await conn.CloseAsync();
+
+                return new Response
+                {
+                    IsSucced = true,
+                    Message = $"{successCount} DivSection records uploaded successfully (BULK)"
                 };
             }
             catch (Exception ex)

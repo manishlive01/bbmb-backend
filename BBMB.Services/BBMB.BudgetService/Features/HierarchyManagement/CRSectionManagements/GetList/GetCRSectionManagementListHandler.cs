@@ -58,6 +58,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRSectionManagements.G
                 CRId = x.CRId,
                 CRCode = x.CRManagement.CRCode,   // ✅ from navigation
                 CRName = x.CRManagement.Name,     // ✅
+                CRSectionCode = x.CRSectionCode,
                 Name = x.Name,
                 Description = x.Description,
                 Location = x.Location,

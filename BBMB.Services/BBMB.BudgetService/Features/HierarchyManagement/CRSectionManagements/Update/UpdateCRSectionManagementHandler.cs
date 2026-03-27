@@ -36,7 +36,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRSectionManagements.U
             }
 
             // 🔥 Validate CRId (FK)
-            var crExists = await _context.CRManagements
+            var crExists = await _context.CRManagements.AsNoTracking()
                 .AnyAsync(x => x.Id == dto.CRId, ct);
 
             if (!crExists)

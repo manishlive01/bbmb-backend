@@ -12,6 +12,8 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.CRSectionManagements.E
 
         [Column("cr_id")]
         public int CRId { get; set; } // ✅ FK
+        [Column("cr_section_code")]
+        public int CRSectionCode { get; set; }
         [Required]
         [MaxLength(200)]
         [Column("name")]
