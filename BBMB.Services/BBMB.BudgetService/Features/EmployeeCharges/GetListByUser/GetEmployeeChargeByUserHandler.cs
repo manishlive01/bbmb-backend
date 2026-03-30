@@ -64,15 +64,15 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser
 
             var ces = await _budgetContext.CEManagements
                 .AsNoTracking()
-                .ToDictionaryAsync(x => x.CECode, cancellationToken);
+                .ToDictionaryAsync(x => x.Id, cancellationToken);
 
             var crs = await _budgetContext.CRManagements
                 .AsNoTracking()
-                .ToDictionaryAsync(x => x.CRCode, cancellationToken);
+                .ToDictionaryAsync(x => x.Id, cancellationToken);
 
             var divs = await _budgetContext.Divisions
                 .AsNoTracking()
-                .ToDictionaryAsync(x => x.DivisionCode, cancellationToken);
+                .ToDictionaryAsync(x => x.Id, cancellationToken);
 
 
             // 🔹 STEP 4: Map response
@@ -83,20 +83,32 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser
                     ? projects[ec.ProjectCode].ProjDesc
                     : "",
 
-                CECode = ec.CECode,
-                CEName = ces.ContainsKey(ec.CECode)
-                    ? ces[ec.CECode].Name
-                    : "",
+                CEId = ec.CEId,
 
-                CRCode = ec.CRCode,
-                CRName = crs.ContainsKey(ec.CRCode)
-                    ? crs[ec.CRCode].Name
-                    : "",
+                CECode = ec.CEId.HasValue && ces.ContainsKey(ec.CEId.Value)
+                            ? ces[ec.CEId.Value].CECode
+                            : 0,
 
-                DivisionCode = ec.DivisionCode,
-                DivName = divs.ContainsKey(ec.DivisionCode)
-                    ? divs[ec.DivisionCode].DivisionDesc
-                    : "",
+                CEName = ec.CEId.HasValue && ces.ContainsKey(ec.CEId.Value)
+                            ? ces[ec.CEId.Value].Name
+                            : "",
+
+                CRId = ec.CRId,
+                CRCode = ec.CRId.HasValue && crs.ContainsKey(ec.CRId.Value)
+                         ? crs[ec.CRId.Value].CRCode
+                         : 0,
+                CRName = ec.CRId.HasValue && crs.ContainsKey(ec.CRId.Value)
+                         ? crs[ec.CRId.Value].Name
+                         : "",
+
+                DivisionId = ec.DivisionId,
+                DivisionCode = ec.DivisionId.HasValue && divs.ContainsKey(ec.DivisionId.Value)
+                            ? divs[ec.DivisionId.Value].DivisionCode
+                            : 0,
+                DivName = ec.DivisionId.HasValue && divs.ContainsKey(ec.DivisionId.Value)
+                            ? divs[ec.DivisionId.Value].DivisionDesc
+                            : "",
+
 
                 IsChargeExpire = ec.IsChargeExpire
             }).ToList();

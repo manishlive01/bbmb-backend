@@ -30,13 +30,13 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<int>("CECode")
+                    b.Property<int>("CEId")
                         .HasColumnType("integer")
-                        .HasColumnName("ce_code");
+                        .HasColumnName("ce_id");
 
-                    b.Property<int>("CRCode")
+                    b.Property<int?>("CRId")
                         .HasColumnType("integer")
-                        .HasColumnName("cr_code");
+                        .HasColumnName("cr_id");
 
                     b.Property<DateTime?>("ChargeExpireTime")
                         .HasColumnType("timestamp with time zone")
@@ -46,9 +46,9 @@ namespace BBMB.BudgetService.Migrations.Employee
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("charge_time");
 
-                    b.Property<int>("DivisionCode")
+                    b.Property<int?>("DivisionId")
                         .HasColumnType("integer")
-                        .HasColumnName("division_code");
+                        .HasColumnName("division_id");
 
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uuid")

@@ -7,9 +7,9 @@
 
         public string ProjectCode { get; set; }
 
-        public string CECode { get; set; } = null!;
-        public string CRCode { get; set; } = null!;
-        public int DivisionCode { get; set; }
+        public int? CEId { get; set; }
+        public int? CRId { get; set; }
+        public int? DivisionId { get; set; }
 
         public DateTime ChargeTime { get; set; }
 

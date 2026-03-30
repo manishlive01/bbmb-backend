@@ -7,8 +7,8 @@
 
         public string ProjectCode { get; set; }
 
-        public int CECode { get; set; }
-        public int CRCode { get; set; }
-        public int DivisionCode { get; set; }
+        public int? CEId { get; set; }
+        public int? CRId { get; set; }
+        public int? DivisionId { get; set; }
     }
 }

@@ -10,15 +10,6 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Create
                 .NotEmpty();
              
 
-            RuleFor(x => x.dto.CECode)
-                .NotEmpty()
-                .MaximumLength(10);
-
-            RuleFor(x => x.dto.CRCode)
-                .NotEmpty()
-                .MaximumLength(10);
-
-
             RuleFor(x => x.dto.ChargeTime)
                 .NotEmpty();
         }

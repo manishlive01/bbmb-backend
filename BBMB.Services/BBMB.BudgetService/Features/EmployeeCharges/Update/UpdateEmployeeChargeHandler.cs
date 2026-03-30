@@ -34,9 +34,9 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Update
 
             employeeCharge.EmployeeId = dto.EmployeeId;
             employeeCharge.ProjectCode = dto.ProjectCode;
-            employeeCharge.CECode = dto.CECode;
-            employeeCharge.CRCode = dto.CRCode;
-            employeeCharge.DivisionCode = dto.DivisionCode;
+            employeeCharge.CEId = dto.CEId;
+            employeeCharge.CRId = dto.CRId;
+            employeeCharge.DivisionId = dto.DivisionId;
             employeeCharge.ChargeTime = dto.ChargeTime;
             employeeCharge.ChargeExpireTime = dto.ChargeExpireTime;
             employeeCharge.IsActive = dto.IsActive;

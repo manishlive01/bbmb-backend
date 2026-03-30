@@ -8,13 +8,15 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser.Dtos
         public string ProjectCode { get; set; }
         public string ProjDesc { get; set; } = null!;
 
-        public int CECode { get; set; }
-        public string CEName { get; set; } = null!;
-
-        public int CRCode { get; set; }
-        public string CRName { get; set; } = null!;
-        public int DivisionCode { get; set; }
-        public string DivName { get; set; } = null!;
+        public int? CEId { get; set; }
+        public int? CECode { get; set; }
+        public string? CEName { get; set; } = null!;
+        public int? CRId { get; set; }
+        public int? CRCode { get; set; }
+        public string? CRName { get; set; } = null!;
+        public int? DivisionId { get; set; }
+        public int? DivisionCode { get; set; }
+        public string? DivName { get; set; } = null!;
         public bool IsChargeExpire { get; set; }
     }
 }

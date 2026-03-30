@@ -18,16 +18,14 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.Entities
         public string ProjectCode { get; set; }
 
         [Required]
-        [Column("ce_code")]
-        public int CECode { get; set; } 
+        [Column("ce_id")]
+        public int? CEId { get; set; }
 
-        [Required]
-        [Column("cr_code")]
-        public int CRCode { get; set; }
+        [Column("cr_id")]
+        public int? CRId { get; set; }
 
-        [Required]
-        [Column("division_code")]
-        public int DivisionCode { get; set; }
+        [Column("division_id")]
+        public int? DivisionId { get; set; }
 
         [Column("charge_time")]
         public DateTime ChargeTime { get; set; }
