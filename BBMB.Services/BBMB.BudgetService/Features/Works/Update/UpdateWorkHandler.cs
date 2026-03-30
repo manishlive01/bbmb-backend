@@ -28,13 +28,13 @@ namespace BBMB.BudgetService.Features.Works.Update
 
             // Validate division exists
             var divisionExists = await _context.Divisions
-                .AnyAsync(d => d.DivisionCode == request.dto.DivisionCode, ct);
+                .AnyAsync(d => d.Id == request.dto.DivisionId, ct);
 
             if (!divisionExists)
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Division with code '{request.dto.DivisionCode}' not found"
+                    Message = $"Division with code '{request.dto.DivisionId}' not found"
                 };
 
             // Validate major head exists

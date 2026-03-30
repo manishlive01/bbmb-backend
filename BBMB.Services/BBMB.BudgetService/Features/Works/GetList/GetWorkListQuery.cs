@@ -9,9 +9,9 @@ namespace BBMB.BudgetService.Features.Works.GetList
         int PageSize,
         string? SortBy,
         bool SortDescending,
-        string? WorkCode,
+        int? WorkCode,
         string? WorkDesc,
-        int? DivisionCode,
+        int? DivisionId,
         string? Status,
         string? Nature
     ) : IRequest<PagedResponse<GetWorkListResponseDto>>;

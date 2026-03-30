@@ -4,8 +4,8 @@ namespace BBMB.BudgetService.Features.Works.Update.Dtos
     {
         public string WorkCode { get; set; } = string.Empty;
         public string WorkDesc { get; set; } = string.Empty;
-        public int DivisionCode { get; set; }
-        public int DivSection { get; set; }
+        public int DivisionId { get; set; }
+        public int DivSectionId { get; set; }
         public string MajorAccCode { get; set; } = string.Empty;
         public string SubMajorAccCode { get; set; } = string.Empty;
         public string MinorAccCode { get; set; } = string.Empty;

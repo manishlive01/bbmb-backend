@@ -4,8 +4,8 @@ namespace BBMB.BudgetService.Features.Budgets.Update.Dtos
 {
     public class UpdateBudgetEntryDto
     {
-        public int DivisionCode { get; set; }
-        public int DivSection { get; set; }
+        public int DivisionId { get; set; }
+        public int DivSectionId { get; set; }
         public int CalendarYear { get; set; }
         public int SequenceNo { get; set; }
         public string MajorAccCode { get; set; } = string.Empty;

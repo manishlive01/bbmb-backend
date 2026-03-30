@@ -38,8 +38,12 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 from w in _context.Works.AsNoTracking()
 
                 join d in _context.Divisions.AsNoTracking()
-                    on w.DivisionId equals d.DivisionCode into divJoin
+                    on w.DivisionId equals d.Id into divJoin
                 from d in divJoin.DefaultIfEmpty()
+
+                join ds in _context.DivSections.AsNoTracking()
+        on w.DivisionId equals ds.DivisionId into divsJoin
+                from ds in divsJoin.DefaultIfEmpty()
 
                 join mh in _context.MajorHeads.AsNoTracking()
                     on w.MajorAccCode equals mh.MajorAccCode into majorJoin
@@ -83,6 +87,7 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 {
                     w,
                     d,
+                    ds,
                     mh,
                     smh,
                     mn,
@@ -97,11 +102,11 @@ namespace BBMB.BudgetService.Features.Works.GetList
 
             if (charge != null)
             {
-                //if (charge.DivisionCode != null)
-                //    query = query.Where(x => x.w.DivisionCode == charge.DivisionCode);
+                if (charge.DivisionId != null)
+                    query = query.Where(x => x.w.DivisionId == charge.DivisionId);
 
-                //if (charge.CECode != null)
-                //    query = query.Where(x => x.w.CECode == charge.CECode);
+                //if (charge.CEId != null)
+                //    query = query.Where(x => x.w.CeId == charge.CEId);
 
                 //if (charge.CRCode != null)
                 //    query = query.Where(x => x.w.CRCode == charge.CRCode);
@@ -112,11 +117,11 @@ namespace BBMB.BudgetService.Features.Works.GetList
             //if (!string.IsNullOrWhiteSpace(request.WorkCode))
             //    query = query.Where(x => x.w.WorkCode.Contains(request.WorkCode));
 
-            //if (!string.IsNullOrWhiteSpace(request.WorkDesc))
-            //    query = query.Where(x => x.w.WorkDesc.Contains(request.WorkDesc));
+            if (!string.IsNullOrWhiteSpace(request.WorkDesc))
+                query = query.Where(x => x.w.WorkDesc.Contains(request.WorkDesc));
 
-            //if (request.DivisionCode.HasValue)
-            //    query = query.Where(x => x.w.DivisionCode == request.DivisionCode);
+            if (request.DivisionId.HasValue)
+                query = query.Where(x => x.w.DivisionId == request.DivisionId);
 
             if (!string.IsNullOrWhiteSpace(request.Status))
                 query = query.Where(x => x.w.Status == request.Status);
@@ -141,9 +146,13 @@ namespace BBMB.BudgetService.Features.Works.GetList
                     //WorkCode = x.w.WorkCode,
                     WorkDesc = x.w.WorkDesc,
 
-                    //DivisionCode = x.w.DivisionCode,
+                    DivisionId = x.w.DivisionId,
+                    DivisionCode = x.d != null ? x.d.DivisionCode : 0,
                     DivisionDesc = x.d != null ? x.d.DivisionDesc : null,
-                    //DivSection = x.w.DivSection,
+
+                    DivSectionId = x.ds != null ? x.ds.Id : 0,
+                    DivSectionCode = x.ds != null ? x.ds.DivSectionCode : 0,
+                    DivSectionName = x.ds != null ? x.ds.Name : null,
 
                     MajorAccCode = x.w.MajorAccCode,
                     MajorAccDesc = x.mh != null ? x.mh.MajorAccDesc : null,

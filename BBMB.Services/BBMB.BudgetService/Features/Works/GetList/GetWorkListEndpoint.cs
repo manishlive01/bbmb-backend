@@ -16,15 +16,15 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 [FromQuery] int pageSize = 10,
                 [FromQuery] string? sortBy = null,
                 [FromQuery] bool sortDescending = false,
-                [FromQuery] string? workCode = null,
+                [FromQuery] int? workCode = null,
                 [FromQuery] string? workDesc = null,
-                [FromQuery] int? divisionCode = null,
+                [FromQuery] int? divisionId = null,
                 [FromQuery] string? status = null,
                 [FromQuery] string? nature = null) =>
             {
                 var query = new GetWorkListQuery(
                     pageNumber, pageSize, sortBy, sortDescending,
-                    workCode, workDesc, divisionCode, status, nature);
+                    workCode, workDesc, divisionId, status, nature);
 
                 var result = await mediator.Send(query);
                 return Results.Ok(result);

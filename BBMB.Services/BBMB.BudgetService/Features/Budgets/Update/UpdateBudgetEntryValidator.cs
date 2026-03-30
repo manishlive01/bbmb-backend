@@ -7,10 +7,10 @@ namespace BBMB.BudgetService.Features.Budgets.Update
     {
         public UpdateBudgetEntryValidator()
         {
-            RuleFor(x => x.DivisionCode)
+            RuleFor(x => x.DivisionId)
                 .NotEmpty().WithMessage("Division code is required");
 
-            RuleFor(x => x.DivSection)
+            RuleFor(x => x.DivSectionId)
                 .NotEmpty().WithMessage("Division section is required");
 
             RuleFor(x => x.CalendarYear)

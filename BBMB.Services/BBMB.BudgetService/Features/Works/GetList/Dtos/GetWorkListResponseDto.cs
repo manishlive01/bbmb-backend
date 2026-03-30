@@ -16,11 +16,13 @@ namespace BBMB.BudgetService.Features.Works.GetList.Dtos
     {
         public string WorkCode { get; set; } = string.Empty;
 
+        public int DivisionId { get; set; }
         public int DivisionCode { get; set; }
         public string? DivisionDesc { get; set; }
 
-        public int DivSection { get; set; }
-
+        public int DivSectionId { get; set; }
+        public int DivSectionCode { get; set; }
+        public string DivSectionName { get; set; }
         public string MajorAccCode { get; set; } = string.Empty;
         public string? MajorAccDesc { get; set; }
 

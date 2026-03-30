@@ -20,7 +20,7 @@ namespace BBMB.BudgetService.Features.Works.Create
         {
             // ================= AUTO GENERATE WORK CODE =================
 
-            var divisionCode = request.dto.DivisionCode;
+            var divisionCode = request.dto.DivisionId;
             var divId= await _context.Divisions
                 .Where(d => d.DivisionCode == divisionCode)
                 .Select(d => d.Id)

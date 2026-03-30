@@ -22,8 +22,8 @@ namespace BBMB.BudgetService.Features.Budgets.Entities
         [Column("work_id")]
         public int? WorkId { get; set; } // ✅ FK (nullable if optional)
         [Required]
-        [Column("div_section")]
-        public int DivSection { get; set; }
+        [Column("div_section_id")]
+        public int DivSectionId { get; set; }
 
         [Required]
         [Column("calendar_year")]

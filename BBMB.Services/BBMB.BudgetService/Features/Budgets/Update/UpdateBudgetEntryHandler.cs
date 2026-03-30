@@ -28,12 +28,12 @@ namespace BBMB.BudgetService.Features.Budgets.Update
 
             // Validate foreign keys exist
             var divisionExists = await _context.Divisions
-                .AnyAsync(d => d.DivisionCode == request.dto.DivisionCode, ct);
+                .AnyAsync(d => d.Id == request.dto.DivisionId, ct);
             if (!divisionExists)
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Division with code '{request.dto.DivisionCode}' not found"
+                    Message = $"Division with code '{request.dto.DivisionId}' not found"
                 };
 
             // Validate work code if provided
@@ -61,7 +61,7 @@ namespace BBMB.BudgetService.Features.Budgets.Update
             var getWorkId=await _context.Works.AsNoTracking().Where(w=>w.WorkCode==request.dto.WorkCode).Select(w=>w.Id).FirstOrDefaultAsync(ct);
              // Update fields
             //budgetEntry.DivisionCode = request.dto.DivisionCode;
-            budgetEntry.DivSection = request.dto.DivSection;
+            budgetEntry.DivSectionId = request.dto.DivSectionId;
             budgetEntry.CalendarYear = request.dto.CalendarYear;
             budgetEntry.SequenceNo = request.dto.SequenceNo;
             budgetEntry.MajorAccCode = request.dto.MajorAccCode;
