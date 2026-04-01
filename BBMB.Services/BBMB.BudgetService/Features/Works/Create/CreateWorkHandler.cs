@@ -20,9 +20,9 @@ namespace BBMB.BudgetService.Features.Works.Create
         {
             // ================= AUTO GENERATE WORK CODE =================
 
-            var divisionCode = request.dto.DivisionId;
+            var divisionId = request.dto.DivisionId;
             var divId= await _context.Divisions
-                .Where(d => d.DivisionCode == divisionCode)
+                .Where(d => d.Id == divisionId)
                 .Select(d => d.Id)
                 .FirstOrDefaultAsync(ct);
             if(divId is 0)
@@ -30,7 +30,7 @@ namespace BBMB.BudgetService.Features.Works.Create
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Division with code '{divisionCode}' not found"
+                    Message = $"Division with Id '{divisionId}' not found"
                 };
             }
             // Get last work for this division
@@ -45,7 +45,7 @@ namespace BBMB.BudgetService.Features.Works.Create
             if (!string.IsNullOrEmpty(lastWorkCode.ToString()))
             {
                 // Extract numeric suffix (after division code)
-                var numericPart = lastWorkCode.ToString().Substring(divisionCode.ToString().Length);
+                var numericPart = lastWorkCode.ToString().Substring(divisionId.ToString().Length);
 
                 if (int.TryParse(numericPart, out int lastNumber))
                 {
