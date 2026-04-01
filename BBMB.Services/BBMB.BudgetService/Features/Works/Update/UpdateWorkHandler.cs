@@ -27,15 +27,15 @@ namespace BBMB.BudgetService.Features.Works.Update
                 };
 
             // Validate division exists
-            var divisionExists = await _context.Divisions
-                .AnyAsync(d => d.Id == request.dto.DivisionId, ct);
+            //var divisionExists = await _context.Divisions
+            //    .AnyAsync(d => d.Id == request.dto.DivisionId, ct);
 
-            if (!divisionExists)
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = $"Division with code '{request.dto.DivisionId}' not found"
-                };
+            //if (!divisionExists)
+            //    return new Response
+            //    {
+            //        IsSucced = false,
+            //        Message = $"Division with code '{request.dto.DivisionId}' not found"
+            //    };
 
             // Validate major head exists
             var majorHeadExists = await _context.MajorHeads
