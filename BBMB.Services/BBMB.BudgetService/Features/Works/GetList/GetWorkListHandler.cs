@@ -143,7 +143,7 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 .Take(pageSize)
                 .Select(x => new GetWorkListResponseDto
                 {
-                    //WorkCode = x.w.WorkCode,
+                    WorkCode = x.w.WorkCode,
                     WorkDesc = x.w.WorkDesc,
 
                     DivisionId = x.w.DivisionId,

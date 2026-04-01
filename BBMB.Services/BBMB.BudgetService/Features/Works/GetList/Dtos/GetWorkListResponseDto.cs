@@ -14,7 +14,7 @@ namespace BBMB.BudgetService.Features.Works.GetList.Dtos
     //}
     public class GetWorkListResponseDto
     {
-        public string WorkCode { get; set; } = string.Empty;
+        public int WorkCode { get; set; }
 
         public int DivisionId { get; set; }
         public int DivisionCode { get; set; }
