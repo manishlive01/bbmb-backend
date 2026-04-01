@@ -42,10 +42,14 @@ namespace BBMB.BudgetService.Features.Works.Create
 
             int nextNumber = 1;
 
-            if (!string.IsNullOrEmpty(lastWorkCode.ToString()))
+            var lastWorkCodeStr = lastWorkCode.ToString();
+            var divisionStr = divisionId.ToString();
+
+            if (!string.IsNullOrEmpty(lastWorkCodeStr) &&
+                lastWorkCodeStr.StartsWith(divisionStr) &&
+                lastWorkCodeStr.Length > divisionStr.Length)
             {
-                // Extract numeric suffix (after division code)
-                var numericPart = lastWorkCode.ToString().Substring(divisionId.ToString().Length);
+                var numericPart = lastWorkCodeStr.Substring(divisionStr.Length);
 
                 if (int.TryParse(numericPart, out int lastNumber))
                 {
@@ -54,20 +58,20 @@ namespace BBMB.BudgetService.Features.Works.Create
             }
 
             // Generate new WorkCode
-            var newWorkCode = $"{divisionCode}{nextNumber.ToString("D5")}";
+            var newWorkCode = $"{divisionId}{nextNumber.ToString("D5")}";
 
             request.dto.WorkCode = newWorkCode;
 
             // ================= VALIDATIONS =================
 
             var divisionExists = await _context.Divisions.AsNoTracking()
-                .AnyAsync(d => d.DivisionCode == divisionCode, ct);
+                .AnyAsync(d => d.Id == divisionId, ct);
 
             if (!divisionExists)
                 return new Response
                 {
                     IsSucced = false,
-                    Message = $"Division with code '{divisionCode}' not found"
+                    Message = $"Division with code '{divisionId}' not found"
                 };
 
             var majorHeadExists = await _context.MajorHeads.AsNoTracking()
