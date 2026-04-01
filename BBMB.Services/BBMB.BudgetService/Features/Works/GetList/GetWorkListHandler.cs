@@ -186,9 +186,11 @@ namespace BBMB.BudgetService.Features.Works.GetList
                     UserCode = x.w.UserCode,
 
                     //CECode = x.w.CECode,
+                    CECode = x.ce != null ? x.ce.CECode : 0,
                     CEName = x.ce != null ? x.ce.Name : null,
 
                     //CRCode = x.w.CRCode,
+                    CRCode = x.cr != null ? x.cr.CRCode : 0,
                     CRName = x.cr != null ? x.cr.Name : null,
 
                     OriginalBudget = x.w.OriginalBudget,
