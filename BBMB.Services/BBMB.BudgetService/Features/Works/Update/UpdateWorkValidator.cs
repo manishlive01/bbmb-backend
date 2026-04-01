@@ -13,8 +13,8 @@ namespace BBMB.BudgetService.Features.Works.Update
                 .NotEmpty().WithMessage("Work description is required.")
                 .MaximumLength(200).WithMessage("Work description must not exceed 200 characters.");
 
-            RuleFor(x => x.dto.DivisionId)
-                .NotEmpty().WithMessage("Division code is required.");
+            //RuleFor(x => x.dto.DivisionId)
+            //    .NotEmpty().WithMessage("Division code is required.");
 
             //RuleFor(x => x.dto.DivSection)
             //    .NotEmpty().WithMessage("Division section is required.");
