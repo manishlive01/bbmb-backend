@@ -20,7 +20,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.Divisions.GetByCECR
                 .Where(d =>   d.CRId == request.crId)
                 .Select(d => new GetDivisionByCECRResponseDto
                 {
-                    DivisionId = d.CRId,
+                    DivisionId = d.Id,
                     DivisionCode = d.DivisionCode, 
                     DivisionDesc = d.DivisionDesc,
                     RegionCode = d.RegionCode,
