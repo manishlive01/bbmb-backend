@@ -101,9 +101,9 @@ builder.Services.AddAuthentication("Bearer")
         ClockSkew = TimeSpan.Zero
     };
 
-    options.TokenValidationParameters.TokenDecryptionKey =
-        new SymmetricSecurityKey(
-            Convert.FromBase64String(builder.Configuration["SSO:EncryptionKey"]));
+    //options.TokenValidationParameters.TokenDecryptionKey =
+    //    new SymmetricSecurityKey(
+    //        Convert.FromBase64String(builder.Configuration["SSO:EncryptionKey"]));
 
     options.Events = new JwtBearerEvents
     {

@@ -22,6 +22,7 @@ namespace BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.GetLis
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+                .RequireAuthorization()
 //.RequireAuthorization("Budget:Admin")
 .WithName("GetLevelManagementList")
 .WithTags("LevelManagement")
