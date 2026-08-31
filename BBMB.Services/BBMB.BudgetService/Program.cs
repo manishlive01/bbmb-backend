@@ -145,7 +145,19 @@ builder.Services.AddOpenApi(options =>
                 }
             }
         ];
+        document.SetReferenceHostDocument();
+        // Environment-specific API base path
+        var basePath = builder.Environment.IsDevelopment()
+            ? ""
+            : "/bbmb-api";
 
+        document.Servers =
+        [
+            new OpenApiServer
+            {
+                Url = basePath
+            }
+        ];
         document.SetReferenceHostDocument();
 
         return Task.CompletedTask;
@@ -171,7 +183,18 @@ var app = builder.Build();
 // ===================================================================
 // AUTO REDIRECT TO SWAGGER
 // ===================================================================
-app.MapGet("/", () => Results.Redirect("/swagger"));
+// ======================================================
+// ROOT → SWAGGER
+// ======================================================
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/", () => Results.Redirect("/swagger"));
+}
+else
+{
+    app.MapGet("/", () => Results.Redirect("/bbmb-api/swagger"));
+
+}
 
 // ===================================================================
 // CORS (MUST BE BEFORE ROUTING)
@@ -193,8 +216,16 @@ app.MapOpenApi();
 // ======================================================
 app.UseSwaggerUI(options =>
 {
-    options.DocumentTitle = $"Environment: {app.Environment.EnvironmentName} - Auth API's";
-    options.SwaggerEndpoint("/openapi/v1.json", "API v1");
+    options.DocumentTitle = $"Environment: {app.Environment.EnvironmentName} - BBMB API's";
+    if (app.Environment.IsDevelopment())
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "API v1");
+
+    }
+    else
+    {
+        options.SwaggerEndpoint("/bbmb-api/openapi/v1.json", "API v1");
+    }
 });
 // ===================================================================
 // SECURITY
