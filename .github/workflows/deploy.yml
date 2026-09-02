@@ -1,50 +1,55 @@
-name: Deploy BBMB App to Ubuntu
+name: BBMB SSO API Deploy
 
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - deploy_stag
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  build-and-deploy:
+    runs-on: [self-hosted, bbmb-stg]
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Restore
-        working-directory: BBMB.Services/BBMB.BudgetService
-        run: dotnet restore
+      - name: Verify Runner
+        run: |
+          echo "Running on:"
+          hostname
+          echo "Current user:"
+          whoami
 
-      - name: Build
-        working-directory: BBMB.Services/BBMB.BudgetService
-        run: dotnet build -c Release --no-restore
+      - name: Check .NET SDK
+        run: |
+          dotnet --version
+          dotnet --list-sdks
 
-      - name: Publish
-        working-directory: BBMB.Services/BBMB.BudgetService
-        run: dotnet publish -c Release -o publish
+      - name: Restore Dependencies
+        run: dotnet restore BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj
 
-      - name: Copy files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ubuntu
-          port: 22
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "BBMB.Services/BBMB.BudgetService/publish/*"
-          target: "/home/ubuntu/bbmb-app"
-          strip_components: 1
-          timeout: 60s
+      - name: Build Application
+        run: dotnet build BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj --no-restore --configuration Release
 
-      - name: Restart BBMB Budget Service
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            sudo -n /usr/bin/systemctl restart bbmb-budget-service.service
-            sudo -n /usr/bin/systemctl is-active bbmb-budget-service.service
+      - name: Publish Application
+        run: dotnet publish BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj --configuration Release --no-build --output ./publish
+
+      - name: Deploy Application
+        run: |
+          echo "Stopping application..."
+          sudo systemctl stop bbmb-api.service
+
+          echo "Removing old deployment..."
+          sudo rm -rf /var/www/bbmb-api/*
+
+          echo "Copying new build..."
+          sudo cp -r ./publish/* /var/www/bbmb-api/
+
+          echo "Setting ownership..."
+          sudo chown -R bhakra:bhakra /var/www/bbmb-api/
+
+          echo "Starting application..."
+          sudo systemctl start bbmb-api.service
+
+          echo "Checking service status..."
+          sudo systemctl status bbmb-api.service --no-pager
