@@ -46,7 +46,7 @@ jobs:
           sudo cp -r ./publish/* /var/www/bbmb-api/
 
           echo "Setting ownership..."
-          sudo chown -R bhakra:bhakra /var/www/bbmb-api/
+          sudo chown -R nginx:nginx /var/www/bbmb-api/
 
           echo "Starting application..."
           sudo systemctl start bbmb-api.service
