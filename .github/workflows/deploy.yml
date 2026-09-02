@@ -1,4 +1,4 @@
-name: BBMB SSO API Deploy
+name: BBMB_stag_deploy
 
 on:
   push:
