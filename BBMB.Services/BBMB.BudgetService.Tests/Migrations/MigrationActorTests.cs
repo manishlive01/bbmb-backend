@@ -20,6 +20,7 @@ public sealed class MigrationActorTests(BudgetDatabaseFixture fixture)
     private static readonly (string Migration, string[] Tables)[] DataShapingMigrations =
     [
         ("BudgetP1ReferenceStateAndAudit", ["office", "state", "setting"]),
+        ("BudgetP1ProposalSpineMasters", ["budget_head_master", "work"]),
     ];
 
     private static async Task<string?> ScalarAsync(string cs, string sql)
@@ -87,6 +88,22 @@ public sealed class MigrationActorTests(BudgetDatabaseFixture fixture)
     {
         var cs = await fixture.CreateFreshDatabaseAsync("ma_one_run");
         await fixture.MigrateToAsync(cs, BeforeAudit);
+        // Legacy rows for the later data-shaping migrations to backfill.
+        var h = await TestMasters.InsertDivisionAsync(cs);
+        var seg = await TestMasters.InsertSegmentsAsync(cs);
+        await using (var conn = new NpgsqlConnection(cs))
+        {
+            await conn.OpenAsync();
+            await using var cmd = new NpgsqlCommand(
+                "INSERT INTO budget.budget_head_master (major_acc_code, sub_major_acc_code, minor_acc_code, sub_minor_acc_code, " +
+                "detail_acc_code, object_acc_code, head_desc, modification_date, user_code) " +
+                $"VALUES ('{seg.Major}', '{seg.SubMajor}', '{seg.Minor}', '{seg.SubMinor}', '{seg.Detail}', '{seg.Object}', 'h', now(), 'L'); " +
+                "INSERT INTO budget.work (work_code, division_id, major_acc_code, sub_major_acc_code, minor_acc_code, " +
+                "sub_minor_acc_code, detail_acc_code, object_acc_code, original_budget, revised_budget, proposed_budget, " +
+                $"remarks, work_desc, user_code) VALUES (1, {h.DivisionId}, '{seg.Major}', '{seg.SubMajor}', '{seg.Minor}', " +
+                $"'{seg.SubMinor}', '{seg.Detail}', '{seg.Object}', '', '', '', '', 'w', 'L')", conn);
+            await cmd.ExecuteNonQueryAsync();
+        }
         // Every remaining migration in one MigrateAsync call.
         await fixture.MigrateToAsync(cs, null);
 
