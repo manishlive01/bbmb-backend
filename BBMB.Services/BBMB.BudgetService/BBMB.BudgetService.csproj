@@ -41,7 +41,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\AccountingHeads\SubMajorHeads\Delete\" />
     <Folder Include="Features\Budgets\GetList\" />
     <Folder Include="Features\Budgets\Create\" />
     <Folder Include="Features\Budgets\GetById\" />
@@ -56,9 +55,7 @@
     <Folder Include="Features\Designations\Delete\" />
     <Folder Include="Features\Designations\Create\" />
     <Folder Include="Features\DetailHeads\GetList\" />
-    <Folder Include="Features\DetailHeads\Delete\" />
     <Folder Include="Features\DetailHeads\Create\" />
-    <Folder Include="Features\DetailHeads\Update\" />
     <Folder Include="Features\Employees\Delete\" />
     <Folder Include="Features\FinancialYears\GetList\" />
     <Folder Include="Features\FinancialYears\GetById\" />
