@@ -4,6 +4,7 @@ using BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Observations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Recommendations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Settings.Entities;
 using BBMB.BudgetService.Features.FinancialYears.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
@@ -34,6 +35,12 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<FigureVersion> FigureVersions { get; set; }
         public DbSet<Observation> Observations { get; set; }
         public DbSet<ProposalMovement> ProposalMovements { get; set; }
+        public DbSet<ExpenditureFigure> ExpenditureFigures { get; set; }
+        public DbSet<OpeningFigure> OpeningFigures { get; set; }
+        public DbSet<CeRecommendation> CeRecommendations { get; set; }
+        public DbSet<RecommendationVersion> RecommendationVersions { get; set; }
+        public DbSet<DemandLineDisplayRow> DemandLineDisplay { get; set; }
+        public DbSet<DemandByCeRow> DemandByCe { get; set; }
 
         /// <summary>Partial UK names whose 23505 maps to a catalogue message (design §4.9).</summary>
         public const string UxDemandLineWork = "ux_demand_line_work";
@@ -191,6 +198,64 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 // The composite FK (from_state, action_code, to_state) → T-16 is added by BudgetP1StateTransitionSeed.
                 ConfigureActorColumns(e);
             });
+
+            // ---------------- T-35 expenditure_figure (append-only) ----------------
+            modelBuilder.Entity<ExpenditureFigure>(e =>
+            {
+                e.Property(x => x.ExpenditureFigureId).UseIdentityAlwaysColumn();
+                e.Property(x => x.Amount).HasColumnType(RupeesPaiseColumnType);
+                e.HasIndex(x => new { x.SubjectType, x.WorkId, x.OfficeId, x.AccountCodeId, x.Nature, x.FinYear, x.Period });
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.WorkId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.OfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<FinancialYear>().WithMany().HasForeignKey(x => x.FinYear).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-36 opening_figure ----------------
+            modelBuilder.Entity<OpeningFigure>(e =>
+            {
+                e.Property(x => x.OpeningFigureId).UseIdentityAlwaysColumn();
+                e.Property(x => x.Amount).HasColumnType(RupeesColumnType);
+                // UK (cycle, subject, figure_kind); the subject columns are partly null, so nulls are not distinct.
+                e.HasIndex(x => new { x.CycleId, x.SubjectType, x.WorkId, x.OfficeId, x.AccountCodeId, x.FigureKind })
+                    .IsUnique().AreNullsDistinct(false);
+                e.HasOne<BudgetCycle>().WithMany().HasForeignKey(x => x.CycleId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.WorkId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.OfficeId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-37 ce_recommendation ----------------
+            modelBuilder.Entity<CeRecommendation>(e =>
+            {
+                e.Property(x => x.RecommendationId).UseIdentityAlwaysColumn();
+                e.Property(x => x.RbeRecommended).HasColumnType(RupeesColumnType);
+                e.Property(x => x.ObeNextRecommended).HasColumnType(RupeesColumnType);
+                e.Property(x => x.RedistributionRequired).HasDefaultValue(false);
+                e.HasIndex(x => new { x.CycleId, x.Category, x.CeOfficeId, x.AccountCodeId }).IsUnique();
+                e.HasOne<BudgetCycle>().WithMany().HasForeignKey(x => x.CycleId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.CeOfficeId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-38 recommendation_version (trigger-written only) ----------------
+            modelBuilder.Entity<RecommendationVersion>(e =>
+            {
+                e.HasKey(x => new { x.RecommendationId, x.VersionNo });
+                e.Property(x => x.RbeRecommended).HasColumnType(RupeesColumnType);
+                e.Property(x => x.ObeNextRecommended).HasColumnType(RupeesColumnType);
+                e.Property(x => x.ConcurrenceRef).HasMaxLength(100);
+                e.HasOne<CeRecommendation>().WithMany().HasForeignKey(x => x.RecommendationId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- Views (design §5.4) ----------------
+            modelBuilder.Entity<DemandLineDisplayRow>(e =>
+            {
+                e.HasNoKey().ToView("v_demand_line_display", "budget");
+                e.Property(x => x.LevelFigures).HasColumnType("jsonb");
+            });
+            modelBuilder.Entity<DemandByCeRow>(e => e.HasNoKey().ToView("v_demand_by_ce", "budget"));
 
             // ---------------- T-17 setting ----------------
             modelBuilder.Entity<BudgetSetting>(e =>
