@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.ObjectClassifications.GetById
                     return Results.NotFound(new { error = "object_classification_not_found", message = ex.Message });
                 }
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetObjectClassificationById")
             .WithTags("ObjectClassifications")
             .WithSummary("Get object classification by code")

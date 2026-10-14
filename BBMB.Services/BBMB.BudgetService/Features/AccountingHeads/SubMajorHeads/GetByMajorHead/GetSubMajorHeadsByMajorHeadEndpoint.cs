@@ -13,6 +13,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.GetByMajorHe
                 var result = await mediator.Send(query);
                 return Results.Ok(new { message = "Sub-major heads retrieved successfully", data = result });
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetSubMajorHeadsByMajorHead")
             .WithTags("SubMajorHeads")
             .Produces(StatusCodes.Status200OK);

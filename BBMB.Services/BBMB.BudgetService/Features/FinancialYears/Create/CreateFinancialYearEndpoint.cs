@@ -22,6 +22,7 @@ namespace BBMB.BudgetService.Features.FinancialYears.Create
                 }
                 return Results.Ok(response);
             })
+            .RequireAuthorization("BudgetRight:Cycle.Manage")
             .Produces<string>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .WithSummary("Create Financial Year")

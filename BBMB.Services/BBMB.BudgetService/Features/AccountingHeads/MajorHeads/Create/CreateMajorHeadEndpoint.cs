@@ -23,6 +23,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Create
 
                 return Results.Ok(response);
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .Produces<string>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
             .WithSummary("Create Major Head")

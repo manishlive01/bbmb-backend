@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetByWork
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetBudgetEntriesByWork")
             .WithTags("BudgetEntries")
             .Produces<PagedResponse<GetBudgetEntryListResponseDto>>(StatusCodes.Status200OK);

@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.Update
                     ? Results.Ok(response)
                     : Results.NotFound(response);
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("UpdateDetailHead")
             .WithTags("DetailHeads")
             .Produces(200)

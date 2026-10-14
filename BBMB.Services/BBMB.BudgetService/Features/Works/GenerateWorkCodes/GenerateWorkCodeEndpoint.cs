@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.Works.GenerateWorkCodes
                         ? Results.Ok(response)
                         : Results.BadRequest(response);
                 })
+                .RequireAuthorization("BudgetRight:Works.Enter")
                 .WithName("GenerateWorkCode")
                 .WithTags("Works")
                 .Produces<Response>(StatusCodes.Status200OK)

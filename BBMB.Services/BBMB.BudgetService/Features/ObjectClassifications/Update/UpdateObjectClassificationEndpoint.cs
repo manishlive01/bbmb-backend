@@ -17,6 +17,7 @@ namespace BBMB.BudgetService.Features.ObjectClassifications.Update
                     ? Results.Ok(response)
                     : Results.NotFound(response);
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("UpdateObjectClassification")
             .WithTags("ObjectClassifications")
             .WithSummary("Update an object classification")

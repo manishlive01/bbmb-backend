@@ -25,6 +25,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Delete
 
                 return Results.NoContent();
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("DeleteSubMinorHead")
             .WithTags("SubMinorHeads")
             .Produces(StatusCodes.Status204NoContent)

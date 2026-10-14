@@ -21,6 +21,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.GetDropdown
                 var result = await sender.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetDetailHeadDropdown")
             .WithTags("DetailHeads")
             .Produces(200);

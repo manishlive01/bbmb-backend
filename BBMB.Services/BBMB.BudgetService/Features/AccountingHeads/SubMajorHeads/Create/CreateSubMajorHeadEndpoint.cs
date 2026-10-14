@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Create
                     ? Results.Created($"/api/accounting-heads/sub-major/{dto.SubMajorAccCode}", response)
                     : Results.Conflict(response);
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("CreateSubMajorHead")
             .WithTags("SubMajorHeads")
             .Produces<Response>(StatusCodes.Status201Created)

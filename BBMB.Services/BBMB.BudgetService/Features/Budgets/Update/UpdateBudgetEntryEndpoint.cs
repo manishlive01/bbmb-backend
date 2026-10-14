@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.Budgets.Update
                     ? Results.Ok(response)
                     : Results.NotFound(response);
             })
+            .RequireAuthorization("BudgetRight:Legacy.BudgetEntry")
             .WithName("UpdateBudgetEntry")
             .WithTags("BudgetEntries")
             .Produces<Response>(StatusCodes.Status200OK)

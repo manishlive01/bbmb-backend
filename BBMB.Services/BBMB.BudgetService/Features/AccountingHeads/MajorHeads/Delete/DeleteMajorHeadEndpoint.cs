@@ -28,6 +28,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.Delete
 
                 return Results.NoContent();
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("Budget.MajorHead.Delete")
             .WithTags("MajorHead")
             .WithSummary("Delete Major Head")

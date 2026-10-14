@@ -41,6 +41,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     ? Results.Ok(response)
                     : Results.BadRequest(response);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .DisableAntiforgery()
             .Accepts<IFormFile>("multipart/form-data")
             .WithName("BulkUploads")

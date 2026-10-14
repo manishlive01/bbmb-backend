@@ -23,6 +23,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Delete
 
                 return Results.NoContent();
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("DeleteMinorHead")
             .WithTags("MinorHeads")
             .Produces(StatusCodes.Status204NoContent)

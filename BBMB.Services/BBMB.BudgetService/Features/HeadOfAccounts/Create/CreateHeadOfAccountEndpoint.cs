@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Create
                     ? Results.Created($"/api/head-of-accounts/{dto.MajorAccCode}", response)
                     : Results.Conflict(response);
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("CreateHeadOfAccount")
             .WithTags("HeadOfAccounts")
             .Produces<Response>(StatusCodes.Status201Created)

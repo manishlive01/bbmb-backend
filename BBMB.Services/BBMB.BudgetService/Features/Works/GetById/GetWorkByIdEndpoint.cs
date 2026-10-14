@@ -21,6 +21,7 @@ namespace BBMB.BudgetService.Features.Works.GetById
                     return Results.NotFound(new { error = "work_not_found", message = ex.Message });
                 }
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetWorkById")
             .WithTags("Works")
             .Produces<GetWorkByIdResponseDto>(StatusCodes.Status200OK)

@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.GetById
                     return Results.NotFound(new { error = "sub_major_head_not_found", message = ex.Message });
                 }
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetSubMajorHeadById")
             .WithTags("SubMajorHeads")
             .Produces(StatusCodes.Status200OK)

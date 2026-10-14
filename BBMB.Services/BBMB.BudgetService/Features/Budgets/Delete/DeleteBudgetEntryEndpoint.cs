@@ -23,6 +23,7 @@ namespace BBMB.BudgetService.Features.Budgets.Delete
 
                 return Results.NoContent();
             })
+            .RequireAuthorization("BudgetRight:Legacy.BudgetEntry")
             .WithName("DeleteBudgetEntry")
             .WithTags("BudgetEntries")
             .Produces(StatusCodes.Status204NoContent)

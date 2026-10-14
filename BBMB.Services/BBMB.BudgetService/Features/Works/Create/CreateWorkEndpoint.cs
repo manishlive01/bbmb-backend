@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.Works.Create
                     ? Results.Created($"/api/works/{dto.WorkCode}", response)
                     : Results.Conflict(response);
             })
+            .RequireAuthorization("BudgetRight:Works.Enter")
             .WithName("CreateWork")
             .WithTags("Works")
             .Produces<Response>(StatusCodes.Status201Created)

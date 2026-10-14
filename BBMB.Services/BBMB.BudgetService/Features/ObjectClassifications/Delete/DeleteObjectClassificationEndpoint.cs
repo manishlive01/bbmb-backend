@@ -22,6 +22,7 @@ namespace BBMB.BudgetService.Features.ObjectClassifications.Delete
 
                 return Results.NoContent();
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("DeleteObjectClassification")
             .WithTags("ObjectClassifications")
             .WithSummary("Delete an object classification")

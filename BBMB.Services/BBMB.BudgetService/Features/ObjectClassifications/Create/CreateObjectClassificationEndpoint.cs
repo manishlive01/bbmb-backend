@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.ObjectClassifications.Create
 
                 return Results.Created($"/api/object-classifications/{dto.ObjectAccCode}", response);
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("CreateObjectClassification")
             .WithTags("ObjectClassifications")
             .WithSummary("Create a new object classification")

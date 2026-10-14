@@ -32,6 +32,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.GetList
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetMinorHeadList")
             .WithTags("MinorHeads")
             .Produces<PagedResponse<GetMinorHeadListResponseDto>>(StatusCodes.Status200OK);

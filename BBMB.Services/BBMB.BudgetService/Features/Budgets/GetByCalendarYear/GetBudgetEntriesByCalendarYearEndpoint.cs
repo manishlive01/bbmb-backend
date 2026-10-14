@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetByCalendarYear
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetBudgetEntriesByCalendarYear")
             .WithTags("BudgetEntries")
             .Produces<PagedResponse<GetBudgetEntryListResponseDto>>(StatusCodes.Status200OK);

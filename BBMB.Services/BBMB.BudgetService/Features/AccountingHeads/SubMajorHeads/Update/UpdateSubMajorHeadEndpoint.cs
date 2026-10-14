@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Update
                     ? Results.Ok(response)
                     : Results.NotFound(response);
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("UpdateSubMajorHead")
             .WithTags("SubMajorHeads")
             .Produces<Response>(StatusCodes.Status200OK)

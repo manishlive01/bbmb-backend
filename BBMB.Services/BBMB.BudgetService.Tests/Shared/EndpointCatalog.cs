@@ -16,7 +16,12 @@ public sealed record CatalogEntry(
     string Pattern,
     IReadOnlyList<string> Methods,
     bool RequiresAuthorization,
-    IReadOnlyList<string> Policies);
+    IReadOnlyList<string> Policies,
+    Type? EndpointType)
+{
+    /// <summary>Namespace of the IEndpoint class that mapped the route (Features.&lt;Area&gt;…).</summary>
+    public string Namespace => EndpointType?.Namespace ?? string.Empty;
+}
 
 /// <summary>
 /// Plan decision PD-2: proves the route table without Microsoft.AspNetCore.Mvc.Testing.
@@ -66,7 +71,19 @@ public static class EndpointCatalog
                     .Select(a => a.Policy)
                     .Where(p => !string.IsNullOrEmpty(p))
                     .Select(p => p!)
-                    .ToList()))
+                    .ToList(),
+                OwningEndpoint(e.Metadata.GetMetadata<System.Reflection.MethodInfo>())))
             .ToList();
+    }
+
+    /// <summary>The IEndpoint class whose Map registered the handler (the lambda lives in a nested closure type).</summary>
+    private static Type? OwningEndpoint(System.Reflection.MethodInfo? handler)
+    {
+        for (var t = handler?.DeclaringType; t is not null; t = t.DeclaringType)
+        {
+            if (typeof(BBMB.BudgetService.Shared.Endpoints.IEndpoint).IsAssignableFrom(t))
+                return t;
+        }
+        return null;
     }
 }

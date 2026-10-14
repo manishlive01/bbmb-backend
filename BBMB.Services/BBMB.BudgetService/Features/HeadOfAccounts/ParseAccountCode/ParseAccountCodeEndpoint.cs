@@ -23,6 +23,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.ParseAccountCode
                     return Results.BadRequest(new { error = "invalid_account_code", message = ex.Message });
                 }
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("ParseAccountCode")
             .WithTags("HeadOfAccounts")
             .Produces<ParseAccountCodeResponseDto>(StatusCodes.Status200OK)

@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Create
                         : Results.BadRequest(response);
                
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("CreateMinorHead")
             .WithTags("MinorHeads")
             .Produces<Response>(StatusCodes.Status201Created)

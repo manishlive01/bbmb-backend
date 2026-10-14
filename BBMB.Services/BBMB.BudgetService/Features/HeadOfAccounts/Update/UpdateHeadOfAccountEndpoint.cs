@@ -38,6 +38,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Update
                     : Results.NotFound(response);
             })
 
+ .RequireAuthorization("BudgetRight:F01.Create")
  .WithName("UpdateHeadOfAccount")
  .WithTags("HeadOfAccounts")
  .Produces<Response>(StatusCodes.Status200OK)

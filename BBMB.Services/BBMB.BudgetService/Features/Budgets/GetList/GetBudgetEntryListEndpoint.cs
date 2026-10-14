@@ -35,7 +35,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
-            .RequireAuthorization("Budget:Admin")
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetBudgetEntryList")
             .WithTags("BudgetEntries")
             .Produces<PagedResponse<GetBudgetEntryListResponseDto>>(StatusCodes.Status200OK);

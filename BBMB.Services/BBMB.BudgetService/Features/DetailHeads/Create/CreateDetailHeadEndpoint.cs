@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.Create
                     ? Results.Created($"/api/detail-heads/{dto.DetailAccCode}", response)
                     : Results.Conflict(response);
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("CreateDetailHead")
             .WithTags("DetailHeads")
             .Produces(201)

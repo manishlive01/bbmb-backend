@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.Works.Update
                     ? Results.Ok(response)
                     : Results.NotFound(response);
             })
+            .RequireAuthorization("BudgetRight:Works.Enter")
             .WithName("UpdateWork")
             .WithTags("Works")
             .Produces<Response>(StatusCodes.Status200OK)

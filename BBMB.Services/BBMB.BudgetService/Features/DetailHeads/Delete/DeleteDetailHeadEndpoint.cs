@@ -22,6 +22,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.Delete
 
                 return Results.NoContent();
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("DeleteDetailHead")
             .WithTags("DetailHeads")
             .Produces(204)

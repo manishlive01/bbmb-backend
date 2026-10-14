@@ -29,6 +29,7 @@ namespace BBMB.BudgetService.Features.Estimates.Update
 
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Legacy.BudgetEntry")
             .WithName("UpdateEstimate")
             .WithTags("Estimates")
             .Produces<Response<string>>(200)

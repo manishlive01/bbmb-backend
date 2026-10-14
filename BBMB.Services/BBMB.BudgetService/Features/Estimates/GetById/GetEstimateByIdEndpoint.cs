@@ -24,6 +24,7 @@ namespace BBMB.BudgetService.Features.Estimates.GetById
 
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetEstimateById")
             .WithTags("Estimates")
             .Produces<Response<GetEstimateByIdResponseDto>>(200)

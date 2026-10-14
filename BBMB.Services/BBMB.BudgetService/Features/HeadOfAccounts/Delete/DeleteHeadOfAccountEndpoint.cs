@@ -40,6 +40,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.Delete
 
                 return Results.NoContent();
             })
+ .RequireAuthorization("BudgetRight:F01.Create")
  .WithName("DeleteHeadOfAccount")
  .WithTags("HeadOfAccounts")
  .Produces(StatusCodes.Status204NoContent)

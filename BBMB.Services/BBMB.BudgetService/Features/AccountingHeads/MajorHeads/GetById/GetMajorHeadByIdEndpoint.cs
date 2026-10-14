@@ -22,6 +22,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.GetById
                     ? Results.NotFound("Major Head not found")
                     : Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .Produces<GetMajorHeadByIdResponseDto>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
             .WithSummary("Get Major Head By Id")

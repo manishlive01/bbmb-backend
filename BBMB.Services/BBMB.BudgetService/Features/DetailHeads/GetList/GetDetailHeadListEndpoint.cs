@@ -43,6 +43,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.GetList
                 var result = await sender.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetDetailHeadList")
             .WithTags("DetailHeads")
             .Produces(200);

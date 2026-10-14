@@ -26,6 +26,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Update
 
                 return Results.Ok(new { message = result.Message });
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("UpdateSubMinorHead")
             .WithTags("SubMinorHeads")
             .Produces(StatusCodes.Status200OK)

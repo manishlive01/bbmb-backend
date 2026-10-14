@@ -17,6 +17,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MajorHeads.GetList
 
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .Produces<List<GetMajorHeadListResponseDto>>(StatusCodes.Status200OK)
             .WithSummary("Get Major Head List")
             .WithDescription("Returns list of major heads directly without response wrapper")

@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.Budgets.Create
 
                 return Results.Created($"/api/budgets", response);
             })
+            .RequireAuthorization("BudgetRight:Legacy.BudgetEntry")
             .WithName("CreateBudgetEntry")
             .WithTags("Budgets")
             .WithSummary("Create a new budget entry")

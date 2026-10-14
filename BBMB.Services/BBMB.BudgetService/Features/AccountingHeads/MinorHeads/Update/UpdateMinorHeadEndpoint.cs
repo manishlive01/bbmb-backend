@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Update
                     ? Results.Ok(response)
                     : Results.NotFound(response);
             })
+            .RequireAuthorization("BudgetRight:F01.Create")
             .WithName("UpdateMinorHead")
             .WithTags("MinorHeads")
             .Produces<Response>(StatusCodes.Status200OK)

@@ -17,6 +17,7 @@ namespace BBMB.BudgetService.Features.Estimates.Delete
                     ? Results.NoContent()
                     : Results.NotFound(response);
             })
+            .RequireAuthorization("BudgetRight:Legacy.BudgetEntry")
             .WithName("DeleteEstimate")
             .WithTags("Estimates")
             .Produces(StatusCodes.Status204NoContent)

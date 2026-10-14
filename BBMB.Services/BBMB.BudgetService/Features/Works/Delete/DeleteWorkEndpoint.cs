@@ -23,6 +23,7 @@ namespace BBMB.BudgetService.Features.Works.Delete
 
                 return Results.NoContent();
             })
+            .RequireAuthorization("BudgetRight:Works.Enter")
             .WithName("DeleteWork")
             .WithTags("Works")
             .Produces(StatusCodes.Status204NoContent)

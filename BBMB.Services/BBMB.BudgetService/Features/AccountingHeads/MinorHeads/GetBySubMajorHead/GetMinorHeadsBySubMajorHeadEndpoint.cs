@@ -14,6 +14,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.MinorHeads.GetBySubMajorHe
                 var result = await mediator.Send(query);
                 return Results.Ok(new { message = "Minor heads retrieved successfully", data = result });
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetMinorHeadsBySubMajorHead")
             .WithTags("MinorHeads")
             .Produces<List<GetMinorHeadsBySubMajorHeadResponseDto>>(StatusCodes.Status200OK);
