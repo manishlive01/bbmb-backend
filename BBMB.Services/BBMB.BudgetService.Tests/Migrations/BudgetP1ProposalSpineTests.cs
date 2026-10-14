@@ -42,27 +42,11 @@ public sealed class BudgetP1ProposalSpineTests(BudgetDatabaseFixture fixture) : 
         "INSERT INTO budget.demand_line (proposal_id, line_type, serial_no, work_id, account_code_id, rbe_amount, obe_next_amount) " +
         $"VALUES ({proposalId ?? _w.WorksProposalAId}, 'WORK', {serial}, {workId}, {_w.AccountCodeId}, {rbe}, 50) RETURNING demand_line_id";
 
-    /// <summary>
-    /// T-16 arrives with BudgetP1StateTransitionSeed (the next migration). Until then DB-10/DB-12 cannot pass,
-    /// so the tests that move a proposal create a stand-in T-16 holding the one triple they use, in their own
-    /// throwaway database. Once the real table exists the statement is a no-op.
-    /// </summary>
-    private async Task EnsureTransitionAsync(NpgsqlConnection c, NpgsqlTransaction tx, string from, string action, string to)
-    {
-        await ExecAsync(c, tx,
-            "CREATE TABLE IF NOT EXISTS budget.state_transition (from_state varchar(4), action_code varchar(20), " +
-            "to_state varchar(4), remark_required boolean NOT NULL DEFAULT false, PRIMARY KEY (from_state, action_code, to_state))");
-        await ExecAsync(c, tx,
-            $"INSERT INTO budget.state_transition (from_state, action_code, to_state, remark_required) " +
-            $"VALUES ('{from}', '{action}', '{to}', false) ON CONFLICT DO NOTHING");
-    }
-
     /// <summary>Moves the WORKS proposal of Division A from S-01 to S-02 with its movement row (DB-10 positive path).</summary>
     private async Task<long> SubmitProposalAAsync()
     {
         var (c, tx) = await _w.BeginAsync(_w.DivisionA, "SUBMIT");
         await using var _ = c;
-        await EnsureTransitionAsync(c, tx, "S-01", "SUBMIT", "S-02");
         var movement = await ExecScalarAsync(c, tx,
             "INSERT INTO budget.proposal_movement (proposal_id, from_state, action_code, to_state, from_office_id, to_office_id, role_code, client_ip) " +
             $"VALUES ({_w.WorksProposalAId}, 'S-01', 'SUBMIT', 'S-02', {_w.DivisionAOfficeId}, {_w.CircleOfficeId}, 'DDO', '192.0.2.1') RETURNING movement_id");

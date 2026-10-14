@@ -134,15 +134,12 @@ public sealed class BudgetP1FiguresAndRecommendationsTests(BudgetDatabaseFixture
             "INSERT INTO budget.demand_line (proposal_id, line_type, serial_no, work_id, account_code_id, rbe_amount, obe_next_amount) " +
             $"VALUES ({_w.WorksProposalAId}, 'WORK', 1, {_w.WorkAId}, {_w.AccountCodeId}, 500, 50) RETURNING demand_line_id");
 
-        // Move to S-03 at the Circle (stand-in T-16 until BudgetP1StateTransitionSeed; see BudgetP1ProposalSpineTests).
+        // Move to S-03 at the Circle: SUBMIT (T01) then OPEN (T05).
         var (c, tx) = await _w.BeginAsync(_w.Circle, "OPEN");
         await using (c)
         {
             foreach (var sql in new[]
                      {
-                         "CREATE TABLE IF NOT EXISTS budget.state_transition (from_state varchar(4), action_code varchar(20), to_state varchar(4), " +
-                         "remark_required boolean NOT NULL DEFAULT false, PRIMARY KEY (from_state, action_code, to_state))",
-                         "INSERT INTO budget.state_transition VALUES ('S-01','SUBMIT','S-02',false), ('S-02','OPEN','S-03',false) ON CONFLICT DO NOTHING",
                          "INSERT INTO budget.proposal_movement (proposal_id, from_state, action_code, to_state, from_office_id, to_office_id, role_code, client_ip) " +
                          $"VALUES ({_w.WorksProposalAId}, 'S-01', 'SUBMIT', 'S-02', {_w.DivisionAOfficeId}, {_w.CircleOfficeId}, 'DDO', '192.0.2.1'), " +
                          $"({_w.WorksProposalAId}, 'S-02', 'OPEN', 'S-03', {_w.CircleOfficeId}, {_w.CircleOfficeId}, 'SE', '192.0.2.1')",

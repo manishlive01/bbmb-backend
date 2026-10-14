@@ -29,6 +29,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<AuditLogEntry> AuditLog { get; set; }
         public DbSet<BudgetCycle> BudgetCycles { get; set; }
         public DbSet<ProposalState> ProposalStates { get; set; }
+        public DbSet<StateTransition> StateTransitions { get; set; }
         public DbSet<BudgetSetting> BudgetSettings { get; set; }
         public DbSet<BudgetProposal> BudgetProposals { get; set; }
         public DbSet<DemandLine> DemandLines { get; set; }
@@ -195,7 +196,11 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 e.HasOne<BudgetProposal>().WithMany().HasForeignKey(x => x.ProposalId).OnDelete(DeleteBehavior.Restrict);
                 e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.FromOfficeId).OnDelete(DeleteBehavior.Restrict);
                 e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.ToOfficeId).OnDelete(DeleteBehavior.Restrict);
-                // The composite FK (from_state, action_code, to_state) → T-16 is added by BudgetP1StateTransitionSeed.
+                // DV-07: a move outside the model cannot be written (BUD-235). Added by BudgetP1StateTransitionSeed.
+                e.HasOne<StateTransition>().WithMany()
+                    .HasForeignKey(x => new { x.FromState, x.ActionCode, x.ToState })
+                    .HasConstraintName("fk_proposal_movement_state_transition")
+                    .OnDelete(DeleteBehavior.Restrict);
                 ConfigureActorColumns(e);
             });
 
@@ -256,6 +261,14 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 e.Property(x => x.LevelFigures).HasColumnType("jsonb");
             });
             modelBuilder.Entity<DemandByCeRow>(e => e.HasNoKey().ToView("v_demand_by_ce", "budget"));
+
+            // ---------------- T-16 state_transition (seeded, design §6.2) ----------------
+            modelBuilder.Entity<StateTransition>(e =>
+            {
+                e.HasKey(x => new { x.FromState, x.ActionCode, x.ToState });
+                e.HasOne<ProposalState>().WithMany().HasForeignKey(x => x.FromState).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<ProposalState>().WithMany().HasForeignKey(x => x.ToState).OnDelete(DeleteBehavior.Restrict);
+            });
 
             // ---------------- T-17 setting ----------------
             modelBuilder.Entity<BudgetSetting>(e =>

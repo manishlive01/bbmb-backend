@@ -1237,6 +1237,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("ProposalId", "CreatedAt");
 
+                    b.HasIndex("FromState", "ActionCode", "ToState");
+
                     b.ToTable("proposal_movement", "budget");
                 });
 
@@ -1266,6 +1268,34 @@ namespace BBMB.BudgetService.Migrations
                     b.HasKey("StateCode");
 
                     b.ToTable("state", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities.StateTransition", b =>
+                {
+                    b.Property<string>("FromState")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("from_state");
+
+                    b.Property<string>("ActionCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("action_code");
+
+                    b.Property<string>("ToState")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("to_state");
+
+                    b.Property<bool>("RemarkRequired")
+                        .HasColumnType("boolean")
+                        .HasColumnName("remark_required");
+
+                    b.HasKey("FromState", "ActionCode", "ToState");
+
+                    b.HasIndex("ToState");
+
+                    b.ToTable("state_transition", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Recommendations.Entities.CeRecommendation", b =>
@@ -3161,6 +3191,28 @@ namespace BBMB.BudgetService.Migrations
                     b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Offices.Entities.BudgetOffice", null)
                         .WithMany()
                         .HasForeignKey("ToOfficeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities.StateTransition", null)
+                        .WithMany()
+                        .HasForeignKey("FromState", "ActionCode", "ToState")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_proposal_movement_state_transition");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities.StateTransition", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities.ProposalState", null)
+                        .WithMany()
+                        .HasForeignKey("FromState")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities.ProposalState", null)
+                        .WithMany()
+                        .HasForeignKey("ToState")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

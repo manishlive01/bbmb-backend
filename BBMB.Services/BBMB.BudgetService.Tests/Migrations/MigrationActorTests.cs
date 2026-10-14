@@ -21,6 +21,7 @@ public sealed class MigrationActorTests(BudgetDatabaseFixture fixture)
     [
         ("BudgetP1ReferenceStateAndAudit", ["office", "state", "setting"]),
         ("BudgetP1ProposalSpineMasters", ["budget_head_master", "work"]),
+        ("BudgetP1StateTransitionSeed", ["state_transition"]),
     ];
 
     private static async Task<string?> ScalarAsync(string cs, string sql)
