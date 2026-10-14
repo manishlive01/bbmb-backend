@@ -24,8 +24,8 @@ namespace BBMB.BudgetService.Features.Estimates.Entities
         [Column("estimate_desc")]
         public string? EstimateDesc { get; set; }
 
+        // Column type budget.rupees, configured in BudgetContext (design §4.5).
         [Column("estimate_amt")]
-        [Precision(12, 2)]
         public decimal? EstimateAmt { get; set; }
 
         [MaxLength(600)]

@@ -166,8 +166,7 @@ namespace BBMB.BudgetService.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<decimal?>("BudgetAmount")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
+                        .HasColumnType("budget.rupees")
                         .HasColumnName("budget_amount");
 
                     b.Property<string>("BudgetDescription")
@@ -229,13 +228,11 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(3)");
 
                     b.Property<decimal?>("ProposedBudget")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
+                        .HasColumnType("budget.rupees")
                         .HasColumnName("proposed_budget");
 
                     b.Property<decimal?>("RevisedAmount")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
+                        .HasColumnType("budget.rupees")
                         .HasColumnName("revised_amount");
 
                     b.Property<int>("SequenceNo")
@@ -417,8 +414,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("division_code");
 
                     b.Property<decimal?>("EstimateAmt")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
+                        .HasColumnType("budget.rupees")
                         .HasColumnName("estimate_amt");
 
                     b.Property<string>("EstimateDesc")
@@ -1323,8 +1319,7 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("division_id");
 
                     b.Property<decimal?>("EstimatedCost")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)")
+                        .HasColumnType("budget.rupees")
                         .HasColumnName("estimated_cost");
 
                     b.Property<string>("FinYrEnd")

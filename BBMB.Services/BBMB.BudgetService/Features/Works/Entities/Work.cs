@@ -61,12 +61,16 @@ namespace BBMB.BudgetService.Features.Works.Entities
 
  
 
+        // D-5: amounts held as text. Not converted (design §4.5); the budget process never reads them. Removal is OI-10.
+        [Obsolete("D-5: text amount, not read by the budget process; removal is OI-10.")]
         [Column("original_budget")]
         public string OriginalBudget { get; set; } = string.Empty;
 
+        [Obsolete("D-5: text amount, not read by the budget process; removal is OI-10.")]
         [Column("revised_budget")]
         public string RevisedBudget { get; set; } = string.Empty;
 
+        [Obsolete("D-5: text amount, not read by the budget process; removal is OI-10.")]
         [Column("proposed_budget")]
         public string ProposedBudget { get; set; } = string.Empty;
 
@@ -93,8 +97,8 @@ namespace BBMB.BudgetService.Features.Works.Entities
         [Column("designation_code")]
         public string? DesignationCode { get; set; }
 
+        // Column type budget.rupees, configured in BudgetContext (design §4.5).
         [Column("estimated_cost")]
-        [Precision(12, 2)]
         public decimal? EstimatedCost { get; set; }
 
         [MaxLength(1)]

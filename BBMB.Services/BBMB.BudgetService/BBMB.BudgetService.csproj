@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Hand SQL executed by migrations (design §11.1 rule 2), read through SqlResource. -->
+    <EmbeddedResource Include="Infrastructure\Persistence\BudgetContexts\Sql\*.sql" />
+  </ItemGroup>
+  <ItemGroup>
 	  <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
 	  <PackageReference Include="Dapper" Version="2.1.79" />
 	  <PackageReference Include="EPPlus" Version="8.7.0" />

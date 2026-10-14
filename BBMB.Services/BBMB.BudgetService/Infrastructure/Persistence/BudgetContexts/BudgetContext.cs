@@ -66,12 +66,25 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<CRManagement> CRManagements { get; set; }
         public DbSet<CRSection> CRSections { get; set; }
         public DbSet<Levels> Levels { get; set; }
+        /// <summary>DDD §1.7: numeric(15,2), whole rupees, |v| &lt;= 9999999999999.</summary>
+        public const string RupeesColumnType = "budget.rupees";
+
+        /// <summary>DDD §1.7: numeric(17,2), unrounded figures from Financial Accounting (BUD-266).</summary>
+        public const string RupeesPaiseColumnType = "budget.rupees_paise";
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // DEFAULT SCHEMA FOR BUDGET
             modelBuilder.HasDefaultSchema("budget");
 
             base.OnModelCreating(modelBuilder);
+            // Money: whole rupees, DDD §1.7 domain budget.rupees (design §4.5). The domain is created by
+            // migration BudgetP1RupeesAndMoneyColumns before the columns are altered to it.
+            modelBuilder.Entity<BudgetEntry>().Property(e => e.BudgetAmount).HasColumnType(RupeesColumnType);
+            modelBuilder.Entity<BudgetEntry>().Property(e => e.RevisedAmount).HasColumnType(RupeesColumnType);
+            modelBuilder.Entity<BudgetEntry>().Property(e => e.ProposedBudget).HasColumnType(RupeesColumnType);
+            modelBuilder.Entity<Estimate>().Property(e => e.EstimateAmt).HasColumnType(RupeesColumnType);
+            modelBuilder.Entity<Work>().Property(e => e.EstimatedCost).HasColumnType(RupeesColumnType);
 
             // Configure composite key for Estimate
             modelBuilder.Entity<Estimate>()
