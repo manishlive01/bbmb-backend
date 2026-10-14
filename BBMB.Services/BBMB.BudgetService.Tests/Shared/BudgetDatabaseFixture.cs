@@ -53,6 +53,8 @@ public sealed class BudgetDatabaseFixture : IAsyncLifetime
             .WithDatabase(DatabaseName)
             .WithUsername("postgres")
             .WithPassword("postgres")
+            // Many test classes create a database of their own; each keeps a small connection pool.
+            .WithCommand("-c", "max_connections=1000")
             .Build();
         await _container.StartAsync();
 
@@ -111,7 +113,13 @@ public sealed class BudgetDatabaseFixture : IAsyncLifetime
             await cmd.ExecuteNonQueryAsync();
         }
 
-        var cs = new NpgsqlConnectionStringBuilder(PlainConnectionString) { Database = name }.ConnectionString;
+        var cs = new NpgsqlConnectionStringBuilder(PlainConnectionString)
+        {
+            Database = name,
+            MaxPoolSize = 10,
+            ConnectionIdleLifetime = 10,
+            ConnectionPruningInterval = 5,
+        }.ConnectionString;
         await PrepareDatabaseAsync(cs, gates ?? AllGates);
         return cs;
     }

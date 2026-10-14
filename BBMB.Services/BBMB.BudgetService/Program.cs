@@ -83,6 +83,12 @@ builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetActors.IBudg
     BBMB.BudgetService.Shared.Services.BudgetActors.HttpBudgetActorSource>();
 builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetActors.IBudgetActionScope,
     BBMB.BudgetService.Shared.Services.BudgetActors.BudgetActionScope>();
+// External boundary (design §4.11): no gateway integrated, nothing is sent.
+builder.Services.AddSingleton<BBMB.BudgetService.Shared.Services.Notifications.IBudgetNotificationGateway,
+    BBMB.BudgetService.Shared.Services.Notifications.NoOpBudgetNotificationGateway>();
+// The single path by which a proposal moves (design §6.2).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.IProposalTransitionService,
+    BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.ProposalTransitionService>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
