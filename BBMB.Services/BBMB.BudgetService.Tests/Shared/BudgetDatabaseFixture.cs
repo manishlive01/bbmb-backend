@@ -90,6 +90,13 @@ public sealed class BudgetDatabaseFixture : IAsyncLifetime
     public BudgetContext NewMigrationBudgetContext(string connectionString) =>
         NewBudgetContext(MigrationConnectionString(connectionString));
 
+    /// <summary>A migration connection naming an arbitrary officer (negative tests).</summary>
+    public static string MigrationConnectionString(string connectionString, Guid employeeId, Guid chargeId) =>
+        new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            Options = $"-c bbmb_migration.actor_employee_id={employeeId} -c bbmb_migration.actor_charge_id={chargeId}",
+        }.ConnectionString;
+
     /// <summary>
     /// Creates an empty database in the same container, migrates EmployeeContext into it, inserts the
     /// migration officer and sets the given gates. BudgetContext is NOT migrated; use
