@@ -51,4 +51,17 @@ public sealed class BudgetResultsTests
         r.MessageId.Should().Be("M-06");
         r.Message.Should().StartWith("M-06: The technical sanctions");
     }
+    [Fact]
+    public void BUD096_rule_failures_returned_as_base_Response_keep_Data_in_the_409_body()
+    {
+        Response refusal = BudgetResponses.RuleFailures(new RuleFailuresDto
+        {
+            Failures = [new RuleFailureItemDto(1, 1, "workId", BudgetMessages.M21, "x")],
+        });
+        var result = BudgetResults.Ok(refusal);
+        Status(result).Should().Be(StatusCodes.Status409Conflict);
+        var body = (result as IValueHttpResult)!.Value;
+        body.Should().BeOfType<Response<RuleFailuresDto>>("the runtime type is serialised, not the declared base type");
+        System.Text.Json.JsonSerializer.Serialize(body).Should().Contain("\"Failures\"");
+    }
 }

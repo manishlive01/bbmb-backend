@@ -1,4 +1,8 @@
 using BBMB.BudgetService.Tests.Shared;
+using BBMB.BudgetService.Features.BudgetProcess.Proposals.Dtos;
+using BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules;
+using BBMB.BudgetService.Shared.Messages;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,11 +18,14 @@ public sealed class ProposalTransitionServiceTests(BudgetDatabaseFixture fixture
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    private async Task<BBMB.BudgetService.Shared.ResponseDTOs.Response<BBMB.BudgetService.Features.BudgetProcess.Proposals.Dtos.ProposalStateResponseDto>>
+    private async Task<Response<ProposalStateResponseDto>>
         MoveAsync(FakeBudgetActorSource actor, string action, string? remark = null, FakeAuthorizationService? auth = null)
     {
         await using var ctx = _w.NewContext();
-        return await TestServices.Transitions(ctx, actor, auth).MoveAsync(_w.WorksProposalAId, action, remark);
+        var r = await TestServices.Transitions(ctx, actor, auth).MoveAsync(_w.WorksProposalAId, action, remark);
+        // Non-hook results are always Response<ProposalStateResponseDto> (success) or a plain failure.
+        return r as Response<ProposalStateResponseDto>
+            ?? new Response<ProposalStateResponseDto> { IsSucced = r.IsSucced, MessageId = r.MessageId, Message = r.Message };
     }
 
     [Fact]
@@ -106,5 +113,33 @@ public sealed class ProposalTransitionServiceTests(BudgetDatabaseFixture fixture
 
         (await service.IsStateModelAvailableAsync()).Should().BeFalse();
         (await service.MoveAsync(12345, "SUBMIT", null)).MessageId.Should().Be("M-19");
+    }
+
+    [Fact]
+    public async Task BUD096_BeforeMove_refusal_reaches_the_caller_with_every_failure_and_writes_nothing()
+    {
+        var hooks = new TransitionHooks
+        {
+            BeforeMove = (_, _) => Task.FromResult<Response?>(BudgetResponses.RuleFailures(new RuleFailuresDto
+            {
+                Failures =
+                [
+                    new RuleFailureItemDto(11, 1, "workId", BudgetMessages.M21, BudgetMessages.Format(BudgetMessages.M21)),
+                    new RuleFailureItemDto(12, 2, "demandAmount", BudgetMessages.M22, BudgetMessages.Format(BudgetMessages.M22)),
+                ],
+            })),
+        };
+        await using (var ctx = _w.NewContext())
+        {
+            var r = await TestServices.Transitions(ctx, _w.DivisionA).MoveAsync(_w.WorksProposalAId, "SUBMIT", null, default, hooks);
+            r.IsSucced.Should().BeFalse();
+            r.MessageId.Should().Be("M-21");
+            var failures = r.Should().BeOfType<Response<RuleFailuresDto>>().Subject.Data!.Failures;
+            failures.Select(f => f.SerialNo).Should().Equal(1, 2);
+        }
+
+        await using var check = _w.NewContext();
+        (await check.ProposalMovements.AsNoTracking().CountAsync(m => m.ProposalId == _w.WorksProposalAId)).Should().Be(0);
+        (await check.BudgetProposals.AsNoTracking().SingleAsync(p => p.ProposalId == _w.WorksProposalAId)).StateCode.Should().Be("S-01");
     }
 }

@@ -29,7 +29,13 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
         /// </summary>
         Task<bool> IsStateModelAvailableAsync(CancellationToken ct = default);
 
-        Task<Response<ProposalStateResponseDto>> MoveAsync(
+        /// <summary>
+        /// Moves the proposal. Success is a <c>Response&lt;ProposalStateResponseDto&gt;</c>; a refusal by a
+        /// <see cref="TransitionHooks.BeforeMove"/> hook is returned unchanged (for example a
+        /// <c>Response&lt;RuleFailuresDto&gt;</c>, design §4.9); every other refusal is a plain catalogued failure.
+        /// Endpoints pass the result to <c>BudgetResults</c>, which serialises the runtime type.
+        /// </summary>
+        Task<Response> MoveAsync(
             long proposalId, string action, string? remark, CancellationToken ct = default, TransitionHooks? hooks = null);
     }
 }

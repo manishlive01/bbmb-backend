@@ -21,14 +21,16 @@ namespace BBMB.BudgetService.Shared.Endpoints
 
             return response.MessageId switch
             {
-                BudgetMessages.M20 => Results.Json(response, statusCode: StatusCodes.Status403Forbidden),
-                BudgetMessages.NotFound => Results.NotFound(response),
-                _ => Results.Conflict(response),
+                // Bodies are written as object so the runtime type is serialised: a handler may return the base
+                // Response type carrying a Response<RuleFailuresDto> (design §4.9), whose Data must not be dropped.
+                BudgetMessages.M20 => Results.Json((object)response, statusCode: StatusCodes.Status403Forbidden),
+                BudgetMessages.NotFound => Results.NotFound((object)response),
+                _ => Results.Conflict((object)response),
             };
         }
 
         /// <summary>Success → 200 with the response body.</summary>
         public static IResult Ok<TResponse>(TResponse response) where TResponse : Response =>
-            From(response, r => Results.Ok(r));
+            From(response, r => Results.Ok((object)r));
     }
 }

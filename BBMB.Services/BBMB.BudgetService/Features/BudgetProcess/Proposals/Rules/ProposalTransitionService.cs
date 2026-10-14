@@ -48,7 +48,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
             return present;
         }
 
-        public async Task<Response<ProposalStateResponseDto>> MoveAsync(
+        public async Task<Response> MoveAsync(
             long proposalId, string action, string? remark, CancellationToken ct = default, TransitionHooks? hooks = null)
         {
             hooks ??= TransitionHooks.None;
@@ -97,15 +97,10 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
             ProposalMovement movement;
             await using (var tx = await scope.BeginAsync(action, ct: ct))
             {
+                // The hook's refusal is returned as-is so a Response<RuleFailuresDto> keeps Data.Failures[]
+                // (design §4.9, BUD-096, BUD-100). Disposing the scope uncommitted rolls back anything it read or locked.
                 if (hooks.BeforeMove is not null && await hooks.BeforeMove(proposal, ct) is { } refusal)
-                {
-                    return new Response<ProposalStateResponseDto>
-                    {
-                        IsSucced = false,
-                        MessageId = refusal.MessageId,
-                        Message = refusal.Message,
-                    };
-                }
+                    return refusal;
 
                 movement = new ProposalMovement
                 {
