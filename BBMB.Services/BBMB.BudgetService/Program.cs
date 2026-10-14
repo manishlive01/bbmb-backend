@@ -117,6 +117,9 @@ builder.Services.AddAuthentication("Bearer")
 // 🔐 CUSTOM PROJECT ROLE AUTHORIZATION
 // ======================================================
 builder.Services.AddProjectRoleAuthorization();
+// Rights matrix read at each evaluation through IOptionsMonitor (design §4.4, BUD-033).
+builder.Services.Configure<Auth.Authorization.Requirements.BudgetRightsOptions>(
+    builder.Configuration.GetSection(Auth.Authorization.Requirements.BudgetRightsOptions.SectionName));
 
 builder.Services.AddOpenApi(options =>
 {

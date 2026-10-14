@@ -10,6 +10,8 @@ namespace BBMB.BudgetService.Authorization.Extension
             this IServiceCollection services)
         {
             services.AddSingleton<IAuthorizationHandler, ProjectRoleHandler>();
+            // BudgetRight:<key> policies (design §4.4).
+            services.AddSingleton<IAuthorizationHandler, BudgetRightHandler>();
             services.AddSingleton<IAuthorizationPolicyProvider, ProjectRolePolicyProvider>();
 
             return services;

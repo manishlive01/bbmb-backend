@@ -21,6 +21,17 @@ namespace Auth.Authorization.PolicyProvider
             if (existingPolicy != null)
                 return existingPolicy;
 
+            // Format: BudgetRight:<key> (design §4.4). Checked ahead of the ProjectName:Roles parse, which
+            // would otherwise read "BudgetRight" as a project name. The policy carries the key only.
+            if (policyName.StartsWith(BudgetRightRequirement.PolicyPrefix, StringComparison.Ordinal))
+            {
+                var key = policyName[BudgetRightRequirement.PolicyPrefix.Length..];
+                if (string.IsNullOrWhiteSpace(key))
+                    return null;
+                return new AuthorizationPolicyBuilder()
+                    .AddRequirements(new BudgetRightRequirement(key))
+                    .Build();
+            }
             // Format: ProjectName:Role1,Role2
             if (!policyName.Contains(":"))
                 return null;
