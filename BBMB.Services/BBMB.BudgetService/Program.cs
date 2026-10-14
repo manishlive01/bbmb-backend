@@ -76,6 +76,13 @@ builder.Services.AddScoped<IFileStorageService,  FileStorageService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IChargeResolver, ChargeResolver>();
+// Budget process: actor, action scope (DDD §7.1) and office scope (design §4.3, §4.4).
+builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetOffices.IBudgetOfficeScope,
+    BBMB.BudgetService.Shared.Services.BudgetOffices.BudgetOfficeScope>();
+builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetActors.IBudgetActorSource,
+    BBMB.BudgetService.Shared.Services.BudgetActors.HttpBudgetActorSource>();
+builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetActors.IBudgetActionScope,
+    BBMB.BudgetService.Shared.Services.BudgetActors.BudgetActionScope>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================

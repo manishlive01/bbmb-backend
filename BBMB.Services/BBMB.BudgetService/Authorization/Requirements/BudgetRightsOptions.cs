@@ -13,5 +13,13 @@ namespace Auth.Authorization.Requirements
         public string ProjectName { get; set; } = "Budget";
 
         public Dictionary<string, string[]> Rights { get; set; } = new(StringComparer.Ordinal);
+
+        /// <summary>
+        /// Acting role → T-13 office level the role acts from (design §4.4 "Office"): DIVISION, CIRCLE and CE
+        /// resolve through the charge's division_id, cr_id and ce_id; FINANCE, SECRETARIAT and IT_CELL by role,
+        /// because employee_charge carries no Finance or Secretariat office (OI-08). Held in configuration with
+        /// the rights, so no role name is fixed in code (BUD-033).
+        /// </summary>
+        public Dictionary<string, string> RoleOfficeLevels { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     }
 }

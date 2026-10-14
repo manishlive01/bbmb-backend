@@ -42,9 +42,11 @@ public static class DbActor
     public static async Task<(Guid EmployeeId, Guid ChargeId, Guid UserId)> NewEmployeeWithChargeAsync(
         BudgetDatabaseFixture fixture, string projectCode = "BU", DateTime? chargeExpireTime = null,
         bool isActive = true, bool isChargeExpire = false, int? ceId = 0, int? crId = null, int? divisionId = null,
-        string name = "Test Officer")
+        string name = "Test Officer", string? connectionString = null)
     {
-        await using var emp = fixture.NewEmployeeContext();
+        await using var emp = connectionString is null
+            ? fixture.NewEmployeeContext()
+            : BudgetDatabaseFixture.NewEmployeeContext(connectionString);
         var template = await emp.Employees.AsNoTracking().FirstAsync(e => e.Id == fixture.MigrationEmployeeId);
         var e = new Employee
         {
