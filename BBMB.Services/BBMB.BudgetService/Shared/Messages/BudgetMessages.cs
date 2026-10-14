@@ -104,7 +104,12 @@ namespace BBMB.BudgetService.Shared.Messages
         /// Unique-constraint name → message id for 23505 (design §4.9). Filled as the constraints that
         /// carry a uniqueness message arrive in each phase's migration.
         /// </summary>
-        private static readonly Dictionary<string, string> UniqueConstraintMessages = new(StringComparer.Ordinal);
+        private static readonly Dictionary<string, string> UniqueConstraintMessages = new(StringComparer.Ordinal)
+        {
+            // T-30 partial UKs (BudgetContext.UxDemandLineWork / UxDemandLineHead).
+            ["ux_demand_line_work"] = M25, // a work once in a demand (BUD-104)
+            ["ux_demand_line_head"] = M35, // one head once in a head-wise demand (VR-14, BUD-310)
+        };
 
         /// <summary>Every catalogued id with its text.</summary>
         public static IReadOnlyDictionary<string, string> All => Catalogue;

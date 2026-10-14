@@ -1,5 +1,7 @@
 using BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Cycles.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Observations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Settings.Entities;
@@ -27,6 +29,15 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<BudgetCycle> BudgetCycles { get; set; }
         public DbSet<ProposalState> ProposalStates { get; set; }
         public DbSet<BudgetSetting> BudgetSettings { get; set; }
+        public DbSet<BudgetProposal> BudgetProposals { get; set; }
+        public DbSet<DemandLine> DemandLines { get; set; }
+        public DbSet<FigureVersion> FigureVersions { get; set; }
+        public DbSet<Observation> Observations { get; set; }
+        public DbSet<ProposalMovement> ProposalMovements { get; set; }
+
+        /// <summary>Partial UK names whose 23505 maps to a catalogue message (design §4.9).</summary>
+        public const string UxDemandLineWork = "ux_demand_line_work";
+        public const string UxDemandLineHead = "ux_demand_line_head";
 
         private static void ConfigureBudgetProcess(ModelBuilder modelBuilder)
         {
@@ -104,6 +115,81 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
             modelBuilder.Entity<ProposalState>(e =>
             {
                 e.HasKey(x => x.StateCode);
+            });
+
+            // ---------------- T-29 proposal ----------------
+            modelBuilder.Entity<BudgetProposal>(e =>
+            {
+                e.Property(x => x.ProposalId).UseIdentityAlwaysColumn();
+                e.HasIndex(x => new { x.CycleId, x.Category, x.OriginOfficeId }).IsUnique();
+                e.HasIndex(x => new { x.CycleId, x.Category, x.StateCode });
+                e.HasIndex(x => new { x.HolderOfficeId, x.StateCode });
+                e.HasOne<BudgetCycle>().WithMany().HasForeignKey(x => x.CycleId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.OriginOfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.HolderOfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<ProposalState>().WithMany().HasForeignKey(x => x.StateCode).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-30 demand_line ----------------
+            modelBuilder.Entity<DemandLine>(e =>
+            {
+                e.Property(x => x.DemandLineId).UseIdentityAlwaysColumn();
+                e.Property(x => x.RbeAmount).HasColumnType(RupeesColumnType);
+                e.Property(x => x.ObeNextAmount).HasColumnType(RupeesColumnType);
+                e.Property(x => x.PctCheckNotApplied).HasDefaultValue(false);
+                e.Property(x => x.FloorCheckUnchecked).HasDefaultValue(false);
+                e.Property(x => x.AddedOnReturn).HasDefaultValue(false);
+                e.Property(x => x.IsDeleted).HasDefaultValue(false);
+                e.HasIndex(x => new { x.ProposalId, x.SerialNo }).IsUnique();
+                // A work once in a demand (BUD-104, M-25); one head once in a head-wise demand (VR-14, M-35).
+                e.HasIndex(x => new { x.ProposalId, x.WorkId }).IsUnique()
+                    .HasDatabaseName(UxDemandLineWork).HasFilter("NOT is_deleted AND line_type = 'WORK'");
+                e.HasIndex(x => new { x.ProposalId, x.AccountCodeId }).IsUnique()
+                    .HasDatabaseName(UxDemandLineHead).HasFilter("NOT is_deleted AND line_type = 'HEAD'");
+                e.HasOne<BudgetProposal>().WithMany().HasForeignKey(x => x.ProposalId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.WorkId).OnDelete(DeleteBehavior.Restrict);
+                // account_code_id → budget_head_master(account_code_id) is added by SQL (unique index, not the PK).
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-31 figure_version (trigger-written only) ----------------
+            modelBuilder.Entity<FigureVersion>(e =>
+            {
+                e.Property(x => x.FigureVersionId).UseIdentityAlwaysColumn();
+                e.Property(x => x.Value).HasColumnType(RupeesColumnType);
+                e.HasIndex(x => new { x.DemandLineId, x.Figure, x.CreatedAt });
+                e.HasOne<DemandLine>().WithMany().HasForeignKey(x => x.DemandLineId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.LevelOfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<ProposalState>().WithMany().HasForeignKey(x => x.StateCode).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-32 observation ----------------
+            modelBuilder.Entity<Observation>(e =>
+            {
+                e.Property(x => x.ObservationId).UseIdentityAlwaysColumn();
+                e.Property(x => x.SelectedForReturn).HasDefaultValue(false);
+                e.HasIndex(x => x.ProposalId);
+                e.HasOne<BudgetProposal>().WithMany().HasForeignKey(x => x.ProposalId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<DemandLine>().WithMany().HasForeignKey(x => x.DemandLineId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.LevelOfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<ProposalMovement>().WithMany().HasForeignKey(x => x.ReturnedByMovementId).OnDelete(DeleteBehavior.Restrict);
+                ReadOnly(e.Property(x => x.RepliedAt));
+                ReadOnly(e.Property(x => x.RepliedBy));
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-33 proposal_movement ----------------
+            modelBuilder.Entity<ProposalMovement>(e =>
+            {
+                e.Property(x => x.MovementId).UseIdentityAlwaysColumn();
+                e.HasIndex(x => new { x.ProposalId, x.CreatedAt });
+                e.HasOne<BudgetProposal>().WithMany().HasForeignKey(x => x.ProposalId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.FromOfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.ToOfficeId).OnDelete(DeleteBehavior.Restrict);
+                // The composite FK (from_state, action_code, to_state) → T-16 is added by BudgetP1StateTransitionSeed.
+                ConfigureActorColumns(e);
             });
 
             // ---------------- T-17 setting ----------------
