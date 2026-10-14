@@ -311,7 +311,22 @@ app.UseExceptionHandler(appBuilder =>
             return;
         }
 
-        // Fallback
+        // Database rule failures (design §4.9, §10): catalogue message, no table/constraint name in the body.
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+            .CreateLogger("BBMB.BudgetService.ExceptionHandler");
+        var mapped = BBMB.BudgetService.Shared.Endpoints.BudgetExceptionMapper.TryMap(exception);
+        if (mapped is not null)
+        {
+            // A DB rule caught what a pre-check should have: Warning, with the constraint/trigger in the log only.
+            logger.LogWarning("Database rule refused the request: {MessageId} {Detail}",
+                mapped.Body.MessageId, mapped.LogDetail);
+            context.Response.StatusCode = mapped.StatusCode;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(mapped.Body);
+            return;
+        }
+        // Fallback (includes DB-28 'ACTOR': a handler wrote without opening the action scope).
+        logger.LogError(exception, "Unhandled exception");
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await context.Response.WriteAsJsonAsync(new
         {
