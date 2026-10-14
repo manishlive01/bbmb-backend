@@ -18,6 +18,7 @@
   <ItemGroup>
     <!-- Hand SQL executed by migrations (design §11.1 rule 2), read through SqlResource. -->
     <EmbeddedResource Include="Infrastructure\Persistence\BudgetContexts\Sql\*.sql" />
+    <EmbeddedResource Include="Shared\Services\BudgetActors\MigrationActor.sql" LogicalName="BBMB.BudgetService.MigrationActor.sql" />
   </ItemGroup>
   <ItemGroup>
 	  <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />

@@ -31,7 +31,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
 {
-    public class BudgetContext : DbContext
+    public partial class BudgetContext : DbContext
     {
         public BudgetContext(DbContextOptions<BudgetContext> options)
             : base(options)
@@ -330,6 +330,9 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .HasPrincipalKey(d => d.DesignationCode)
                       .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // Budget-process tables (design §2.1: partial class BudgetContext.BudgetProcess.cs).
+            ConfigureBudgetProcess(modelBuilder);
         }
     }
 }

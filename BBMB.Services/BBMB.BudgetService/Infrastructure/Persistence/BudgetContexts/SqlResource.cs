@@ -23,6 +23,29 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
             return reader.ReadToEnd();
         }
 
+        /// <summary>
+        /// The migration-actor fragment (design §11.1 rule 8) for <paramref name="migrationName"/>. Every
+        /// data-shaping step runs it first. For a gated migration (§11.1 rule 9) the gate's recorded decision
+        /// becomes <c>budget.justification</c>.
+        /// </summary>
+        public static string MigrationActor(string migrationName, string? gate = null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(migrationName);
+            if (!System.Text.RegularExpressions.Regex.IsMatch(migrationName, "^[A-Za-z0-9_]+$"))
+                throw new ArgumentException("Migration name must be an identifier.", nameof(migrationName));
+            if (gate is not null && !System.Text.RegularExpressions.Regex.IsMatch(gate, "^[a-z0-9_]+$"))
+                throw new ArgumentException("Gate must be an identifier.", nameof(gate));
+
+            using var stream = typeof(SqlResource).Assembly.GetManifestResourceStream("BBMB.BudgetService.MigrationActor.sql")
+                ?? throw new InvalidOperationException("Embedded MigrationActor.sql not found.");
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd()
+                .Replace("{{MIGRATION}}", migrationName, StringComparison.Ordinal)
+                .Replace("{{JUSTIFICATION}}",
+                    gate is null ? "''" : $"coalesce(current_setting('bbmb_gate.{gate}', true), '')",
+                    StringComparison.Ordinal);
+        }
+
         /// <summary>Names of every embedded SQL file (used by tests).</summary>
         public static IEnumerable<string> Names() =>
             typeof(SqlResource).Assembly.GetManifestResourceNames()
