@@ -1,4 +1,5 @@
 using BBMB.BudgetService.Features.Works.Update.Dtos;
+using BBMB.BudgetService.Shared.Validators;
 using FluentValidation;
 
 namespace BBMB.BudgetService.Features.Works.Update
@@ -107,6 +108,7 @@ namespace BBMB.BudgetService.Features.Works.Update
                 .GreaterThanOrEqualTo(0)
                 .WithMessage("Estimated cost cannot be negative.")
                 .When(x => x.dto.EstimatedCost.HasValue);
+            RuleFor(x => x.dto.EstimatedCost).WholeRupees(); // BUD-013, design §4.5 step 4
         }
     }
 }

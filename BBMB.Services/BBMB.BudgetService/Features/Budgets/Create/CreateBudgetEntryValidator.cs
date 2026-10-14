@@ -1,4 +1,5 @@
 using BBMB.BudgetService.Features.Budgets.Create.Dtos;
+using BBMB.BudgetService.Shared.Validators;
 using FluentValidation;
 
 namespace BBMB.BudgetService.Features.Budgets.Create
@@ -56,6 +57,10 @@ namespace BBMB.BudgetService.Features.Budgets.Create
             RuleFor(x => x.dto.BudgetType)
                 .IsInEnum().WithMessage("Budget type must be Work, Expensive, or Receipt");
 
+            // BUD-013, design §4.5 step 4: whole rupees, at most 13 digits.
+            RuleFor(x => x.dto.BudgetAmount).WholeRupees();
+            RuleFor(x => x.dto.RevisedAmount).WholeRupees();
+            RuleFor(x => x.dto.ProposedBudget).WholeRupees();
             RuleFor(x => x.dto.UserCode)
                 .NotEmpty().WithMessage("User code is required")
                 .MaximumLength(6).WithMessage("User code must not exceed 6 characters");

@@ -1,11 +1,14 @@
 using BBMB.BudgetService.Features.Estimates.Update.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.Validators;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.Estimates.Update
 {
-    public class UpdateEstimateValidator : AbstractValidator<UpdateEstimateDto>
+    // D-3 (design §3): typed to the command so ValidationBehavior resolves and runs it. Typed to
+    // UpdateEstimateDto, it never ran.
+    public class UpdateEstimateValidator : AbstractValidator<UpdateEstimateCommand>
     {
         private readonly BudgetContext _context;
 
@@ -13,21 +16,23 @@ namespace BBMB.BudgetService.Features.Estimates.Update
         {
             _context = context;
 
-            RuleFor(x => x.EstimateDesc)
+            RuleFor(x => x.Dto.EstimateDesc)
                 .MaximumLength(600)
-                .When(x => x.EstimateDesc != null)
+                .When(x => x.Dto.EstimateDesc != null)
                 .WithMessage("EstimateDesc must not exceed 600 characters");
 
-            RuleFor(x => x.EstimateNarr)
+            RuleFor(x => x.Dto.EstimateNarr)
                 .MaximumLength(600)
-                .When(x => x.EstimateNarr != null)
+                .When(x => x.Dto.EstimateNarr != null)
                 .WithMessage("EstimateNarr must not exceed 600 characters");
 
-            RuleFor(x => x.FinYearEnd)
+            // BUD-013, design §4.5 step 4.
+            RuleFor(x => x.Dto.EstimateAmt).WholeRupees();
+            RuleFor(x => x.Dto.FinYearEnd)
                 .NotEmpty()
                 .WithMessage("FinYearEnd is required");
 
-            RuleFor(x => x.DivisionCode)
+            RuleFor(x => x.Dto.DivisionCode)
                 .NotEmpty()
                 .WithMessage("DivisionCode is required")
                 .MustAsync(DivisionExists)
