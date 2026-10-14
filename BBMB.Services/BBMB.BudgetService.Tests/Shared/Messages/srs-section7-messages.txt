@@ -1,0 +1,37 @@
+# Extracted from BBMB-SRS-BUD-01 v1.0 section 7 (message catalogue). One line per message: <id>\t<text>.
+M-01	The code entered already exists under the same parent head. Enter a code not already used at this level.
+M-02	The complete Account Code formed by these six segments already exists in the Manual.
+M-03	The e-Office reference of the approval of the Group Head is required before the code can be created.
+M-04	The scanned copy of the administrative approval has to be attached before the entry can be submitted.
+M-05	The Account Code selected does not exist in the Manual of Accounts Codes.
+M-06	The technical sanctions against this approval would exceed 105 per cent of the approved amount. The administrative approval has to be revised before a larger sanction can be recorded. On the AM&R tab, a second sanction against the same work is not accepted.
+M-07	The scanned copy of the technical sanction has to be attached before the entry can be submitted.
+M-08	Provision against a work having no administrative approval cannot exceed Rs. 10,000 under either estimate unless the certificate of the Chief Engineer concerned, that the work is urgent and that the budget will be utilised as demanded, is attached.
+M-09	The revised estimate and the estimate for the coming year, added together, exceed 110 per cent of the amount approved under the administrative approval.
+M-10	The figure demanded is more than 5 per cent above the budget approved for the AM&R work this work continues. A justification and the approval of the Chief Engineer concerned are required.
+M-11	The file uploaded is not in the template the module issues. Download the template and enter the demand in it.
+M-12	A remark is required before the proposal can be returned or an observation recorded.
+M-13	This account head is not assigned to your office. Demand can be made only against the heads assigned.
+M-14	The total distributed against this account code exceeds the amount approved for your office against the same code.
+M-15	This head cannot be removed from the office. A demand or an allocation exists against it.
+M-16	The minutes of the Budget Sub-Committee or of the Full Board have to be uploaded before an allocation can be made.
+M-17	The budget for this cycle has been frozen. A change can now be made only by re-appropriation.
+M-18	The amount surrendered would exceed the additional amount required. Reduce the amount or remove a surrender line.
+M-19	This action is not available at the present stage of the proposal.
+M-20	You are not authorised to perform this action.
+M-21	The named field is required.
+M-22	The value entered in the named field is not of the required form. The expected form is stated.
+M-23	The proposal is open at your office with another officer and can be seen but not changed.
+M-24	The file is of a format or a size the module does not accept. The permitted formats and the limit are stated.
+M-25	This work is already present in the demand and has not been entered again.
+M-26	The last date prescribed in the budget calendar for action at this level has passed.
+M-27	The amount sanctioned is above the powers delegated to the authority recorded. Record a justification to proceed.
+M-28	The total allocated to the estimates of this work exceeds the budget allocated to the work. Reduce the amount or allocate less against another estimate.
+M-29	The amount exceeds the balance available under unforeseen work for the office concerned.
+M-30	The distribution of one or more account codes no longer agrees with the revised figure. The distribution has to be corrected before the budget can be frozen.
+M-31	The revised technically sanctioned amount is below the expenditure already booked against the estimate code of this sanction.
+M-32	The figure this check is measured against is nil or negative, so the percentage check has not been applied to this line.
+M-33	This account code cannot be marked not for use. A demand, an allocation, a re-appropriation or an expenditure exists against it.
+M-34	The basis on which provision was allocated against this work or head has changed. The allocated figure exceeds what the changed basis supports by the amount shown, and is to be corrected by re-appropriation.
+M-35	This account head already carries a line in this demand. Amend the line already present rather than adding a second.
+M-36	The revised estimate is below the expenditure already incurred, shown against it. The revised estimate cannot be less than what has already been spent.
