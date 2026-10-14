@@ -20,6 +20,7 @@ using BBMB.BudgetService.Features.Units.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using Auth.Authorization.Requirements;
 using BBMB.BudgetService.Shared.Messages;
+using BBMB.BudgetService.Shared.Services.BudgetActors;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Npgsql;
@@ -56,6 +57,8 @@ namespace BBMB.BudgetService.Features.BulkUploads
         private readonly IAuthorizationService _authorization;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<BulkUploadHandler> _logger;
+        private readonly IBudgetActorSource _actorSource;
+        private readonly IBudgetActionScope _scope;
         private string _uploadType = string.Empty;
 
         /// <summary>Sheet row being saved, for "Row &lt;n&gt;: M-nn" (first row of the failing batch).</summary>
@@ -65,8 +68,12 @@ namespace BBMB.BudgetService.Features.BulkUploads
             BudgetContext context,
             IAuthorizationService authorization,
             IHttpContextAccessor httpContextAccessor,
-            ILogger<BulkUploadHandler> logger)
+            ILogger<BulkUploadHandler> logger,
+            IBudgetActorSource actorSource,
+            IBudgetActionScope scope)
         {
+            _actorSource = actorSource;
+            _scope = scope;
             _context = context;
             _authorization = authorization;
             _httpContextAccessor = httpContextAccessor;
@@ -937,8 +944,12 @@ namespace BBMB.BudgetService.Features.BulkUploads
     int rowCount,
     CancellationToken cancellationToken)
         {
+            // T-07 carries fn_require_actor from P1 (DB-28): the action scope REPLACES the arm's own
+            // transaction (a second BeginTransactionAsync would throw); every batch and the commit stay in it.
+            if (await _actorSource.GetAsync(cancellationToken) is null)
+                return BudgetResponses.Fail(BudgetMessages.M20);
             await using var transaction =
-                await _context.Database.BeginTransactionAsync(cancellationToken);
+                await _scope.BeginAsync("BULK_UPLOAD:headofaccountmaster", ct: cancellationToken);
 
             _context.ChangeTracker.AutoDetectChangesEnabled = false;
 
@@ -1044,7 +1055,9 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         DetailAccCode = detail,
                         ObjectAccCode = obj,
                         HeadDesc = desc,
-                        PartyEmpRequired = "N",
+                        // L-04 path (design §9.3): legacy origin; the flag by the BUD-267 rule.
+                        Origin = HeadOfAccountOrigin.Legacy,
+                        PartyEmpRequired = HeadOfAccountOrigin.PartyEmpRequiredFor(major),
                         PartyLedgToPrint = "N",
                         TdsDeducted = "N",
                         AdvanceHead = "N",

@@ -105,10 +105,57 @@ namespace BBMB.BudgetService.Features.Works.Entities
         [Column("status")]
         public string? Status { get; set; }
 
+        // DDD T-23: varchar(500) (design §5.2).
         [Required]
-        [MaxLength(200)]
+        [MaxLength(500)]
         [Column("work_desc")]
         public string WorkDesc { get; set; } = string.Empty;
+
+        // ---------------- DDD T-23 columns added in P1 (design §5.2, §5.5 row a) ----------------
+
+        /// <summary>AA or AMR; fixes the ceiling. Required for every row with pre_ddd = false (CHECK).</summary>
+        [MaxLength(3)]
+        [Column("work_class")]
+        public string? WorkClass { get; set; }
+
+        /// <summary>F-07 column 14: the AM&amp;R work this work continues. Only for AMR (CHECK).</summary>
+        [Column("preceding_amr_work_id")]
+        public int? PrecedingAmrWorkId { get; set; }
+
+        /// <summary>
+        /// How the work entered (DDD T-23). Set server-side, never from the request body (design §9.3, §11.3).
+        /// Required for every row with pre_ddd = false (CHECK).
+        /// </summary>
+        [MaxLength(16)]
+        [Column("entered_via")]
+        public string? EnteredVia { get; set; }
+
+        /// <summary>
+        /// True for rows that existed before the DDD (§5.5 row a). One-way true → false
+        /// (trg_work_pre_ddd_one_way), cleared only in the first cycle.
+        /// </summary>
+        [Column("pre_ddd")]
+        public bool PreDdd { get; set; }
+
+        // [A] actor columns. Creation columns nullable, never backfilled (an old work's creator was not
+        // recorded), always filled on insert and immutable on update by fn_require_actor.
+        [Column("created_at")]
+        public DateTimeOffset? CreatedAt { get; private set; }
+
+        [Column("created_by")]
+        public Guid? CreatedBy { get; private set; }
+
+        [Column("created_charge_id")]
+        public Guid? CreatedChargeId { get; private set; }
+
+        [Column("updated_at")]
+        public DateTimeOffset? UpdatedAt { get; private set; }
+
+        [Column("updated_by")]
+        public Guid? UpdatedBy { get; private set; }
+
+        [Column("updated_charge_id")]
+        public Guid? UpdatedChargeId { get; private set; }
 
         [MaxLength(1)]
         [Column("nature")]
@@ -134,5 +181,22 @@ namespace BBMB.BudgetService.Features.Works.Entities
         public virtual Designation? Designation { get; set; }
         public ICollection<BudgetEntry> BudgetEntries { get; set; } = new List<BudgetEntry>();
 
+    }
+
+    /// <summary>T-23 <c>work_class</c> values (CHECK).</summary>
+    public static class WorkClass
+    {
+        public const string Aa = "AA";
+        public const string Amr = "AMR";
+    }
+
+    /// <summary>T-23 <c>entered_via</c> values (CHECK).</summary>
+    public static class WorkEnteredVia
+    {
+        public const string AaEntry = "AA_ENTRY";
+        public const string DemandEntry = "DEMAND_ENTRY";
+        public const string TsEntry = "TS_ENTRY";
+        public const string ReappropNew = "REAPPROP_NEW";
+        public const string LegacyOpening = "LEGACY_OPENING";
     }
 }

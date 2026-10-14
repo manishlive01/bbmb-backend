@@ -184,7 +184,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
 
                 // 🔹 Property rules
                 entity.Property(x => x.MajorAccCode).HasMaxLength(4).IsRequired();
-                entity.Property(x => x.SubMajorAccCode).HasMaxLength(4);
+                entity.Property(x => x.SubMajorAccCode).HasMaxLength(2); // DDD T-07 varchar(2) (design §5.2)
                 entity.Property(x => x.MinorAccCode).HasMaxLength(3).IsRequired();
                 entity.Property(x => x.SubMinorAccCode).HasMaxLength(2);
                 entity.Property(x => x.DetailAccCode).HasMaxLength(3).IsRequired();

@@ -1,4 +1,6 @@
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.Messages;
+using BBMB.BudgetService.Shared.Services.BudgetActors;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -8,14 +10,19 @@ namespace BBMB.BudgetService.Features.Works.Update
     public class UpdateWorkHandler : IRequestHandler<UpdateWorkCommand, Response>
     {
         private readonly BudgetContext _context;
-
-        public UpdateWorkHandler(BudgetContext context)
+        private readonly IBudgetActorSource _actorSource;
+        private readonly IBudgetActionScope _scope;
+        public UpdateWorkHandler(BudgetContext context, IBudgetActorSource actorSource, IBudgetActionScope scope)
         {
             _context = context;
+            _actorSource = actorSource;
+            _scope = scope;
         }
-
         public async Task<Response> Handle(UpdateWorkCommand request, CancellationToken ct)
         {
+            // work carries fn_require_actor from P1 (DB-28): every write runs inside the action scope.
+            if (await _actorSource.GetAsync(ct) is null)
+                return BudgetResponses.Fail(BudgetMessages.M20);
             var work = await _context.Works
                 .FirstOrDefaultAsync(w => w.WorkCode == request.Code, ct);
 
@@ -159,9 +166,9 @@ namespace BBMB.BudgetService.Features.Works.Update
             work.Status = request.dto.Status;
             work.Nature = request.dto.Nature;
             work.RefWorkCode = request.dto.RefWorkCode;
-
-
+            await using var tx = await _scope.BeginAsync("WORKS_UPDATE", ct: ct);
             await _context.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
 
             return new Response
             {

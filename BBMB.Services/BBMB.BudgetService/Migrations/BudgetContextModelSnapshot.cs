@@ -937,8 +937,8 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("major_acc_code");
 
                     b.Property<string>("SubMajorAccCode")
-                        .HasMaxLength(4)
-                        .HasColumnType("character varying(4)")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
                         .HasColumnName("sub_major_acc_code");
 
                     b.Property<string>("MinorAccCode")
@@ -961,6 +961,13 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("object_acc_code");
 
+                    b.Property<long>("AccountCodeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_code_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("AccountCodeId"));
+
                     b.Property<string>("AdvanceHead")
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")
@@ -970,6 +977,34 @@ namespace BBMB.BudgetService.Migrations
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")
                         .HasColumnName("bank_cash");
+
+                    b.Property<string>("CompleteCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasMaxLength(22)
+                        .HasColumnType("character varying(22)")
+                        .HasColumnName("complete_code")
+                        .HasComputedColumnSql("major_acc_code || '-' || sub_major_acc_code || '-' || minor_acc_code || '-' || sub_minor_acc_code || '-' || detail_acc_code || '-' || object_acc_code", true);
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid?>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<string>("EofficeApprovalRef")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eoffice_approval_ref");
 
                     b.Property<string>("HeadDesc")
                         .IsRequired()
@@ -986,7 +1021,33 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(1)")
                         .HasColumnName("monthly_carry_fwd");
 
+                    b.Property<bool>("NotForUse")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("not_for_use");
+
+                    b.Property<DateTimeOffset?>("NotForUseAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("not_for_use_at");
+
+                    b.Property<Guid?>("NotForUseBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("not_for_use_by");
+
+                    b.Property<string>("NotForUseRef")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("not_for_use_ref");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasColumnName("origin");
+
                     b.Property<string>("PartyEmpRequired")
+                        .IsRequired()
                         .HasMaxLength(1)
                         .HasColumnType("character varying(1)")
                         .HasColumnName("party_emp_required");
@@ -1008,6 +1069,12 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("user_code");
 
                     b.HasKey("MajorAccCode", "SubMajorAccCode", "MinorAccCode", "SubMinorAccCode", "DetailAccCode", "ObjectAccCode");
+
+                    b.HasIndex("AccountCodeId")
+                        .IsUnique();
+
+                    b.HasIndex("CompleteCode")
+                        .IsUnique();
 
                     b.HasIndex("DetailAccCode");
 
@@ -1665,6 +1732,21 @@ namespace BBMB.BudgetService.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid?>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
                     b.Property<string>("DesignationCode")
                         .HasMaxLength(6)
                         .HasColumnType("character varying(6)")
@@ -1686,6 +1768,11 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<int>("DivisionId")
                         .HasColumnType("integer")
                         .HasColumnName("division_id");
+
+                    b.Property<string>("EnteredVia")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("entered_via");
 
                     b.Property<decimal?>("EstimatedCost")
                         .HasColumnType("budget.rupees")
@@ -1737,6 +1824,16 @@ namespace BBMB.BudgetService.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("original_budget");
+
+                    b.Property<bool>("PreDdd")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("pre_ddd");
+
+                    b.Property<int?>("PrecedingAmrWorkId")
+                        .HasColumnType("integer")
+                        .HasColumnName("preceding_amr_work_id");
 
                     b.Property<string>("ProposedBudget")
                         .IsRequired()
@@ -1797,11 +1894,31 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<string>("SubMinorHeadSubMinorAccCode")
                         .HasColumnType("character varying(2)");
 
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
                     b.Property<string>("UserCode")
                         .IsRequired()
                         .HasMaxLength(6)
                         .HasColumnType("character varying(6)")
                         .HasColumnName("user_code");
+
+                    b.Property<string>("WorkClass")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("work_class");
 
                     b.Property<int>("WorkCode")
                         .HasMaxLength(8)
@@ -1810,8 +1927,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("WorkDesc")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
                         .HasColumnName("work_desc");
 
                     b.HasKey("Id");
@@ -1829,6 +1946,8 @@ namespace BBMB.BudgetService.Migrations
                     b.HasIndex("MinorHeadMinorAccCode");
 
                     b.HasIndex("ObjectClassificationObjectAccCode");
+
+                    b.HasIndex("PrecedingAmrWorkId");
 
                     b.HasIndex("WorkCode")
                         .IsUnique();
@@ -2200,6 +2319,11 @@ namespace BBMB.BudgetService.Migrations
                     b.HasOne("BBMB.BudgetService.Features.ObjectClassifications.Entities.ObjectClassification", "ObjectClassification")
                         .WithMany()
                         .HasForeignKey("ObjectClassificationObjectAccCode");
+
+                    b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", null)
+                        .WithMany()
+                        .HasForeignKey("PrecedingAmrWorkId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", "SubMajorHead")
                         .WithMany()

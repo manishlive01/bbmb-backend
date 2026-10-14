@@ -24,11 +24,19 @@ public sealed class BulkUploadHandlerTests(BudgetDatabaseFixture fixture)
         return new FormFile(new MemoryStream(bytes), 0, bytes.Length, "file", "upload.xlsx");
     }
 
-    private BulkUploadHandler Handler(params string[] allowedPolicies) => new(
-        fixture.NewBudgetContext(),
-        new FakeAuthorizationService(allowedPolicies),
-        new HttpContextAccessor { HttpContext = new DefaultHttpContext() },
-        NullLogger<BulkUploadHandler>.Instance);
+    private BulkUploadHandler Handler(params string[] allowedPolicies) => Handler(FakeBudgetActorSource.None(), allowedPolicies);
+
+    private BulkUploadHandler Handler(FakeBudgetActorSource actor, params string[] allowedPolicies)
+    {
+        var ctx = fixture.NewBudgetContext();
+        return new BulkUploadHandler(
+            ctx,
+            new FakeAuthorizationService(allowedPolicies),
+            new HttpContextAccessor { HttpContext = new DefaultHttpContext() },
+            NullLogger<BulkUploadHandler>.Instance,
+            actor,
+            new BBMB.BudgetService.Shared.Services.BudgetActors.BudgetActionScope(ctx, actor));
+    }
 
     private async Task EnsureProjectAsync()
     {

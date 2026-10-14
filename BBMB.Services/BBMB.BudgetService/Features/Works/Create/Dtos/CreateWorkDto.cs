@@ -4,6 +4,9 @@ namespace BBMB.BudgetService.Features.Works.Create.Dtos
     {
         public string WorkCode { get; set; } = string.Empty;
         public string WorkDesc { get; set; } = string.Empty;
+
+        /// <summary>AA or AMR (DDD T-23 work_class; required for every new work, design §9.3).</summary>
+        public string WorkClass { get; set; } = string.Empty;
         public int DivisionId { get; set; }
         public int DivSectionId { get; set; }
         public string MajorAccCode { get; set; } = string.Empty;

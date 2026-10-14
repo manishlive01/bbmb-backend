@@ -4,6 +4,8 @@ using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Settings.Entities;
 using BBMB.BudgetService.Features.FinancialYears.Entities;
+using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
+using BBMB.BudgetService.Features.Works.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CRManagements.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.Divisions.Entities;
@@ -28,6 +30,35 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
 
         private static void ConfigureBudgetProcess(ModelBuilder modelBuilder)
         {
+            // ---------------- T-07 budget_head_master: P1 columns (design §5.2) ----------------
+            modelBuilder.Entity<HeadOfAccount>(e =>
+            {
+                e.Property(x => x.AccountCodeId).UseIdentityAlwaysColumn();
+                e.Property(x => x.AccountCodeId).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+                e.HasIndex(x => x.AccountCodeId).IsUnique();
+                e.Property(x => x.CompleteCode).HasComputedColumnSql(
+                    "major_acc_code || '-' || sub_major_acc_code || '-' || minor_acc_code || '-' || " +
+                    "sub_minor_acc_code || '-' || detail_acc_code || '-' || object_acc_code", stored: true);
+                e.HasIndex(x => x.CompleteCode).IsUnique();
+                e.Property(x => x.NotForUse).HasDefaultValue(false);
+                ReadOnly(e.Property(x => x.CreatedAt));
+                ReadOnly(e.Property(x => x.CreatedBy));
+                ReadOnly(e.Property(x => x.CreatedChargeId));
+            });
+
+            // ---------------- T-23 work: P1 columns (design §5.2, §5.5 row a) ----------------
+            modelBuilder.Entity<Work>(e =>
+            {
+                e.Property(x => x.PreDdd).HasDefaultValue(false);
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.PrecedingAmrWorkId).OnDelete(DeleteBehavior.Restrict);
+                ReadOnly(e.Property(x => x.CreatedAt));
+                ReadOnly(e.Property(x => x.CreatedBy));
+                ReadOnly(e.Property(x => x.CreatedChargeId));
+                ReadOnly(e.Property(x => x.UpdatedAt));
+                ReadOnly(e.Property(x => x.UpdatedBy));
+                ReadOnly(e.Property(x => x.UpdatedChargeId));
+            });
+
             // ---------------- T-13 office ----------------
             modelBuilder.Entity<BudgetOffice>(e =>
             {
@@ -102,12 +133,14 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 ReadOnly(e.Property<Guid?>(nameof(ActorStampedEntity.UpdatedChargeId)));
             }
 
-            static void ReadOnly<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty> p)
-            {
-                p.ValueGeneratedOnAddOrUpdate();
-                p.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
-                p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
-            }
+        }
+
+        /// <summary>A trigger-filled column EF never writes and reads back after save (design §4.3).</summary>
+        private static void ReadOnly<TProperty>(Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder<TProperty> p)
+        {
+            p.ValueGeneratedOnAddOrUpdate();
+            p.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            p.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
         }
     }
 }

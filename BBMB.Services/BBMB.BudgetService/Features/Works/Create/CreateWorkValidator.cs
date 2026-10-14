@@ -16,7 +16,11 @@ namespace BBMB.BudgetService.Features.Works.Create
 
             RuleFor(x => x.dto.WorkDesc)
                 .NotEmpty().WithMessage("Work description is required.")
-                .MaximumLength(200).WithMessage("Work description must not exceed 200 characters.");
+                .MaximumLength(500).WithMessage("Work description must not exceed 500 characters.");
+            // DDD T-23: work_class AA or AMR (design §9.3).
+            RuleFor(x => x.dto.WorkClass)
+                .NotEmpty().WithMessage("Work class is required.")
+                .Must(c => c is "AA" or "AMR").WithMessage("Work class must be AA or AMR.");
 
             RuleFor(x => x.dto.DivisionId)
                 .NotEmpty().WithMessage("Division code is required.");

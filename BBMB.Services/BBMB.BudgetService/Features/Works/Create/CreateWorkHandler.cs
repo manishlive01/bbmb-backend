@@ -1,5 +1,7 @@
 using BBMB.BudgetService.Features.Works.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.Messages;
+using BBMB.BudgetService.Shared.Services.BudgetActors;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using Mapster;
 using MediatR;
@@ -10,14 +12,19 @@ namespace BBMB.BudgetService.Features.Works.Create
     public class CreateWorkHandler : IRequestHandler<CreateWorkCommand, Response>
     {
         private readonly BudgetContext _context;
-
-        public CreateWorkHandler(BudgetContext context)
+        private readonly IBudgetActorSource _actorSource;
+        private readonly IBudgetActionScope _scope;
+        public CreateWorkHandler(BudgetContext context, IBudgetActorSource actorSource, IBudgetActionScope scope)
         {
             _context = context;
+            _actorSource = actorSource;
+            _scope = scope;
         }
-
         public async Task<Response> Handle(CreateWorkCommand request, CancellationToken ct)
         {
+            // work carries fn_require_actor from P1 (DB-28): every write runs inside the action scope.
+            if (await _actorSource.GetAsync(ct) is null)
+                return BudgetResponses.Fail(BudgetMessages.M20);
             // ================= AUTO GENERATE WORK CODE =================
 
             var divisionId = request.dto.DivisionId;
@@ -142,9 +149,14 @@ namespace BBMB.BudgetService.Features.Works.Create
             // ================= CREATE WORK =================
 
             var work = request.dto.Adapt<Work>();
-
+            // Set server-side after Adapt, never from the request body (design §9.3, §11.3): a work keyed on
+            // the work master screen is a continuing work keyed in the first cycle (DDD T-23, L-08).
+            work.EnteredVia = WorkEnteredVia.LegacyOpening;
+            work.PreDdd = false;
+            await using var tx = await _scope.BeginAsync("WORKS_ENTER", ct: ct);
             await _context.Works.AddAsync(work, ct);
             await _context.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
 
             return new Response
             {
