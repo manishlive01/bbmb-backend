@@ -18,7 +18,7 @@ namespace BBMB.BudgetService.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("budget")
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -193,9 +193,9 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<string>("DetailHeadDetailAccCode")
                         .HasColumnType("character varying(3)");
 
-                    b.Property<int>("DivSection")
+                    b.Property<int>("DivSectionId")
                         .HasColumnType("integer")
-                        .HasColumnName("div_section");
+                        .HasColumnName("div_section_id");
 
                     b.Property<int>("DivisionId")
                         .HasColumnType("integer")
