@@ -117,6 +117,11 @@ namespace BBMB.BudgetService.Shared.Messages
             // T-07: the six segments, and the complete code they form, exist once in the Manual (VR-01, BUD-042).
             ["PK_budget_head_master"] = M02,
             ["IX_budget_head_master_complete_code"] = M02,
+            // T-27 partial UK: one sanction only against an AM&R work (TSN-007, BUD-274; M-06 names it).
+            ["ux_technical_sanction_amr_work"] = M06,
+            // T-25 UKs, backstops behind the handler (one approval per work; serial allotted in the Division).
+            ["ux_admin_approval_work"] = M19,
+            ["ux_admin_approval_division_serial"] = M19,
         };
 
         /// <summary>The uniqueness message id registered for <paramref name="constraintName"/>, or null.</summary>

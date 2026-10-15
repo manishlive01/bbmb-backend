@@ -1,4 +1,7 @@
+using BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.CorrectionFlags.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Cycles.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Observations.Entities;
@@ -6,6 +9,7 @@ using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Recommendations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Settings.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Entities;
 using BBMB.BudgetService.Features.FinancialYears.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
 using BBMB.BudgetService.Features.Works.Entities;
@@ -42,10 +46,26 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<RecommendationVersion> RecommendationVersions { get; set; }
         public DbSet<DemandLineDisplayRow> DemandLineDisplay { get; set; }
         public DbSet<DemandByCeRow> DemandByCe { get; set; }
+        // P2 (design §5.3 P2 table)
+        public DbSet<BudgetAttachment> BudgetAttachments { get; set; }
+        public DbSet<DelegationLimit> DelegationLimits { get; set; }
+        public DbSet<AdminApproval> AdminApprovals { get; set; }
+        public DbSet<AdminApprovalVersion> AdminApprovalVersions { get; set; }
+        public DbSet<TechnicalSanction> TechnicalSanctions { get; set; }
+        public DbSet<TechnicalSanctionVersion> TechnicalSanctionVersions { get; set; }
+        public DbSet<CorrectionFlag> CorrectionFlags { get; set; }
 
         /// <summary>Partial UK names whose 23505 maps to a catalogue message (design §4.9).</summary>
         public const string UxDemandLineWork = "ux_demand_line_work";
         public const string UxDemandLineHead = "ux_demand_line_head";
+        /// <summary>T-27 partial UK: one sanction only against an AM&amp;R work (TSN-007, BUD-274, M-06).</summary>
+        public const string UxTechnicalSanctionAmrWork = "ux_technical_sanction_amr_work";
+        /// <summary>T-25 UK: one approval per work (a revision is a version, not a second approval).</summary>
+        public const string UxAdminApprovalWork = "ux_admin_approval_work";
+        /// <summary>T-25 UK (Division, serial).</summary>
+        public const string UxAdminApprovalSerial = "ux_admin_approval_division_serial";
+        /// <summary>T-27 UK on the estimate code (DB-05, TSN-009).</summary>
+        public const string UxTechnicalSanctionEstimateCode = "ux_technical_sanction_estimate_code";
 
         private static void ConfigureBudgetProcess(ModelBuilder modelBuilder)
         {
@@ -252,6 +272,93 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 e.Property(x => x.ConcurrenceRef).HasMaxLength(100);
                 e.HasOne<CeRecommendation>().WithMany().HasForeignKey(x => x.RecommendationId).OnDelete(DeleteBehavior.Restrict);
                 ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-22 attachment (append-only) ----------------
+            modelBuilder.Entity<BudgetAttachment>(e =>
+            {
+                e.Property(x => x.AttachmentId).UseIdentityAlwaysColumn();
+                e.Property(x => x.Sha256Digest).IsFixedLength();
+                e.HasIndex(x => x.StorageKey).IsUnique();
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-19 delegation_limit (append-only) ----------------
+            modelBuilder.Entity<DelegationLimit>(e =>
+            {
+                e.Property(x => x.DelegationLimitId).UseIdentityAlwaysColumn();
+                e.Property(x => x.MaxAmount).HasColumnType(RupeesColumnType);
+                e.HasIndex(x => new { x.AuthorityLevel, x.EffectiveFrom }).IsUnique();
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-25 admin_approval ----------------
+            modelBuilder.Entity<AdminApproval>(e =>
+            {
+                e.Property(x => x.AdminApprovalId).UseIdentityAlwaysColumn();
+                e.HasIndex(x => x.WorkId).IsUnique().HasDatabaseName(UxAdminApprovalWork);
+                e.HasIndex(x => new { x.DivisionOfficeId, x.SerialNo }).IsUnique().HasDatabaseName(UxAdminApprovalSerial);
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.WorkId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.DivisionOfficeId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-26 admin_approval_version (append-only) ----------------
+            modelBuilder.Entity<AdminApprovalVersion>(e =>
+            {
+                e.HasKey(x => new { x.AdminApprovalId, x.VersionNo });
+                e.Property(x => x.AmountSanctioned).HasColumnType(RupeesColumnType);
+                e.HasOne<AdminApproval>().WithMany().HasForeignKey(x => x.AdminApprovalId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.AaCopyAttachmentId).OnDelete(DeleteBehavior.Restrict);
+                // account_code_id → budget_head_master(account_code_id) is added by SQL (unique index, not the PK).
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-27 technical_sanction ----------------
+            modelBuilder.Entity<TechnicalSanction>(e =>
+            {
+                e.Property(x => x.TechnicalSanctionId).UseIdentityAlwaysColumn();
+                e.HasIndex(x => x.WorkId, "IX_technical_sanction_work_id");
+                e.HasIndex(x => x.AdminApprovalId);
+                e.HasIndex(x => x.WorkId, UxTechnicalSanctionAmrWork).IsUnique().HasFilter("tab = 'AMR'");
+                e.HasIndex(x => x.EstimateCode).IsUnique().HasDatabaseName(UxTechnicalSanctionEstimateCode);
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.WorkId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<AdminApproval>().WithMany().HasForeignKey(x => x.AdminApprovalId).OnDelete(DeleteBehavior.Restrict);
+                // Written only by budget.fn_record_estimate_code (DB-05): EF never writes them.
+                ReadOnly(e.Property(x => x.EstimateCode));
+                ReadOnly(e.Property(x => x.EstimateCodeAt));
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-28 technical_sanction_version (append-only) ----------------
+            modelBuilder.Entity<TechnicalSanctionVersion>(e =>
+            {
+                e.HasKey(x => new { x.TechnicalSanctionId, x.VersionNo });
+                e.Property(x => x.TsAmount).HasColumnType(RupeesColumnType);
+                e.HasOne<TechnicalSanction>().WithMany().HasForeignKey(x => x.TechnicalSanctionId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.TsCopyAttachmentId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-45 correction_flag (provision_id P4, cleared_by_reappropriation_id P5) ----------------
+            modelBuilder.Entity<CorrectionFlag>(e =>
+            {
+                e.Property(x => x.CorrectionFlagId).UseIdentityAlwaysColumn();
+                e.Property(x => x.FigureAllocated).HasColumnType(RupeesColumnType);
+                e.Property(x => x.FigureSupported).HasColumnType(RupeesColumnType);
+                e.Property(x => x.IsCritical).HasDefaultValue(false);
+                e.HasIndex(x => x.WorkId);
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.WorkId).OnDelete(DeleteBehavior.Restrict);
+                // cleared_by → employee.employee is added by SQL (cross-schema).
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-30 attachment references (P2, DB-08 by trigger) ----------------
+            modelBuilder.Entity<DemandLine>(e =>
+            {
+                e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.JustificationAttachmentId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.CeCertificateAttachmentId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.CeAmrApprovalAttachmentId).OnDelete(DeleteBehavior.Restrict);
             });
 
             // ---------------- Views (design §5.4) ----------------

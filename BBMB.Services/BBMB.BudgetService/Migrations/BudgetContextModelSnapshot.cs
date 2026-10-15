@@ -157,6 +157,241 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("fa_sub_minor_head", "budget");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities.AdminApproval", b =>
+                {
+                    b.Property<long>("AdminApprovalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("admin_approval_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("AdminApprovalId"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<short>("CurrentVersionNo")
+                        .HasColumnType("smallint")
+                        .HasColumnName("current_version_no");
+
+                    b.Property<long>("DivisionOfficeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("division_office_id");
+
+                    b.Property<int>("SerialNo")
+                        .HasColumnType("integer")
+                        .HasColumnName("serial_no");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<int>("WorkId")
+                        .HasColumnType("integer")
+                        .HasColumnName("work_id");
+
+                    b.HasKey("AdminApprovalId");
+
+                    b.HasIndex("WorkId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_admin_approval_work");
+
+                    b.HasIndex("DivisionOfficeId", "SerialNo")
+                        .IsUnique()
+                        .HasDatabaseName("ux_admin_approval_division_serial");
+
+                    b.ToTable("admin_approval", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities.AdminApprovalVersion", b =>
+                {
+                    b.Property<long>("AdminApprovalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("admin_approval_id");
+
+                    b.Property<short>("VersionNo")
+                        .HasColumnType("smallint")
+                        .HasColumnName("version_no");
+
+                    b.Property<long>("AaCopyAttachmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("aa_copy_attachment_id");
+
+                    b.Property<string>("AaReferenceNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("aa_reference_no");
+
+                    b.Property<long>("AccountCodeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_code_id");
+
+                    b.Property<decimal>("AmountSanctioned")
+                        .HasColumnType("budget.rupees")
+                        .HasColumnName("amount_sanctioned");
+
+                    b.Property<string>("CompetentAuthority")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("competent_authority");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<DateOnly>("DateOfApproval")
+                        .HasColumnType("date")
+                        .HasColumnName("date_of_approval");
+
+                    b.Property<string>("DelegationJustification")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("delegation_justification");
+
+                    b.Property<string>("EofficeRef")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("eoffice_ref");
+
+                    b.Property<bool>("ExceedsDelegation")
+                        .HasColumnType("boolean")
+                        .HasColumnName("exceeds_delegation");
+
+                    b.Property<string>("NameOfWork")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("name_of_work");
+
+                    b.HasKey("AdminApprovalId", "VersionNo");
+
+                    b.HasIndex("AaCopyAttachmentId");
+
+                    b.ToTable("admin_approval_version", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities.BudgetAttachment", b =>
+                {
+                    b.Property<long>("AttachmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("attachment_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("AttachmentId"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<string>("EvidenceClass")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("evidence_class");
+
+                    b.Property<string>("FileExtension")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasColumnName("file_extension");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("original_file_name");
+
+                    b.Property<string>("ScanEngine")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("scan_engine");
+
+                    b.Property<DateTimeOffset>("ScannedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("scanned_at");
+
+                    b.Property<string>("Sha256Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("sha256_digest")
+                        .IsFixedLength();
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<Guid>("StorageKey")
+                        .HasColumnType("uuid")
+                        .HasColumnName("storage_key");
+
+                    b.HasKey("AttachmentId");
+
+                    b.HasIndex("StorageKey")
+                        .IsUnique();
+
+                    b.ToTable("attachment", "budget");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Entities.AuditLogEntry", b =>
                 {
                     b.Property<long>("AuditId")
@@ -261,6 +496,69 @@ namespace BBMB.BudgetService.Migrations
                     b.HasIndex("TableName", "RecordKey");
 
                     b.ToTable("audit_log", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.CorrectionFlags.Entities.CorrectionFlag", b =>
+                {
+                    b.Property<long>("CorrectionFlagId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("correction_flag_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("CorrectionFlagId"));
+
+                    b.Property<DateTimeOffset?>("ClearedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cleared_at");
+
+                    b.Property<Guid?>("ClearedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cleared_by");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<decimal?>("FigureAllocated")
+                        .HasColumnType("budget.rupees")
+                        .HasColumnName("figure_allocated");
+
+                    b.Property<decimal?>("FigureSupported")
+                        .HasColumnType("budget.rupees")
+                        .HasColumnName("figure_supported");
+
+                    b.Property<bool>("IsCritical")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_critical");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("reason");
+
+                    b.Property<int?>("WorkId")
+                        .HasColumnType("integer")
+                        .HasColumnName("work_id");
+
+                    b.HasKey("CorrectionFlagId");
+
+                    b.HasIndex("WorkId");
+
+                    b.ToTable("correction_flag", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Cycles.Entities.BudgetCycle", b =>
@@ -475,6 +773,12 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasKey("DemandLineId");
 
+                    b.HasIndex("CeAmrApprovalAttachmentId");
+
+                    b.HasIndex("CeCertificateAttachmentId");
+
+                    b.HasIndex("JustificationAttachmentId");
+
                     b.HasIndex("WorkId");
 
                     b.HasIndex("ProposalId", "AccountCodeId")
@@ -495,6 +799,26 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities.DemandLineDisplayRow", b =>
                 {
+                    b.Property<decimal?>("AaAmountSanctioned")
+                        .HasColumnType("numeric")
+                        .HasColumnName("aa_amount_sanctioned");
+
+                    b.Property<short?>("AaCurrentVersionNo")
+                        .HasColumnType("smallint")
+                        .HasColumnName("aa_current_version_no");
+
+                    b.Property<DateOnly?>("AaDateOfApproval")
+                        .HasColumnType("date")
+                        .HasColumnName("aa_date_of_approval");
+
+                    b.Property<string>("AaNameOfWork")
+                        .HasColumnType("text")
+                        .HasColumnName("aa_name_of_work");
+
+                    b.Property<string>("AaReferenceNo")
+                        .HasColumnType("text")
+                        .HasColumnName("aa_reference_no");
+
                     b.Property<long?>("AccountCodeId")
                         .HasColumnType("bigint")
                         .HasColumnName("account_code_id");
@@ -503,10 +827,22 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("added_on_return");
 
+                    b.Property<long?>("AdminApprovalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("admin_approval_id");
+
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("category");
+
+                    b.Property<long?>("CeAmrApprovalAttachmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("ce_amr_approval_attachment_id");
+
+                    b.Property<long?>("CeCertificateAttachmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("ce_certificate_attachment_id");
 
                     b.Property<string>("CompleteCode")
                         .HasColumnType("text")
@@ -539,6 +875,10 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
+
+                    b.Property<long?>("JustificationAttachmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("justification_attachment_id");
 
                     b.Property<string>("JustificationText")
                         .HasColumnType("text")
@@ -589,6 +929,14 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<int>("SerialNo")
                         .HasColumnType("integer")
                         .HasColumnName("serial_no");
+
+                    b.Property<decimal?>("TsAmountToDate")
+                        .HasColumnType("numeric")
+                        .HasColumnName("ts_amount_to_date");
+
+                    b.Property<int?>("TsCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("ts_count");
 
                     b.Property<string>("UnforeseenName")
                         .HasColumnType("text")
@@ -1535,6 +1883,209 @@ namespace BBMB.BudgetService.Migrations
                         .IsUnique();
 
                     b.ToTable("setting", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Settings.Entities.DelegationLimit", b =>
+                {
+                    b.Property<long>("DelegationLimitId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("delegation_limit_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("DelegationLimitId"));
+
+                    b.Property<string>("AuthorityLevel")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("authority_level");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("effective_from");
+
+                    b.Property<decimal?>("MaxAmount")
+                        .HasColumnType("budget.rupees")
+                        .HasColumnName("max_amount");
+
+                    b.Property<string>("SourceRef")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source_ref");
+
+                    b.HasKey("DelegationLimitId");
+
+                    b.HasIndex("AuthorityLevel", "EffectiveFrom")
+                        .IsUnique();
+
+                    b.ToTable("delegation_limit", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Entities.TechnicalSanction", b =>
+                {
+                    b.Property<long>("TechnicalSanctionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("technical_sanction_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("TechnicalSanctionId"));
+
+                    b.Property<long?>("AdminApprovalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("admin_approval_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<short>("CurrentVersionNo")
+                        .HasColumnType("smallint")
+                        .HasColumnName("current_version_no");
+
+                    b.Property<string>("EstimateCode")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("estimate_code");
+
+                    b.Property<DateTimeOffset?>("EstimateCodeAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("estimate_code_at");
+
+                    b.Property<int>("SerialNo")
+                        .HasColumnType("integer")
+                        .HasColumnName("serial_no");
+
+                    b.Property<string>("Tab")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("tab");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<int>("WorkId")
+                        .HasColumnType("integer")
+                        .HasColumnName("work_id");
+
+                    b.HasKey("TechnicalSanctionId");
+
+                    b.HasIndex("AdminApprovalId");
+
+                    b.HasIndex("EstimateCode")
+                        .IsUnique()
+                        .HasDatabaseName("ux_technical_sanction_estimate_code");
+
+                    b.HasIndex(new[] { "WorkId" }, "IX_technical_sanction_work_id");
+
+                    b.HasIndex(new[] { "WorkId" }, "ux_technical_sanction_amr_work")
+                        .IsUnique()
+                        .HasFilter("tab = 'AMR'");
+
+                    b.ToTable("technical_sanction", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Entities.TechnicalSanctionVersion", b =>
+                {
+                    b.Property<long>("TechnicalSanctionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("technical_sanction_id");
+
+                    b.Property<short>("VersionNo")
+                        .HasColumnType("smallint")
+                        .HasColumnName("version_no");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<string>("NameOfEstimate")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("name_of_estimate");
+
+                    b.Property<decimal>("TsAmount")
+                        .HasColumnType("budget.rupees")
+                        .HasColumnName("ts_amount");
+
+                    b.Property<long>("TsCopyAttachmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("ts_copy_attachment_id");
+
+                    b.Property<DateOnly>("TsDate")
+                        .HasColumnType("date")
+                        .HasColumnName("ts_date");
+
+                    b.Property<string>("TsNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("ts_number");
+
+                    b.HasKey("TechnicalSanctionId", "VersionNo");
+
+                    b.HasIndex("TsCopyAttachmentId");
+
+                    b.ToTable("technical_sanction_version", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Budgets.Entities.BudgetEntry", b =>
@@ -2997,6 +3548,36 @@ namespace BBMB.BudgetService.Migrations
                     b.Navigation("MinorHead");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities.AdminApproval", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Offices.Entities.BudgetOffice", null)
+                        .WithMany()
+                        .HasForeignKey("DivisionOfficeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", null)
+                        .WithMany()
+                        .HasForeignKey("WorkId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities.AdminApprovalVersion", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities.BudgetAttachment", null)
+                        .WithMany()
+                        .HasForeignKey("AaCopyAttachmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities.AdminApproval", null)
+                        .WithMany()
+                        .HasForeignKey("AdminApprovalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Entities.AuditLogEntry", b =>
                 {
                     b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Offices.Entities.BudgetOffice", null)
@@ -3004,6 +3585,14 @@ namespace BBMB.BudgetService.Migrations
                         .HasForeignKey("ActorOfficeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.CorrectionFlags.Entities.CorrectionFlag", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", null)
+                        .WithMany()
+                        .HasForeignKey("WorkId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Cycles.Entities.BudgetCycle", b =>
@@ -3023,6 +3612,21 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities.DemandLine", b =>
                 {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities.BudgetAttachment", null)
+                        .WithMany()
+                        .HasForeignKey("CeAmrApprovalAttachmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities.BudgetAttachment", null)
+                        .WithMany()
+                        .HasForeignKey("CeCertificateAttachmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities.BudgetAttachment", null)
+                        .WithMany()
+                        .HasForeignKey("JustificationAttachmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities.BudgetProposal", null)
                         .WithMany()
                         .HasForeignKey("ProposalId")
@@ -3237,6 +3841,35 @@ namespace BBMB.BudgetService.Migrations
                     b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Recommendations.Entities.CeRecommendation", null)
                         .WithMany()
                         .HasForeignKey("RecommendationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Entities.TechnicalSanction", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities.AdminApproval", null)
+                        .WithMany()
+                        .HasForeignKey("AdminApprovalId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", null)
+                        .WithMany()
+                        .HasForeignKey("WorkId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Entities.TechnicalSanctionVersion", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Entities.TechnicalSanction", null)
+                        .WithMany()
+                        .HasForeignKey("TechnicalSanctionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities.BudgetAttachment", null)
+                        .WithMany()
+                        .HasForeignKey("TsCopyAttachmentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

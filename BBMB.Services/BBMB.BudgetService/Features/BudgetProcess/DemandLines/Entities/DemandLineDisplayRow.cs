@@ -44,5 +44,19 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities
         /// [{"level_office_id":…,"figure":"RBE"|"OBE_NEXT","value":…}], latest value per level and figure.
         /// </summary>
         [Column("level_figures")] public string LevelFigures { get; set; } = "[]";
+
+        // ---- V-04 version 2 (P2): the approval's current version and the sanctions to date (WORK lines) ----
+        [Column("admin_approval_id")] public long? AdminApprovalId { get; set; }
+        [Column("aa_name_of_work")] public string? AaNameOfWork { get; set; }
+        [Column("aa_reference_no")] public string? AaReferenceNo { get; set; }
+        [Column("aa_date_of_approval")] public DateOnly? AaDateOfApproval { get; set; }
+        [Column("aa_amount_sanctioned")] public decimal? AaAmountSanctioned { get; set; }
+        [Column("aa_current_version_no")] public short? AaCurrentVersionNo { get; set; }
+        [Column("ts_count")] public int? TsCount { get; set; }
+        /// <summary>Sum of the current versions of every sanction of the work.</summary>
+        [Column("ts_amount_to_date")] public decimal? TsAmountToDate { get; set; }
+        [Column("justification_attachment_id")] public long? JustificationAttachmentId { get; set; }
+        [Column("ce_certificate_attachment_id")] public long? CeCertificateAttachmentId { get; set; }
+        [Column("ce_amr_approval_attachment_id")] public long? CeAmrApprovalAttachmentId { get; set; }
     }
 }
