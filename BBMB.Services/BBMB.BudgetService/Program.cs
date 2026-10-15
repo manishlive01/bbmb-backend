@@ -90,6 +90,10 @@ builder.Services.AddSingleton<BBMB.BudgetService.Shared.Services.Notifications.I
 // T-17 value in force (design §5.3).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Settings.IBudgetSettingsReader,
     BBMB.BudgetService.Features.BudgetProcess.Settings.BudgetSettingsReader>();
+// Demand line rule set (design §6.4).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules.DemandLineRuleInputsLoader>();
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules.IDemandLineRules,
+    BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules.DemandLineRules>();
 // Work-master rules (design §5.3 first-cycle guard, §11.3 reference rule).
 builder.Services.AddScoped<BBMB.BudgetService.Features.Works.Rules.WorkRules>();
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.IProposalTransitionService,
