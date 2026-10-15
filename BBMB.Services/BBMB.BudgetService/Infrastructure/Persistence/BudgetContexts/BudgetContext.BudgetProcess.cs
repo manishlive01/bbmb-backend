@@ -1,3 +1,4 @@
+using BBMB.BudgetService.Features.BudgetProcess.AccountHeadAssignments.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Entities;
@@ -8,6 +9,7 @@ using BBMB.BudgetService.Features.BudgetProcess.Observations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Recommendations.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Reports.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Settings.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Entities;
 using BBMB.BudgetService.Features.FinancialYears.Entities;
@@ -54,8 +56,12 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<TechnicalSanction> TechnicalSanctions { get; set; }
         public DbSet<TechnicalSanctionVersion> TechnicalSanctionVersions { get; set; }
         public DbSet<CorrectionFlag> CorrectionFlags { get; set; }
+        public DbSet<AccountHeadAssignment> AccountHeadAssignments { get; set; }
+        public DbSet<ManualOfAccountsCodeRow> ManualOfAccountsCodes { get; set; }
 
         /// <summary>Partial UK names whose 23505 maps to a catalogue message (design §4.9).</summary>
+        /// <summary>T-21 partial UK (office, account code) where removed_at is null.</summary>
+        public const string UxAccountHeadAssignmentLive = "ux_account_head_assignment_live";
         public const string UxDemandLineWork = "ux_demand_line_work";
         public const string UxDemandLineHead = "ux_demand_line_head";
         /// <summary>T-27 partial UK: one sanction only against an AM&amp;R work (TSN-007, BUD-274, M-06).</summary>
@@ -368,6 +374,19 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 e.Property(x => x.LevelFigures).HasColumnType("jsonb");
             });
             modelBuilder.Entity<DemandByCeRow>(e => e.HasNoKey().ToView("v_demand_by_ce", "budget"));
+            modelBuilder.Entity<ManualOfAccountsCodeRow>(e => e.HasNoKey().ToView("v_manual_of_accounts_codes", "budget"));
+            // ---------------- T-21 account_head_assignment (P2) ----------------
+            modelBuilder.Entity<AccountHeadAssignment>(e =>
+            {
+                e.Property(x => x.AssignmentId).UseIdentityAlwaysColumn();
+                // One live row per office and head; a removed row stays (DB-02, removal by marking).
+                e.HasIndex(x => new { x.OfficeId, x.AccountCodeId }).IsUnique()
+                    .HasDatabaseName(UxAccountHeadAssignmentLive).HasFilter("removed_at IS NULL");
+                e.HasIndex(x => x.AccountCodeId);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.OfficeId).OnDelete(DeleteBehavior.Restrict);
+                // account_code_id → budget_head_master(account_code_id) and removed_by → employee are added by SQL.
+                ConfigureActorColumns(e);
+            });
 
             // ---------------- T-16 state_transition (seeded, design §6.2) ----------------
             modelBuilder.Entity<StateTransition>(e =>

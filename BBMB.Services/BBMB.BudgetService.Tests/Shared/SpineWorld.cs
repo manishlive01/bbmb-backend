@@ -85,6 +85,16 @@ public sealed class SpineWorld
                 seg.Major, seg.SubMajor, seg.Minor, seg.SubMinor, seg.Detail, seg.Object);
             accountCodeId = await ctx.HeadOfAccounts.Where(h => h.MajorAccCode == seg.Major && h.MinorAccCode == seg.Minor)
                 .Select(h => h.AccountCodeId).SingleAsync();
+            // From BudgetP2AccountCodesAndAssignment a head-wise line needs a live T-21 assignment (DB-02). The world's
+            // code is assigned to every Division, Circle and CE office, as the L-05 load would (source R04_LOAD).
+            // Skipped when the world is migrated to an earlier target.
+#pragma warning disable EF1002 // the interpolated values are ids read from the database above
+            await ctx.Database.ExecuteSqlRawAsync(
+                "DO $$ BEGIN IF to_regclass('budget.account_head_assignment') IS NOT NULL THEN " +
+                "EXECUTE 'INSERT INTO budget.account_head_assignment (office_id, account_code_id, source) " +
+                $"SELECT o, {accountCodeId}, ''R04_LOAD'' FROM unnest(ARRAY[{ce}, {circle}, {divA}, {divB}]::bigint[]) AS o'; " +
+                "END IF; END $$");
+#pragma warning restore EF1002
             await tx.CommitAsync();
         }
 

@@ -118,7 +118,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .IsRequired();
 
                 entity.Property(x => x.SubMajorAccDesc)
-                      .HasMaxLength(100)
+                      .HasMaxLength(200)
                       .IsRequired();
 
                 // 🔹 FK → MajorHead
@@ -150,7 +150,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .IsRequired();
 
                 entity.Property(x => x.SubMinorAccDesc)
-                      .HasMaxLength(100)
+                      .HasMaxLength(200)
                       .IsRequired();
             });
 

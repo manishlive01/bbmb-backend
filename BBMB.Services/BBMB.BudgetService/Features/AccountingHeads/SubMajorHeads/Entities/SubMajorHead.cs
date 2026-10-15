@@ -19,7 +19,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities
         public string SubMajorAccCode { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(100)]
+        [MaxLength(200)] // DDD T-01..T-05 varchar(200) (BudgetP2AccountCodesAndAssignment)
         [Column("sub_major_acc_desc")]
         public string SubMajorAccDesc { get; set; } = string.Empty;
 

@@ -33,8 +33,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("MajorAccDesc")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("major_acc_desc");
 
                     b.Property<DateTime>("ModificationDate")
@@ -61,8 +61,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("MinorAccDesc")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("minor_acc_desc");
 
                     b.Property<DateTime>("ModificationDate")
@@ -101,8 +101,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("SubMajorAccDesc")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("sub_major_acc_desc");
 
                     b.Property<string>("UserCode")
@@ -139,8 +139,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("SubMinorAccDesc")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("sub_minor_acc_desc");
 
                     b.Property<string>("UserCode")
@@ -155,6 +155,85 @@ namespace BBMB.BudgetService.Migrations
                         .IsUnique();
 
                     b.ToTable("fa_sub_minor_head", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AccountHeadAssignments.Entities.AccountHeadAssignment", b =>
+                {
+                    b.Property<long>("AssignmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("assignment_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("AssignmentId"));
+
+                    b.Property<long>("AccountCodeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_code_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<long>("OfficeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("office_id");
+
+                    b.Property<DateTimeOffset?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("removed_at");
+
+                    b.Property<Guid?>("RemovedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("removed_by");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("source");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("AssignmentId");
+
+                    b.HasIndex("AccountCodeId");
+
+                    b.HasIndex("OfficeId", "AccountCodeId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_account_head_assignment_live")
+                        .HasFilter("removed_at IS NULL");
+
+                    b.ToTable("account_head_assignment", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities.AdminApproval", b =>
@@ -1829,6 +1908,119 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("recommendation_version", "budget");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Reports.Entities.ManualOfAccountsCodeRow", b =>
+                {
+                    b.Property<long>("AccountCodeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_code_id");
+
+                    b.Property<string>("CompleteCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("complete_code");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<string>("CreatedByName")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by_name");
+
+                    b.Property<string>("DetailAccCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("detail_acc_code");
+
+                    b.Property<string>("DetailAccDesc")
+                        .HasColumnType("text")
+                        .HasColumnName("detail_acc_desc");
+
+                    b.Property<string>("EofficeApprovalRef")
+                        .HasColumnType("text")
+                        .HasColumnName("eoffice_approval_ref");
+
+                    b.Property<string>("HeadDesc")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("head_desc");
+
+                    b.Property<string>("MajorAccCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("major_acc_code");
+
+                    b.Property<string>("MajorAccDesc")
+                        .HasColumnType("text")
+                        .HasColumnName("major_acc_desc");
+
+                    b.Property<string>("MinorAccCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("minor_acc_code");
+
+                    b.Property<string>("MinorAccDesc")
+                        .HasColumnType("text")
+                        .HasColumnName("minor_acc_desc");
+
+                    b.Property<bool>("NotForUse")
+                        .HasColumnType("boolean")
+                        .HasColumnName("not_for_use");
+
+                    b.Property<DateTimeOffset?>("NotForUseAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("not_for_use_at");
+
+                    b.Property<string>("NotForUseRef")
+                        .HasColumnType("text")
+                        .HasColumnName("not_for_use_ref");
+
+                    b.Property<string>("ObjectAccCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("object_acc_code");
+
+                    b.Property<string>("ObjectAccDesc")
+                        .HasColumnType("text")
+                        .HasColumnName("object_acc_desc");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("origin");
+
+                    b.Property<string>("PartyEmpRequired")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("party_emp_required");
+
+                    b.Property<string>("SubMajorAccCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sub_major_acc_code");
+
+                    b.Property<string>("SubMajorAccDesc")
+                        .HasColumnType("text")
+                        .HasColumnName("sub_major_acc_desc");
+
+                    b.Property<string>("SubMinorAccCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sub_minor_acc_code");
+
+                    b.Property<string>("SubMinorAccDesc")
+                        .HasColumnType("text")
+                        .HasColumnName("sub_minor_acc_desc");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("v_manual_of_accounts_codes", "budget");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Settings.Entities.BudgetSetting", b =>
                 {
                     b.Property<long>("SettingId")
@@ -2302,8 +2494,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.Property<string>("DetailAccDesc")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("detail_acc_desc");
 
                     b.Property<DateTime>("ModificationDate")
@@ -3546,6 +3738,15 @@ namespace BBMB.BudgetService.Migrations
                         .IsRequired();
 
                     b.Navigation("MinorHead");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AccountHeadAssignments.Entities.AccountHeadAssignment", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Offices.Entities.BudgetOffice", null)
+                        .WithMany()
+                        .HasForeignKey("OfficeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities.AdminApproval", b =>

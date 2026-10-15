@@ -18,7 +18,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities
         public string MinorAccCode { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(100)]
+        [MaxLength(200)] // DDD T-01..T-05 varchar(200) (BudgetP2AccountCodesAndAssignment)
         [Column("sub_minor_acc_desc")]
         public string SubMinorAccDesc { get; set; } = string.Empty;
 
