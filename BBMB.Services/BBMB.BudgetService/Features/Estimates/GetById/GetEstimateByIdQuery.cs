@@ -4,5 +4,6 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.Estimates.GetById
 {
-    public record GetEstimateByIdQuery(int WorkCode, string EstimateCode) : IRequest<Response<GetEstimateByIdResponseDto>>;
+    // P4 (design §4.6): the estimate is keyed on (work_id, estimate_code); the GET is addressed by work id.
+    public record GetEstimateByIdQuery(int WorkId, string EstimateCode) : IRequest<Response<GetEstimateByIdResponseDto>>;
 }

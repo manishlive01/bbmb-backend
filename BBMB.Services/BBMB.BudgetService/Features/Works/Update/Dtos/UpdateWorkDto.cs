@@ -2,7 +2,9 @@ namespace BBMB.BudgetService.Features.Works.Update.Dtos
 {
     public class UpdateWorkDto
     {
-        public string WorkCode { get; set; } = string.Empty;
+        // P4 (design §4.6): UpdateWorkDto loses WorkCode. A work code is never set or changed through the
+        // work master update — it is generated only on allocation (BUD-232) or keyed via F-28 legacy-code,
+        // and is write-once (DB-05).
         public string WorkDesc { get; set; } = string.Empty;
         // No DivisionId: division_id is never updatable (design §11.3). No enteredVia (design §9.3).
         public int DivSectionId { get; set; }

@@ -17,10 +17,12 @@ namespace BBMB.BudgetService.Features.Estimates.GetById
 
         public async Task<Response<GetEstimateByIdResponseDto>> Handle(GetEstimateByIdQuery request, CancellationToken cancellationToken)
         {
+#pragma warning disable CS0618 // work_code retained read-only through P4 (design §4.6 step 2, OI-46)
             var estimate = await _context.Estimates
-                .Where(e => e.WorkCode == request.WorkCode && e.EstimateCode == request.EstimateCode)
+                .Where(e => e.WorkId == request.WorkId && e.EstimateCode == request.EstimateCode)
                 .Select(e => new GetEstimateByIdResponseDto
                 {
+                    WorkId = e.WorkId,
                     WorkCode = e.WorkCode,
                     EstimateCode = e.EstimateCode,
                     EstimateDesc = e.EstimateDesc,
@@ -35,6 +37,7 @@ namespace BBMB.BudgetService.Features.Estimates.GetById
                         .FirstOrDefault()
                 })
                 .FirstOrDefaultAsync(cancellationToken);
+#pragma warning restore CS0618
 
             if (estimate == null)
             {

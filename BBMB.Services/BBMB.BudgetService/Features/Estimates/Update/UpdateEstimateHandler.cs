@@ -1,52 +1,16 @@
-using BBMB.BudgetService.Features.Estimates.Update.Dtos;
-using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.Messages;
 using BBMB.BudgetService.Shared.ResponseDTOs;
-using FluentValidation;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.Estimates.Update
 {
     public class UpdateEstimateHandler : IRequestHandler<UpdateEstimateCommand, Response<string>>
     {
-        private readonly BudgetContext _context; 
-
-        public UpdateEstimateHandler(BudgetContext context )
+        public Task<Response<string>> Handle(UpdateEstimateCommand request, CancellationToken cancellationToken)
         {
-            _context = context; 
-        }
-
-        public async Task<Response<string>> Handle(UpdateEstimateCommand request, CancellationToken cancellationToken)
-        {
-             
-
-            // Find estimate
-            var estimate = await _context.Estimates
-                .FirstOrDefaultAsync(e => e.WorkCode == request.WorkCode && e.EstimateCode == request.EstimateCode, cancellationToken);
-
-            if (estimate == null)
-            {
-                return new Response<string>
-                {
-                    IsSucced = false,
-                    Message = "Estimate not found"
-                };
-            }
-
-            // Update fields
-            estimate.EstimateDesc = request.Dto.EstimateDesc;
-            estimate.EstimateAmt = request.Dto.EstimateAmt;
-            estimate.EstimateNarr = request.Dto.EstimateNarr;
-            estimate.FinYearEnd = request.Dto.FinYearEnd;
-            estimate.DivisionCode = request.Dto.DivisionCode;
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            return new Response<string>
-            {
-                IsSucced = true,
-                Message = "Estimate updated successfully"
-            };
+            // P4 (design §4.6, §9.3 Estimates P4): the legacy estimate write route refuses after the reset (M-19).
+            // Estimate figures are maintained by Financial Accounting against a technical sanction, not here.
+            return Task.FromResult(BudgetResponses.Fail<string>(BudgetMessages.M19));
         }
     }
 }

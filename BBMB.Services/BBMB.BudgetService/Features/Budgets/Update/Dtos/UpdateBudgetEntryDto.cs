@@ -14,7 +14,8 @@ namespace BBMB.BudgetService.Features.Budgets.Update.Dtos
         public string SubMinorAccCode { get; set; } = string.Empty;
         public string DetailAccCode { get; set; } = string.Empty;
         public string ObjectAccCode { get; set; } = string.Empty;
-        public int? WorkCode { get; set; }
+        // P4 (design §4.6): the budget entry references the work by its stable id, not the old int work code.
+        public int? WorkId { get; set; }
         public string BudgetDescription { get; set; } = string.Empty;
         public decimal? BudgetAmount { get; set; }
         public decimal? RevisedAmount { get; set; }

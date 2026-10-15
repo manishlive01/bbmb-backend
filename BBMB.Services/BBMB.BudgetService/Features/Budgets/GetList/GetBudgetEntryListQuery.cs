@@ -13,6 +13,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
         int? DivisionCode,
         int? CalendarYear,
         BudgetType? BudgetType,
-        int? WorkCode
+        // P4 (design §4.6, §9.3 Budgets P4): the list filters by work id, not the old int work code.
+        int? WorkId
     ) : IRequest<PagedResponse<GetBudgetEntryListResponseDto>>;
 }
