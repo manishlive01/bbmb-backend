@@ -152,6 +152,42 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
             };
         }
 
+        public async Task<IReadOnlyList<string>> GetAvailableActionsAsync(long proposalId, CancellationToken ct = default)
+        {
+            if (!await IsStateModelAvailableAsync(ct))
+                return [];
+            var actor = await actorSource.GetAsync(ct);
+            if (actor is null)
+                return [];
+            var proposal = await context.BudgetProposals.AsNoTracking().FirstOrDefaultAsync(p => p.ProposalId == proposalId, ct);
+            if (proposal is null)
+                return [];
+            var visible = await officeScope.GetVisibleOfficeIdsAsync(actor.OfficeId, ct);
+            if (!visible.Contains(proposal.OriginOfficeId) && !visible.Contains(proposal.HolderOfficeId))
+                return [];
+            var cycleStatus = await context.BudgetCycles.AsNoTracking()
+                .Where(c => c.CycleId == proposal.CycleId).Select(c => c.Status).SingleAsync(ct);
+            if (cycleStatus != CycleStatus.Open)
+                return [];
+
+            var transitions = await context.StateTransitions.AsNoTracking()
+                .Where(t => t.FromState == proposal.StateCode).ToListAsync(ct);
+            var user = httpContextAccessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal();
+            var available = new List<string>();
+            foreach (var action in transitions.Select(t => t.ActionCode).Distinct().OrderBy(a => a, StringComparer.Ordinal))
+            {
+                if (action != ProposalAction.Recall && proposal.HolderOfficeId != actor.OfficeId)
+                    continue;
+                var resolved = await ResolveAsync(proposal, action, actor.OfficeId, ct);
+                if (resolved is null || !transitions.Any(t => t.ActionCode == resolved.ActionCode && t.ToState == resolved.ToState))
+                    continue;
+                var right = TransitionResolver.RightFor(action, proposal.StateCode, proposal.Category);
+                if ((await authorization.AuthorizeAsync(user, null, BudgetRightRequirement.Policy(right))).Succeeded)
+                    available.Add(action);
+            }
+            return available;
+        }
+
         /// <summary>The proposal's state and holder for a response (design §8.1).</summary>
         public async Task<ProposalStateResponseDto> StateOfAsync(long proposalId, CancellationToken ct)
         {

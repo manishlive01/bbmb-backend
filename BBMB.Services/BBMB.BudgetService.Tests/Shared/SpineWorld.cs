@@ -42,10 +42,11 @@ public sealed class SpineWorld
         new(source.Actor! with { OfficeId = officeId, OfficeLevel = level, RoleCode = role });
 
     /// <param name="withCycle">False leaves T-14 and T-29 empty (CycleId and WorksProposalAId are 0).</param>
-    public static async Task<SpineWorld> CreateAsync(BudgetDatabaseFixture fixture, string name, bool withCycle = true)
+    /// <param name="migrateTo">Target migration; null migrates fully. Must be at or after BudgetP1ProposalSpine.</param>
+    public static async Task<SpineWorld> CreateAsync(BudgetDatabaseFixture fixture, string name, bool withCycle = true, string? migrateTo = null)
     {
         var cs = await fixture.CreateFreshDatabaseAsync(name);
-        await fixture.MigrateToAsync(cs, null);
+        await fixture.MigrateToAsync(cs, migrateTo);
         var a = await TestMasters.InsertDivisionAsync(cs);
         var b = await TestMasters.InsertDivisionAsync(cs);
         var seg = await TestMasters.InsertSegmentsAsync(cs);

@@ -35,6 +35,13 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
         /// <c>Response&lt;RuleFailuresDto&gt;</c>, design §4.9); every other refusal is a plain catalogued failure.
         /// Endpoints pass the result to <c>BudgetResults</c>, which serialises the runtime type.
         /// </summary>
+        /// <summary>
+        /// The actions the current actor could take on the proposal now (design §8.3 GetById
+        /// <c>availableActions</c>): T-16 rows from the proposal's state whose target resolves, filtered by the
+        /// holder rule and the actor's rights. Empty while T-16 is absent (§11.4), without an actor, for a
+        /// proposal not visible to the actor, and in a cycle that is not OPEN.
+        /// </summary>
+        Task<IReadOnlyList<string>> GetAvailableActionsAsync(long proposalId, CancellationToken ct = default);
         Task<Response> MoveAsync(
             long proposalId, string action, string? remark, CancellationToken ct = default, TransitionHooks? hooks = null);
     }
