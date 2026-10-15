@@ -41,11 +41,13 @@ namespace BBMB.BudgetService.Features.Works.Rules
 
         /// <summary>
         /// True when a record the work's head and class are part of references it (design §11.3 reference rule).
-        /// P1: a non-deleted T-30 demand line. P2 extends this with T-25 and T-27, P4 with T-41, each in the
-        /// change that adds the table.
+        /// A non-deleted T-30 demand line (P1), a T-25 administrative approval or a T-27 technical sanction (P2,
+        /// whose versions carry the head and whose tab is the class). P4 extends this with T-41.
         /// </summary>
-        public Task<bool> IsReferencedAsync(int workId, CancellationToken ct = default) =>
-            context.DemandLines.AsNoTracking().AnyAsync(l => l.WorkId == workId && !l.IsDeleted, ct);
+        public async Task<bool> IsReferencedAsync(int workId, CancellationToken ct = default) =>
+            await context.DemandLines.AsNoTracking().AnyAsync(l => l.WorkId == workId && !l.IsDeleted, ct)
+            || await context.AdminApprovals.AsNoTracking().AnyAsync(a => a.WorkId == workId, ct)
+            || await context.TechnicalSanctions.AsNoTracking().AnyAsync(t => t.WorkId == workId, ct);
 
         /// <summary>
         /// Resolves a T-07 <c>account_code_id</c> for use on a work (design §5.2): absent or <c>not_for_use</c>

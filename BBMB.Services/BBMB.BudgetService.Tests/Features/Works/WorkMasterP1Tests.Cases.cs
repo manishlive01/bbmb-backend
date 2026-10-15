@@ -124,11 +124,26 @@ public sealed partial class WorkMasterP1Tests
         work.MajorAccCode.Should().Be(_w.Segments.Major);
     }
 
-    [Fact(Skip = "Runnable when T-25/T-26 land: P2-07")]
+    [Fact]
     public async Task S113_Works_ReclassifyWithT26VersionRefusedM19()
     {
-        // P2-07: create an administrative approval (T-25) with a version (T-26) on work A, then reclassify.
-        // WorkRules.IsReferencedAsync is extended with T-25/T-27 in that change (design §11.3, §12, §14).
+        // An administrative approval (T-25) with its version 1 (T-26) on work A and no demand line: the reference
+        // rule refuses on the approval alone (WorkRules.IsReferencedAsync covers T-25 and T-27, design §11.3).
+        var att = await BudgetProcess.AdminApprovals.CreateAdminApprovalTests.EvidenceAsync(_w, _w.DivisionA);
+        var (c, tx) = await _w.BeginAsync(_w.DivisionA, "AA_CREATE");
+        await using (c)
+        {
+            await using var h = new Npgsql.NpgsqlCommand(
+                "INSERT INTO budget.admin_approval (work_id, division_office_id, serial_no, current_version_no) " +
+                $"VALUES ({_w.WorkAId}, {_w.DivisionAOfficeId}, 1, 1) RETURNING admin_approval_id", c, tx);
+            var aa = Convert.ToInt64(await h.ExecuteScalarAsync());
+            await using var v = new Npgsql.NpgsqlCommand(
+                "INSERT INTO budget.admin_approval_version (admin_approval_id, version_no, name_of_work, aa_reference_no, date_of_approval, " +
+                "account_code_id, amount_sanctioned, aa_copy_attachment_id, competent_authority, exceeds_delegation) " +
+                $"VALUES ({aa}, 1, 'Work', 'AA/1', current_date - 1, {_w.AccountCodeId}, 1000, {att}, 'EE', false)", c, tx);
+            await v.ExecuteNonQueryAsync();
+            await tx.CommitAsync();
+        }
         var reclass = SameAs("Work 500001");
         reclass.WorkClass = "AMR";
         (await UpdateAsync(await WorkCodeAsync(_w.WorkAId), reclass)).MessageId.Should().Be("M-19");

@@ -73,6 +73,24 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Rules
         }
 
         /// <summary>
+        /// The work's demand in the current cycle (§5.3): whether a live (non-deleted) demand line of it exists, and
+        /// the sum of rbe + obe over those lines, null figures counting as nothing (BUD-065 "demanded sum").
+        /// No current cycle → no live line.
+        /// </summary>
+        public async Task<(bool HasLiveLine, decimal Sum)> DemandOfWorkAsync(int workId, CancellationToken ct = default)
+        {
+            var cycle = await BudgetCycleQueries.GetCurrentAsync(context, ct);
+            if (cycle is null)
+                return (false, 0);
+            var lines = await context.DemandLines.AsNoTracking()
+                .Where(l => l.WorkId == workId && !l.IsDeleted)
+                .Join(context.BudgetProposals.Where(p => p.CycleId == cycle.CycleId), l => l.ProposalId, p => p.ProposalId, (l, p) => l)
+                .Select(l => (l.RbeAmount ?? 0) + (l.ObeNextAmount ?? 0))
+                .ToListAsync(ct);
+            return (lines.Count > 0, lines.Sum());
+        }
+
+        /// <summary>
         /// BUD-059: when the Division's WORKS proposal of the current cycle (§5.3) is at S-01 or S-04, the work gets a
         /// WORK line with null figures (the DDO enters them at F-07), unless it already has a live line there. No
         /// current cycle, no proposal, or a proposal in another state: no line, and the approval stands.
