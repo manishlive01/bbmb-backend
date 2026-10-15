@@ -17,7 +17,7 @@ BEGIN
         RAISE EXCEPTION 'DB-01' USING ERRCODE = 'P0001', DETAIL = 'recommendation and office of a distribution are fixed';
     END IF;
     SELECT o.ce_id INTO v_ce_id
-    FROM budget.recommendation r JOIN budget.office o ON o.office_id = r.ce_office_id
+    FROM budget.ce_recommendation r JOIN budget.office o ON o.office_id = r.ce_office_id
     WHERE r.recommendation_id = NEW.recommendation_id;
     -- The office must be a Circle or Division whose CE charge is the recommendation's CE office.
     IF NOT EXISTS (
@@ -49,7 +49,7 @@ DECLARE
 BEGIN
     SELECT coalesce(r.rbe_recommended, 0), coalesce(r.obe_next_recommended, 0)
     INTO v_rbe_recommended, v_obe_recommended
-    FROM budget.recommendation r WHERE r.recommendation_id = NEW.recommendation_id;
+    FROM budget.ce_recommendation r WHERE r.recommendation_id = NEW.recommendation_id;
 
     SELECT coalesce(sum(d.rbe_amount), 0), coalesce(sum(d.obe_next_amount), 0)
     INTO v_rbe_total, v_obe_total
@@ -85,7 +85,7 @@ BEGIN
         INTO v_rbe_total, v_obe_total
         FROM budget.distribution d WHERE d.recommendation_id = NEW.recommendation_id;
         IF v_rbe_total > coalesce(NEW.rbe_recommended, 0) OR v_obe_total > coalesce(NEW.obe_next_recommended, 0) THEN
-            UPDATE budget.recommendation SET redistribution_required = true
+            UPDATE budget.ce_recommendation SET redistribution_required = true
             WHERE recommendation_id = NEW.recommendation_id AND NOT redistribution_required;
         END IF;
     END IF;

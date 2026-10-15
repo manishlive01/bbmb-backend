@@ -2,7 +2,7 @@
 -- The T-37 trigger and the standalone functions are dropped here (they are not dropped by DropTable), and
 -- V-04 is restored to its P2 version 2 (which does not reference the P3 tables) so DropTable(distribution)
 -- does not fail on a dependent view. V-05 is dropped.
-DROP TRIGGER IF EXISTS trg_recommendation_redistribution ON budget.recommendation;
+DROP TRIGGER IF EXISTS trg_recommendation_redistribution ON budget.ce_recommendation;
 DROP VIEW IF EXISTS budget.v_distribution_balance;
 
 -- Restore V-04 to version 2 (P2): drop the P3 columns (col9) by replacing the view with the v2 body.

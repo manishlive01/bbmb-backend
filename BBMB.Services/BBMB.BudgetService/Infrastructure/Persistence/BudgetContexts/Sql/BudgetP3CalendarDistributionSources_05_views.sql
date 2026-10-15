@@ -15,7 +15,7 @@ SELECT r.recommendation_id,
        coalesce(r.rbe_recommended, 0) - coalesce(d.rbe_distributed, 0)      AS rbe_balance_retained,
        coalesce(r.obe_next_recommended, 0) - coalesce(d.obe_distributed, 0) AS obe_balance_retained,
        r.redistribution_required
-FROM budget.recommendation r
+FROM budget.ce_recommendation r
 LEFT JOIN LATERAL (
     SELECT sum(x.rbe_amount) AS rbe_distributed, sum(x.obe_next_amount) AS obe_distributed
     FROM budget.distribution x WHERE x.recommendation_id = r.recommendation_id
@@ -136,7 +136,7 @@ LEFT JOIN LATERAL (
     -- Columns 9/10 for the framing office: its distributed share, or (where it is the CE office) the balance
     -- retained. Keyed on the line's head and the proposal's category and cycle. Null where none exists yet.
     SELECT d.rbe_amount, d.obe_next_amount
-    FROM budget.recommendation r
+    FROM budget.ce_recommendation r
     JOIN budget.distribution d ON d.recommendation_id = r.recommendation_id AND d.office_id = p.origin_office_id
     WHERE r.cycle_id = p.cycle_id AND r.category = p.category AND r.account_code_id = l.account_code_id
     LIMIT 1

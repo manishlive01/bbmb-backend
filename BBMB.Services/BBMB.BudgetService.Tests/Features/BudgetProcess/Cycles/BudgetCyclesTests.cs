@@ -137,12 +137,16 @@ public sealed class BudgetCyclesTests(BudgetDatabaseFixture fixture) : IAsyncLif
     }
 
     [Fact]
-    public void P1_category_RECEIPTS_is_refused_by_the_validator()
+    public void P3_open_proposals_validator_accepts_the_four_categories_and_refuses_the_rest()
     {
+        // P3-05 (design §8.2) enables RECEIPTS (F-15) and CAPEX (F-16) alongside WORKS and DNA. This test was
+        // P1_category_RECEIPTS_is_refused_by_the_validator; it is realigned to the P3 scope, not newly authored.
         var v = new OpenProposalsValidator();
-        v.Validate(new OpenProposalsCommand(1, new OpenProposalsDto { Categories = ["RECEIPTS"] })).IsValid.Should().BeFalse();
+        v.Validate(new OpenProposalsCommand(1, new OpenProposalsDto { Categories = ["RECEIPTS"] })).IsValid.Should().BeTrue();
+        v.Validate(new OpenProposalsCommand(1, new OpenProposalsDto { Categories = ["CAPEX"] })).IsValid.Should().BeTrue();
+        v.Validate(new OpenProposalsCommand(1, new OpenProposalsDto { Categories = ["WORKS", "DNA", "RECEIPTS", "CAPEX"] })).IsValid.Should().BeTrue();
+        v.Validate(new OpenProposalsCommand(1, new OpenProposalsDto { Categories = ["NONSENSE"] })).IsValid.Should().BeFalse();
         v.Validate(new OpenProposalsCommand(1, new OpenProposalsDto { Categories = [] })).IsValid.Should().BeFalse();
         v.Validate(new OpenProposalsCommand(1, new OpenProposalsDto { Categories = ["DNA"], OfficeIds = [0] })).IsValid.Should().BeFalse();
-        v.Validate(new OpenProposalsCommand(1, new OpenProposalsDto { Categories = ["WORKS", "DNA"] })).IsValid.Should().BeTrue();
     }
 }

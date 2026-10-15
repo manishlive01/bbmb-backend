@@ -31,5 +31,5 @@ CREATE TRIGGER trg_expenditure_source_forbid_row BEFORE UPDATE OR DELETE ON budg
 CREATE TRIGGER trg_expenditure_source_forbid_stmt BEFORE DELETE OR TRUNCATE ON budget.expenditure_source_setting
     FOR EACH STATEMENT EXECUTE FUNCTION budget.fn_forbid_change();
 -- T-37 recommendation: the redistribution flag (BUD-279), after a recommended-figure change.
-CREATE TRIGGER trg_recommendation_redistribution AFTER UPDATE ON budget.recommendation
+CREATE TRIGGER trg_recommendation_redistribution AFTER UPDATE ON budget.ce_recommendation
     FOR EACH ROW EXECUTE FUNCTION budget.fn_recommendation_redistribution_flag();
