@@ -9,9 +9,9 @@ namespace BBMB.BudgetService.Features.Works.Update
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapPut("/api/works/{code}", async (int code, UpdateWorkDto dto, IMediator mediator) =>
+            app.MapPut("/api/works/{id:int}", async (int id, UpdateWorkDto dto, IMediator mediator) =>
             {
-                var command = new UpdateWorkCommand(code, dto);
+                var command = new UpdateWorkCommand(id, dto);
                 var response = await mediator.Send(command);
 
                 // Design §4.9: NOT_FOUND → 404 (another Division's work is not disclosed), M-20 → 403, else 409.

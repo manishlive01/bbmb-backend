@@ -80,7 +80,7 @@ public sealed class BudgetP2AttachmentsApprovalsSanctionsTests(BudgetDatabaseFix
         var seg = _w.Segments;
         var w = new Work
         {
-            WorkCode = Random.Shared.Next(600000, 699999), DivisionId = divisionId, WorkDesc = $"{workClass} work", UserCode = "T",
+            WorkCode = null, DivisionId = divisionId, WorkDesc = $"{workClass} work", UserCode = "T", // P4 §4.6: code-less at entry
             MajorAccCode = seg.Major, SubMajorAccCode = seg.SubMajor, MinorAccCode = seg.Minor,
             SubMinorAccCode = seg.SubMinor, DetailAccCode = seg.Detail, ObjectAccCode = seg.Object,
             WorkClass = workClass, EnteredVia = "LEGACY_OPENING",

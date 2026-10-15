@@ -30,11 +30,13 @@ namespace BBMB.BudgetService.Features.Budgets.Create
                 return BudgetResponses.Fail(BudgetMessages.M05);
             }
 
-            // Validate work code if provided
-            if (!string.IsNullOrWhiteSpace(request.dto.WorkCode.ToString()))
+            // Validate work code if provided. P4 compile fix (design §4.6): work_code is now string?; the DTO
+            // is re-keyed to WorkId in P4-03, so the lookup compares the string form of the code until then.
+            var workCodeText = request.dto.WorkCode.ToString();
+            if (!string.IsNullOrWhiteSpace(workCodeText))
             {
                 var workExists = await _context.Works
-                    .AnyAsync(w => w.WorkCode == request.dto.WorkCode, ct);
+                    .AnyAsync(w => w.WorkCode == workCodeText, ct);
                 if (!workExists)
                 {
                     return new Response

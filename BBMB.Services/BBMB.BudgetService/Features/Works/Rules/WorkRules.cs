@@ -77,25 +77,10 @@ namespace BBMB.BudgetService.Features.Works.Rules
                 .ToListAsync(ct);
         }
 
-        /// <summary>
-        /// The interim integer code a new work must carry until the P4 reset (design §4.6): <c>work.work_code</c>
-        /// is still <c>int NOT NULL</c> with a unique key in P1–P3, so a work entered with its demand line cannot
-        /// be code-less yet (DV-19 lands in P4). Same rule as <c>CreateWorkHandler</c> (D-4): Division id followed
-        /// by a five-digit serial. P4 moves every such code to <c>work_code_prev</c> and nulls <c>work_code</c>.
-        /// </summary>
-        public async Task<int> NextInterimWorkCodeAsync(int divisionId, CancellationToken ct = default)
-        {
-            var last = await context.Works.AsNoTracking()
-                .Where(w => w.DivisionId == divisionId)
-                .OrderByDescending(w => w.WorkCode).Select(w => w.WorkCode).FirstOrDefaultAsync(ct);
-            var lastText = last.ToString();
-            var divisionText = divisionId.ToString();
-            var next = 1;
-            if (lastText.StartsWith(divisionText, StringComparison.Ordinal) && lastText.Length > divisionText.Length &&
-                int.TryParse(lastText[divisionText.Length..], out var n))
-                next = n + 1;
-            return int.Parse($"{divisionId}{next:D5}");
-        }
+        // NextInterimWorkCodeAsync removed in P4 (design §4.6, DV-19): a work is created with NO code. The
+        // four creation paths (F-03 AA_ENTRY, F-06 AMR TS_ENTRY, F-07 DEMAND_ENTRY, and the upload demand
+        // path) now set work_code = null. A code is generated only on the four allocation occasions
+        // (BUD-232) by budget.fn_generate_work_code, or keyed as a legacy code (F-28).
 
         /// <summary>Copies the six segments of a resolved T-07 code onto the work (design §5.2).</summary>
         public static void ApplySegments(Work work, HeadOfAccount code)

@@ -33,8 +33,13 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
             if (request.BudgetType.HasValue)
                 query = query.Where(b => b.BudgetType == request.BudgetType.Value);
 
-            if (!string.IsNullOrEmpty(request.WorkCode.ToString()))
-                query = query.Where(b => b.Work.WorkCode == request.WorkCode);
+            // P4 compile fix (design §4.6): work_code is now string?; the query filter is re-keyed to ?workId=
+            // in P4-03, so this compares the string form of the code until then.
+            if (request.WorkCode.HasValue)
+            {
+                var workCodeText = request.WorkCode.Value.ToString();
+                query = query.Where(b => b.Work.WorkCode == workCodeText);
+            }
 
             // Get total count
             var totalCount = await query.CountAsync(ct);

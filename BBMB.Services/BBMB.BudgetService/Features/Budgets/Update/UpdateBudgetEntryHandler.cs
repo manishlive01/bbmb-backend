@@ -36,11 +36,13 @@ namespace BBMB.BudgetService.Features.Budgets.Update
                     Message = $"Division with code '{request.dto.DivisionId}' not found"
                 };
 
-            // Validate work code if provided
-            if (!string.IsNullOrEmpty(request.dto.WorkCode.ToString()))
+            // Validate work code if provided. P4 compile fix (design §4.6): work_code is now string?; the DTO
+            // is re-keyed to WorkId in P4-03, so the lookup compares the string form of the code until then.
+            var workCodeText = request.dto.WorkCode.ToString();
+            if (!string.IsNullOrEmpty(workCodeText))
             {
                 var workExists = await _context.Works
-                    .AnyAsync(w => w.WorkCode == request.dto.WorkCode, ct);
+                    .AnyAsync(w => w.WorkCode == workCodeText, ct);
                 if (!workExists)
                     return new Response
                     {
@@ -58,7 +60,7 @@ namespace BBMB.BudgetService.Features.Budgets.Update
                     IsSucced = false,
                     Message = $"Major head with code '{request.dto.MajorAccCode}' not found"
                 };
-            var getWorkId=await _context.Works.AsNoTracking().Where(w=>w.WorkCode==request.dto.WorkCode).Select(w=>w.Id).FirstOrDefaultAsync(ct);
+            var getWorkId=await _context.Works.AsNoTracking().Where(w=>w.WorkCode==workCodeText).Select(w=>w.Id).FirstOrDefaultAsync(ct);
              // Update fields
             //budgetEntry.DivisionCode = request.dto.DivisionCode;
             budgetEntry.DivSectionId = request.dto.DivSectionId;

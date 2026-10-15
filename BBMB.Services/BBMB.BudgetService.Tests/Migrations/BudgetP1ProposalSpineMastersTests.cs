@@ -132,7 +132,7 @@ public sealed class BudgetP1ProposalSpineMastersTests(BudgetDatabaseFixture fixt
         {
             var w = new BBMB.BudgetService.Features.Works.Entities.Work
             {
-                WorkCode = 200001, DivisionId = h.DivisionId, WorkDesc = "New", UserCode = "T",
+                WorkCode = null, DivisionId = h.DivisionId, WorkDesc = "New", UserCode = "T", // P4 §4.6: code-less at entry
                 MajorAccCode = plain.Major, SubMajorAccCode = plain.SubMajor, MinorAccCode = plain.Minor,
                 SubMinorAccCode = plain.SubMinor, DetailAccCode = plain.Detail, ObjectAccCode = plain.Object,
                 WorkClass = "AA", EnteredVia = "LEGACY_OPENING", PreDdd = false,

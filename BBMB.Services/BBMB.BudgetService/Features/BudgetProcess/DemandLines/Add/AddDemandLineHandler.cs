@@ -82,7 +82,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Add
                         return DemandLineWrites.FieldFailure(line, "newWork.accountCodeId", codeFailure!);
                     work = new Work
                     {
-                        WorkCode = await workRules.NextInterimWorkCodeAsync(divisionId!.Value, ct),
+                        WorkCode = null, // no code at entry (design §4.6, DV-19); generated only on allocation (BUD-232)
                         DivisionId = divisionId.Value, WorkDesc = nw.NameOfWork.Trim(), WorkClass = nw.WorkClass,
                         EnteredVia = WorkEnteredVia.DemandEntry, PreDdd = false, UserCode = DemandLineWrites.DemandEntryUserCode,
                     };

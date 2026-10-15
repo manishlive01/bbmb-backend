@@ -107,7 +107,7 @@ public sealed class SpineWorld
             await using var wtx = await new BudgetActionScope(wctx, actor).BeginAsync("WORKS_ENTER");
             var w = new Work
             {
-                WorkCode = code, DivisionId = divisionId, WorkDesc = $"Work {code}", UserCode = "T",
+                WorkCode = null, DivisionId = divisionId, WorkDesc = $"Work {code}", UserCode = "T", // P4 §4.6: code-less at entry
                 MajorAccCode = seg.Major, SubMajorAccCode = seg.SubMajor, MinorAccCode = seg.Minor,
                 SubMinorAccCode = seg.SubMinor, DetailAccCode = seg.Detail, ObjectAccCode = seg.Object,
                 WorkClass = "AA", EnteredVia = "LEGACY_OPENING",

@@ -84,7 +84,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Create
             {
                 work = new Work
                 {
-                    WorkCode = await workRules.NextInterimWorkCodeAsync(division.DivisionId, ct),
+                    WorkCode = null, // no code at entry (design §4.6, DV-19); generated only on allocation (BUD-232)
                     DivisionId = division.DivisionId, WorkDesc = dto.NameOfWork.Trim(), WorkClass = WorkClass.Aa,
                     EnteredVia = WorkEnteredVia.AaEntry, PreDdd = false, UserCode = AaEntryUserCode,
                 };

@@ -18,10 +18,13 @@ namespace BBMB.BudgetService.Features.Budgets.GetByWork
 
         public async Task<PagedResponse<GetBudgetEntryListResponseDto>> Handle(GetBudgetEntriesByWorkQuery request, CancellationToken ct)
         {
+            // P4 compile fix (design §4.6): work_code is now string?; this by-work route is re-keyed to workId
+            // in P4-03, so the comparison is kept string-wise until then.
+            var workCodeText = request.WorkCode.ToString();
             var query = _context.BudgetEntries
                 .Include(b => b.Division)
                 .Include(b => b.Work)
-                .Where(b => b.Work.WorkCode == request.WorkCode);
+                .Where(b => b.Work.WorkCode == workCodeText);
 
             var totalCount = await query.CountAsync(ct);
 

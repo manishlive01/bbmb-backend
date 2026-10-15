@@ -117,9 +117,9 @@ public sealed class DemandLineSlicesTests(BudgetDatabaseFixture fixture) : IAsyn
         work.CreatedBy.Should().Be(_w.DivisionA.Actor!.EmployeeId);
         line.AccountCodeId.Should().Be(_w.AccountCodeId);
         line.FloorCheckUnchecked.Should().BeTrue("no expenditure is available for a new work (VR-15)");
-        // work_code is still int NOT NULL until the P4 reset (design §4.6): the interim code is carried and
-        // nulled by BudgetP4WorkCodeConformance; the null-code assertion is P4-03's (DV-19).
-        work.WorkCode.Should().BeGreaterThan(0);
+        // DV-19 (design §4.6): a work created with its demand line (DEMAND_ENTRY) carries NO code after the
+        // P4 reset — a code is generated only on the four allocation occasions (BUD-232).
+        work.WorkCode.Should().BeNull();
     }
 
     [Fact]

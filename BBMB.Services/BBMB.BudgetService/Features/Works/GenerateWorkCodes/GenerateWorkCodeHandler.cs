@@ -21,56 +21,14 @@ namespace BBMB.BudgetService.Features.Works.GenerateWorkCodes
             GenerateWorkCodeQuery request,
             CancellationToken cancellationToken)
         {
-            var response = new Response<GenerateWorkCodeResponseDto>();
-
-            // 🔎 Validate Division Exists
-            var divisionExists = await _context.Divisions
-                .FirstOrDefaultAsync(x => x.DivisionCode == request.DivisionCode, cancellationToken);
-
-            if ( divisionExists is null)
+            // P4 (design §4.6, BUD-232): a free work-code generator cannot exist — a code is generated only
+            // on the four allocation occasions by budget.fn_generate_work_code, never on demand. This endpoint
+            // and its slice are removed in P4-03; until then it refuses rather than issue a non-conformant code.
+            return new Response<GenerateWorkCodeResponseDto>
             {
-                response.IsSucced = false;
-                response.Message = $"DivisionCode {request.DivisionCode} does not exist";
-                return response;
-            }
-
-            // 🔎 Get Last WorkCode for that Division
-            var lastWorkCode = await _context.Set<Work>()
-                .Where(x => x.DivisionId == divisionExists.Id)
-                .OrderByDescending(x => x.WorkCode)
-                .Select(x => x.WorkCode)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            int nextSequence = 1;
-
-            if (!string.IsNullOrWhiteSpace(lastWorkCode.ToString()))
-            {
-                var divisionLength = request.DivisionCode.ToString().Length;
-
-                if (lastWorkCode.ToString().Length > divisionLength)
-                {
-                    var sequencePart = lastWorkCode.ToString().Substring(divisionLength);
-
-                    if (int.TryParse(sequencePart, out var parsed))
-                    {
-                        nextSequence = parsed + 1;
-                    }
-                }
-            }
-
-            // 🔥 Always 4 digit padded
-            var newWorkCode = $"{request.DivisionCode}{nextSequence:D4}";
-
-            response.IsSucced = true;
-            response.Message = "WorkCode generated successfully";
-            response.Data = new GenerateWorkCodeResponseDto
-            {
-                WorkCode = newWorkCode,
-                DivisionCode = request.DivisionCode,
-                SequenceNumber = nextSequence
+                IsSucced = false,
+                Message = "Work-code generation on demand is not permitted (BUD-232): a code is assigned only on allocation."
             };
-
-            return response;
         }
     }
 }

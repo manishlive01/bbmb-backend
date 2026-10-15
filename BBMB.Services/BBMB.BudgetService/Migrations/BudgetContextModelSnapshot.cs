@@ -2906,10 +2906,9 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.Estimates.Entities.Estimate", b =>
                 {
-                    b.Property<int>("WorkCode")
-                        .HasMaxLength(8)
+                    b.Property<int>("WorkId")
                         .HasColumnType("integer")
-                        .HasColumnName("work_code");
+                        .HasColumnName("work_id");
 
                     b.Property<string>("EstimateCode")
                         .HasMaxLength(10)
@@ -2938,7 +2937,12 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("fin_year_end");
 
-                    b.HasKey("WorkCode", "EstimateCode");
+                    b.Property<int>("WorkCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("integer")
+                        .HasColumnName("work_code");
+
+                    b.HasKey("WorkId", "EstimateCode");
 
                     b.ToTable("estimate", "budget");
                 });
@@ -4058,10 +4062,32 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("work_class");
 
-                    b.Property<int>("WorkCode")
-                        .HasMaxLength(8)
-                        .HasColumnType("integer")
+                    b.Property<string>("WorkCode")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
                         .HasColumnName("work_code");
+
+                    b.Property<DateTimeOffset?>("WorkCodeAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("work_code_at");
+
+                    b.Property<int?>("WorkCodeFinYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("work_code_fin_year");
+
+                    b.Property<string>("WorkCodeOccasion")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("work_code_occasion");
+
+                    b.Property<string>("WorkCodeOrigin")
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)")
+                        .HasColumnName("work_code_origin");
+
+                    b.Property<int?>("WorkCodePrev")
+                        .HasColumnType("integer")
+                        .HasColumnName("work_code_prev");
 
                     b.Property<string>("WorkDesc")
                         .IsRequired()
@@ -4070,8 +4096,6 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("work_desc");
 
                     b.HasKey("Id");
-
-                    b.HasAlternateKey("WorkCode");
 
                     b.HasIndex("DesignationCode");
 
@@ -4087,14 +4111,30 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("PrecedingAmrWorkId");
 
-                    b.HasIndex("WorkCode")
-                        .IsUnique();
-
                     b.HasIndex("SubMajorHeadMajorAccCode", "SubMajorHeadSubMajorAccCode");
 
                     b.HasIndex("SubMinorHeadMinorAccCode", "SubMinorHeadSubMinorAccCode");
 
                     b.ToTable("work", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.Works.Entities.WorkCodeSerial", b =>
+                {
+                    b.Property<int>("DivisionCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("division_code");
+
+                    b.Property<int>("FinYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("fin_year");
+
+                    b.Property<short>("LastSerial")
+                        .HasColumnType("smallint")
+                        .HasColumnName("last_serial");
+
+                    b.HasKey("DivisionCode", "FinYear");
+
+                    b.ToTable("work_code_serial", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities.SubMajorHead", b =>
@@ -4593,7 +4633,7 @@ namespace BBMB.BudgetService.Migrations
                 {
                     b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", "Work")
                         .WithMany()
-                        .HasForeignKey("WorkCode")
+                        .HasForeignKey("WorkId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

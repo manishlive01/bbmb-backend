@@ -215,7 +215,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.UploadWorksDeman
             line.AccountCodeId = code.AccountCodeId;
             var work = new Work
             {
-                WorkCode = await workRules.NextInterimWorkCodeAsync(divisionId.Value, ct),
+                WorkCode = null, // no code at entry (design §4.6, DV-19); generated only on allocation (BUD-232)
                 DivisionId = divisionId.Value,
                 WorkDesc = nameText.Length > 500 ? nameText[..500] : nameText,
                 WorkClass = WorkClass.Aa,
