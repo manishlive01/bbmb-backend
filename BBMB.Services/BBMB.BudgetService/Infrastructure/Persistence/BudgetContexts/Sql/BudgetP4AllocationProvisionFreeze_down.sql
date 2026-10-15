@@ -135,4 +135,6 @@ DROP FUNCTION IF EXISTS budget.fn_unforeseen_request_rules();
 DROP FUNCTION IF EXISTS budget.fn_estimate_allocation_ceiling();
 DROP FUNCTION IF EXISTS budget.fn_provision_movement_balance();
 DROP FUNCTION IF EXISTS budget.fn_provision_movement_rules();
+DROP INDEX IF EXISTS budget.ix_provision_live_holder;
+DROP FUNCTION IF EXISTS budget.fn_provision_live_unique();
 DROP FUNCTION IF EXISTS budget.fn_provision_write_once();

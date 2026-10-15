@@ -33,9 +33,13 @@ ALTER TABLE budget.provision
     ADD CONSTRAINT fk_provision_created_by FOREIGN KEY (created_by) REFERENCES employee.employee (id) ON DELETE RESTRICT,
     ADD CONSTRAINT fk_provision_created_charge FOREIGN KEY (created_charge_id) REFERENCES employee.employee_charge (id) ON DELETE RESTRICT;
 
--- A partial unique index on the live-holder key prevents two live provisions for the same holder and basis
--- (DDD §5.7). It is filtered on the self-FK superseded_by_provision_id, so it is a SQL object, not an EF index.
-CREATE UNIQUE INDEX ux_provision_live_holder ON budget.provision
+-- At most one live provision per holder key and basis (DDD §5.7 "prevents two live provisions for the same
+-- holder and basis"). A plain non-unique index serves lookups; uniqueness is enforced by a DEFERRABLE
+-- INITIALLY DEFERRED constraint trigger (fn_provision_live_unique, step 3), checked at commit. It is deferred,
+-- not a partial unique index, because a FULL_BOARD RBE allocation legitimately inserts the superseding
+-- provision and marks the superseded one in the same transaction (BUD-285); an immediate partial unique index
+-- would reject the brief moment both are live mid-transaction.
+CREATE INDEX ix_provision_live_holder ON budget.provision
     (fin_year, basis, holder_type, work_id, office_id, account_code_id)
     WHERE superseded_by_provision_id IS NULL;
 

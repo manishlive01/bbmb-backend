@@ -116,6 +116,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AdminApprov
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Rules.TechnicalSanctionRules>();
 // Attachment download: "caller may view an owning record" (design §8.2).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Attachments.Rules.AttachmentAccessRules>();
+// F-19 allocation: the plan computation shared by preview and allocate (design §8.6).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Allocations.Rules.AllocationRules>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================

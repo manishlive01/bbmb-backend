@@ -24,6 +24,10 @@ CREATE TRIGGER trg_provision_write_once BEFORE UPDATE ON budget.provision
     FOR EACH ROW EXECUTE FUNCTION budget.fn_provision_write_once();
 CREATE TRIGGER trg_provision_forbid_stmt BEFORE DELETE OR TRUNCATE ON budget.provision
     FOR EACH STATEMENT EXECUTE FUNCTION budget.fn_forbid_change();
+-- At most one live provision per holder key and basis, at commit (deferred so supersession is atomic).
+CREATE CONSTRAINT TRIGGER trg_provision_live_unique AFTER INSERT OR UPDATE ON budget.provision
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW EXECUTE FUNCTION budget.fn_provision_live_unique();
 
 -- ===================== T-42 provision_movement (ledger, append-only) =====================
 CREATE TRIGGER trg_provision_movement_require_actor BEFORE INSERT OR UPDATE ON budget.provision_movement

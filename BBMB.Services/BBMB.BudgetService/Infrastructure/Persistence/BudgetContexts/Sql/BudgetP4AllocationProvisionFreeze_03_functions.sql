@@ -40,6 +40,40 @@ END
 $fn$;
 
 -- ===================================================================================================
+-- T-41 provision AT COMMIT (CONSTRAINT TRIGGER, DEFERRABLE INITIALLY DEFERRED): at most one live provision
+-- (superseded_by_provision_id IS NULL) per holder key and basis (DDD §5.7). Deferred so a FULL_BOARD RBE
+-- allocation may insert the new provision and mark the old one superseded within one transaction (BUD-285)
+-- without a mid-transaction clash. Checked for the row's holder key on INSERT and when a row's live status or
+-- holder key changes on UPDATE.
+CREATE FUNCTION budget.fn_provision_live_unique() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path = budget, pg_temp
+AS $fn$
+DECLARE
+    v_count int;
+BEGIN
+    IF NEW.superseded_by_provision_id IS NOT NULL THEN
+        RETURN NULL; -- a superseded row is not "live"; nothing to check
+    END IF;
+    SELECT count(*) INTO v_count
+    FROM budget.provision p
+    WHERE p.superseded_by_provision_id IS NULL
+      AND p.fin_year = NEW.fin_year
+      AND p.basis = NEW.basis
+      AND p.holder_type = NEW.holder_type
+      AND p.work_id IS NOT DISTINCT FROM NEW.work_id
+      AND p.office_id = NEW.office_id
+      AND p.account_code_id IS NOT DISTINCT FROM NEW.account_code_id;
+    IF v_count > 1 THEN
+        RAISE EXCEPTION 'DB-05' USING ERRCODE = 'P0001',
+            DETAIL = format('two live provisions for the same holder (year %s, basis %s, holder %s)',
+                            NEW.fin_year, NEW.basis, NEW.holder_type);
+    END IF;
+    RETURN NULL;
+END
+$fn$;
+
+-- ===================================================================================================
 -- T-42 provision_movement BEFORE INSERT: DB-19 and DB-22, judged when the movement is written.
 --  - DB-19: an ALLOCATION movement is refused for a cycle that is frozen. The cycle is that of the
 --    movement's allocation (ALLOCATION movements always carry allocation_id, per the CHECK).

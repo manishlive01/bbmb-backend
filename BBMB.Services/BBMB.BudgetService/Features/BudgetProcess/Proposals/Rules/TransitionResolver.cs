@@ -143,6 +143,14 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
                         ? null
                         : new ResolvedTransition(s, action, ProposalStateCode.S08, offices.SecretariatOfficeId.Value);
 
+                // T23 / T26: the allocation steps, driven only by F-19 BSC / FULL_BOARD allocation. The holder
+                // does not change.
+                case ProposalAction.AllocateRbe when s == ProposalStateCode.S12:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S13, p.HolderOfficeId);
+
+                case ProposalAction.AllocateObe when s == ProposalStateCode.S14:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S15, p.HolderOfficeId);
+
                 default:
                     return null;
             }
