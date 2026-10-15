@@ -21,6 +21,9 @@ namespace BBMB.BudgetService.Features.BudgetProcess.CorrectionFlags.Entities
         public string Reason { get; set; } = string.Empty;
         [Column("work_id")]
         public int? WorkId { get; set; }
+        /// <summary>FK T-41 (P4). At least one of work and provision (CHECK).</summary>
+        [Column("provision_id")]
+        public long? ProvisionId { get; set; }
         /// <summary>Shown with M-34.</summary>
         [Column("figure_allocated")]
         public decimal? FigureAllocated { get; set; }

@@ -1,5 +1,10 @@
 using BBMB.BudgetService.Features.BudgetProcess.AccountHeadAssignments.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Allocations.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.EstimateAllocations.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Freezes.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Provisions.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.CorrectionFlags.Entities;
@@ -67,6 +72,16 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<Distribution> Distributions { get; set; }
         public DbSet<DistributionBalanceRow> DistributionBalances { get; set; }
         public DbSet<ExpenditureSourceSetting> ExpenditureSourceSettings { get; set; }
+        // P4 (design §5.3 P4 table)
+        public DbSet<Allocation> Allocations { get; set; }
+        public DbSet<Provision> Provisions { get; set; }
+        public DbSet<ProvisionMovement> ProvisionMovements { get; set; }
+        public DbSet<EstimateAllocation> EstimateAllocations { get; set; }
+        public DbSet<BudgetFreeze> BudgetFreezes { get; set; }
+        public DbSet<UnforeseenRequest> UnforeseenRequests { get; set; }
+        public DbSet<UnforeseenRequestMovement> UnforeseenRequestMovements { get; set; }
+        public DbSet<UnforeseenAuthorisation> UnforeseenAuthorisations { get; set; }
+        public DbSet<ProvisionBalanceRow> ProvisionBalances { get; set; }
 
         /// <summary>Partial UK names whose 23505 maps to a catalogue message (design §4.9).</summary>
         /// <summary>T-21 partial UK (office, account code) where removed_at is null.</summary>
@@ -443,6 +458,127 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 e.HasOne<FinancialYear>().WithMany().HasForeignKey(x => x.FinYear).OnDelete(DeleteBehavior.Restrict);
                 ConfigureActorColumns(e);
             });
+
+            // ================= P4 (design §5.3 P4 table, §5.7, §5.8) =================
+
+            // ---------------- T-40 allocation (append-only; F-19) ----------------
+            modelBuilder.Entity<Allocation>(e =>
+            {
+                e.Property(x => x.AllocationId).UseIdentityAlwaysColumn();
+                e.Property(x => x.TotalActivated).HasColumnType(RupeesColumnType);
+                e.HasIndex(x => new { x.CycleId, x.Body }).IsUnique();
+                e.HasOne<BudgetCycle>().WithMany().HasForeignKey(x => x.CycleId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.MinutesAttachmentId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-41 provision (written once except supersession, DB-05) ----------------
+            // The partial unique index on the live-holder key (where superseded_by_provision_id IS NULL) is a
+            // SQL object (filtered on a self-FK column); it is created in the migration, not here.
+            modelBuilder.Entity<Provision>(e =>
+            {
+                e.Property(x => x.ProvisionId).UseIdentityAlwaysColumn();
+                e.HasIndex(x => new { x.FinYear, x.Basis, x.HolderType, x.WorkId, x.OfficeId });
+                e.HasOne<FinancialYear>().WithMany().HasForeignKey(x => x.FinYear).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.WorkId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.OfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<DemandLine>().WithMany().HasForeignKey(x => x.DemandLineId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<CeRecommendation>().WithMany().HasForeignKey(x => x.RecommendationId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Distribution>().WithMany().HasForeignKey(x => x.DistributionId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Allocation>().WithMany().HasForeignKey(x => x.AllocationId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Provision>().WithMany().HasForeignKey(x => x.SupersededByProvisionId).OnDelete(DeleteBehavior.Restrict);
+                // account_code_id → budget_head_master(account_code_id) is added by SQL (unique index, not the PK).
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-42 provision_movement (ledger, append-only) ----------------
+            // reappropriation_id → T-46 is added in P5 (BudgetP5Reappropriation).
+            modelBuilder.Entity<ProvisionMovement>(e =>
+            {
+                e.Property(x => x.ProvisionMovementId).UseIdentityAlwaysColumn();
+                e.Property(x => x.Amount).HasColumnType(RupeesColumnType);
+                e.HasIndex(x => x.ProvisionId);
+                e.HasOne<Provision>().WithMany().HasForeignKey(x => x.ProvisionId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Allocation>().WithMany().HasForeignKey(x => x.AllocationId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<UnforeseenAuthorisation>().WithMany().HasForeignKey(x => x.UnforeseenAuthorisationId).OnDelete(DeleteBehavior.Restrict);
+                // reappropriation_id is a plain nullable column here; its FK to T-46 is added in P5.
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-43 estimate_allocation (F-29) ----------------
+            modelBuilder.Entity<EstimateAllocation>(e =>
+            {
+                e.Property(x => x.EstimateAllocationId).UseIdentityAlwaysColumn();
+                e.Property(x => x.Amount).HasColumnType(RupeesColumnType);
+                e.HasIndex(x => new { x.ProvisionId, x.TechnicalSanctionId }).IsUnique();
+                e.HasOne<Provision>().WithMany().HasForeignKey(x => x.ProvisionId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<TechnicalSanction>().WithMany().HasForeignKey(x => x.TechnicalSanctionId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-44 freeze (append-only; PK = cycle_id) ----------------
+            modelBuilder.Entity<BudgetFreeze>(e =>
+            {
+                e.HasKey(x => x.CycleId);
+                e.Property(x => x.CycleId).ValueGeneratedNever();
+                e.HasOne<BudgetCycle>().WithMany().HasForeignKey(x => x.CycleId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-48 unforeseen_request (F-30) ----------------
+            modelBuilder.Entity<UnforeseenRequest>(e =>
+            {
+                e.Property(x => x.UnforeseenRequestId).UseIdentityAlwaysColumn();
+                e.Property(x => x.AmountCurrent).HasColumnType(RupeesColumnType);
+                e.Property(x => x.AmountNext).HasColumnType(RupeesColumnType);
+                e.HasIndex(x => x.WorkId).IsUnique();
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.WorkId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.DivisionOfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Provision>().WithMany().HasForeignKey(x => x.CurrentProvisionId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Provision>().WithMany().HasForeignKey(x => x.NextProvisionId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.HolderOfficeId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-49 unforeseen_request_movement (append-only) ----------------
+            modelBuilder.Entity<UnforeseenRequestMovement>(e =>
+            {
+                e.HasKey(x => x.MovementId);
+                e.Property(x => x.MovementId).UseIdentityAlwaysColumn();
+                e.HasIndex(x => x.UnforeseenRequestId);
+                e.HasOne<UnforeseenRequest>().WithMany().HasForeignKey(x => x.UnforeseenRequestId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.FromOfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.ToOfficeId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-50 unforeseen_authorisation (append-only) ----------------
+            modelBuilder.Entity<UnforeseenAuthorisation>(e =>
+            {
+                e.Property(x => x.UnforeseenAuthorisationId).UseIdentityAlwaysColumn();
+                e.Property(x => x.AmountCurrent).HasColumnType(RupeesColumnType);
+                e.Property(x => x.AmountNext).HasColumnType(RupeesColumnType);
+                e.HasIndex(x => x.UnforeseenRequestId).IsUnique();
+                e.HasOne<UnforeseenRequest>().WithMany().HasForeignKey(x => x.UnforeseenRequestId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.CeOfficeId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-45 provision_id FK (P4) ----------------
+            modelBuilder.Entity<CorrectionFlag>(e =>
+            {
+                e.HasIndex(x => x.ProvisionId);
+                e.HasOne<Provision>().WithMany().HasForeignKey(x => x.ProvisionId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---------------- T-37 minutes_allocation_id FK (P4, DB-17) ----------------
+            modelBuilder.Entity<CeRecommendation>(e =>
+            {
+                e.HasOne<Allocation>().WithMany().HasForeignKey(x => x.MinutesAllocationId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---------------- V-02 v_provision_balance (design §5.4) ----------------
+            modelBuilder.Entity<ProvisionBalanceRow>(e => e.HasNoKey().ToView("v_provision_balance", "budget"));
 
             // ---------------- T-16 state_transition (seeded, design §6.2) ----------------
             modelBuilder.Entity<StateTransition>(e =>

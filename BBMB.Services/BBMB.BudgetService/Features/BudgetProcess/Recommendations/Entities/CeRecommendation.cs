@@ -52,6 +52,14 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Recommendations.Entities
         [Column("distribution_confirmed_by")]
         public Guid? DistributionConfirmedBy { get; set; }
 
+        /// <summary>
+        /// FK T-40 (P4, DB-17): the minutes allocation a changed recommendation gives effect to. A recommended
+        /// figure may be altered after an allocation of the cycle exists only if it cites that allocation
+        /// (BUD-301). Null until an allocation exists.
+        /// </summary>
+        [Column("minutes_allocation_id")]
+        public long? MinutesAllocationId { get; set; }
+
         [Timestamp]
         public uint Version { get; set; }
     }

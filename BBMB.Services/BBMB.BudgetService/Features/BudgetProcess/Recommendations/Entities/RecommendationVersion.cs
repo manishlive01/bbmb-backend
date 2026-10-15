@@ -25,5 +25,9 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Recommendations.Entities
 
         [Column("concurrence_ref")]
         public string? ConcurrenceRef { get; private set; }
+
+        /// <summary>FK T-40 (P4): the minutes allocation the recommendation gave effect to at this version (DB-17).</summary>
+        [Column("minutes_allocation_id")]
+        public long? MinutesAllocationId { get; private set; }
     }
 }

@@ -47,7 +47,9 @@ namespace BBMB.BudgetService.Features.Works.Rules
         public async Task<bool> IsReferencedAsync(int workId, CancellationToken ct = default) =>
             await context.DemandLines.AsNoTracking().AnyAsync(l => l.WorkId == workId && !l.IsDeleted, ct)
             || await context.AdminApprovals.AsNoTracking().AnyAsync(a => a.WorkId == workId, ct)
-            || await context.TechnicalSanctions.AsNoTracking().AnyAsync(t => t.WorkId == workId, ct);
+            || await context.TechnicalSanctions.AsNoTracking().AnyAsync(t => t.WorkId == workId, ct)
+            // P4 (design §11.3): a provision now also fixes the work's head and class.
+            || await context.Provisions.AsNoTracking().AnyAsync(p => p.WorkId == workId, ct);
 
         /// <summary>
         /// Resolves a T-07 <c>account_code_id</c> for use on a work (design §5.2): absent or <c>not_for_use</c>
