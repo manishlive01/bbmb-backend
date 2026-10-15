@@ -61,6 +61,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Cycles.OpenProposals
 
             var result = new OpenProposalsResponseDto();
             await using var tx = await scope.BeginAsync(ActionCode, ct: ct);
+            // Serialises concurrent opens so the idempotent "only missing proposals" holds (as LoadBudgetOffices).
+            await context.Database.ExecuteSqlRawAsync("LOCK TABLE budget.proposal IN SHARE ROW EXCLUSIVE MODE", ct);
             var existing = (await context.BudgetProposals.AsNoTracking()
                     .Where(p => p.CycleId == request.CycleId && categories.Contains(p.Category))
                     .Select(p => new { p.Category, p.OriginOfficeId }).ToListAsync(ct))

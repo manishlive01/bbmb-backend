@@ -81,6 +81,33 @@ public sealed class BudgetSettingsTests(BudgetDatabaseFixture fixture) : IAsyncL
     }
 
     [Fact]
+    public async Task BUD242_same_key_and_instant_twice_is_M19_and_one_row()
+    {
+        var from = DateTimeOffset.UtcNow.AddDays(3);
+        (await CreateAsync(Cmd("AMR_INCREASE_PCT", 6, from))).IsSucced.Should().BeTrue();
+        var second = await CreateAsync(Cmd("AMR_INCREASE_PCT", 7, from));
+        second.IsSucced.Should().BeFalse();
+        second.MessageId.Should().Be("M-19");
+        await using var ctx = _w.NewContext();
+        (await ctx.BudgetSettings.AsNoTracking().CountAsync(s => s.SettingKey == "AMR_INCREASE_PCT" && s.EffectiveFrom == from.ToUniversalTime()))
+            .Should().Be(1);
+    }
+
+    [Fact]
+    public async Task BUD242_unique_index_backstop_maps_to_M19()
+    {
+        var (c, tx) = await _w.BeginAsync(_w.ItCell);
+        await using var _ = c;
+        const string sql = "INSERT INTO budget.setting (setting_key, numeric_value, effective_from, authority_ref) " +
+                           "VALUES ('TS_CEILING_PCT', 104, '2099-01-01T00:00:00Z', 'Order 2/2026')";
+        await using (var first = new NpgsqlCommand(sql, c, tx)) await first.ExecuteNonQueryAsync();
+        await using var dup = new NpgsqlCommand(sql, c, tx);
+        var ex = (await FluentActions.Awaiting(() => dup.ExecuteNonQueryAsync()).Should().ThrowAsync<PostgresException>()).Which;
+        ex.SqlState.Should().Be(PostgresErrorCodes.UniqueViolation);
+        BBMB.BudgetService.Shared.Messages.BudgetMessages.FromPostgres(ex)?.MessageId.Should().Be("M-19");
+    }
+
+    [Fact]
     public async Task DB27_UPDATE_on_budget_setting_is_refused_by_the_trigger()
     {
         var (c, tx) = await _w.BeginAsync(_w.ItCell);

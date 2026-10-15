@@ -98,6 +98,23 @@ public sealed class BudgetCyclesTests(BudgetDatabaseFixture fixture) : IAsyncLif
     }
 
     [Fact]
+    public async Task S62_concurrent_open_proposals_creates_each_WORKS_proposal_once()
+    {
+        var results = await Task.WhenAll(OpenAsync(_w.CycleId, ["WORKS"]), OpenAsync(_w.CycleId, ["WORKS"]));
+        results.Should().OnlyContain(r => r.IsSucced, "the table lock serialises the second open behind the first");
+        results.Sum(r => r.Data!.Created.Count).Should().Be(1, "Division B's proposal is created exactly once");
+        await using var ctx = _w.NewContext();
+        (await ctx.BudgetProposals.AsNoTracking().CountAsync(p => p.CycleId == _w.CycleId && p.Category == "WORKS")).Should().Be(2);
+    }
+
+    [Fact]
+    public void S82_cycle_and_proposal_unique_indexes_are_mapped_to_M19()
+    {
+        foreach (var c in new[] { "IX_budget_cycle_current_fin_year", "IX_budget_cycle_is_first_cycle", "IX_proposal_cycle_id_category_origin_office_id" })
+            BBMB.BudgetService.Shared.Messages.BudgetMessages.UniqueConstraintMessageFor(c).Should().Be("M-19", c);
+    }
+
+    [Fact]
     public async Task DB01_head_wise_proposal_for_a_FINANCE_office_is_refused_and_a_Circle_is_opened()
     {
         (await OpenAsync(_w.CycleId, ["DNA"], [_w.FinanceOfficeId])).MessageId.Should().Be("M-22");

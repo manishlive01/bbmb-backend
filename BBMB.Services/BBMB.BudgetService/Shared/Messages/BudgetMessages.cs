@@ -109,8 +109,16 @@ namespace BBMB.BudgetService.Shared.Messages
             // T-30 partial UKs (BudgetContext.UxDemandLineWork / UxDemandLineHead).
             ["ux_demand_line_work"] = M25, // a work once in a demand (BUD-104)
             ["ux_demand_line_head"] = M35, // one head once in a head-wise demand (VR-14, BUD-310)
+            // Backstops behind the handler pre-checks (concurrent requests): M-19 as the cycle choice under OI-13.
+            ["IX_budget_cycle_current_fin_year"] = M19, // T-28 one cycle per financial year
+            ["IX_budget_cycle_is_first_cycle"] = M19,   // T-28 one first cycle
+            ["IX_setting_setting_key_effective_from"] = M19, // T-17 one row per key and instant
+            ["IX_proposal_cycle_id_category_origin_office_id"] = M19, // T-29 one proposal per cycle, category, origin
         };
 
+        /// <summary>The uniqueness message id registered for <paramref name="constraintName"/>, or null.</summary>
+        public static string? UniqueConstraintMessageFor(string constraintName) =>
+            UniqueConstraintMessages.TryGetValue(constraintName, out var id) ? id : null;
         /// <summary>Every catalogued id with its text.</summary>
         public static IReadOnlyDictionary<string, string> All => Catalogue;
 
