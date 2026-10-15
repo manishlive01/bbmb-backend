@@ -18,6 +18,12 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Add.Dtos
         /// <summary>Original estimate of the next year, whole rupees; negatives allowed (BUD-088).</summary>
         public decimal? ObeNextAmount { get; set; }
         public string? JustificationText { get; set; }
+        /// <summary>Column 13 supporting file (any class).</summary>
+        public long? JustificationAttachmentId { get; set; }
+        /// <summary>VR-03 / BUD-091: the CE's certificate that the work is urgent (EVIDENCE).</summary>
+        public long? CeCertificateAttachmentId { get; set; }
+        /// <summary>VR-05 / BUD-278: the CE's approval of the AM&amp;R increase (EVIDENCE).</summary>
+        public long? CeAmrApprovalAttachmentId { get; set; }
         /// <summary>Table 3 column 14: the AM&amp;R work of the preceding year this AM&amp;R work continues (BUD-275).</summary>
         public int? PrecedingAmrWorkId { get; set; }
     }

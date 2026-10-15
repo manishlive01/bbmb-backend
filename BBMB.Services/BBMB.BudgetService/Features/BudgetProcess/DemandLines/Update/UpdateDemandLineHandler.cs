@@ -77,6 +77,9 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Update
             line.RbeAmount = dto.RbeAmount;
             line.ObeNextAmount = dto.ObeNextAmount;
             line.JustificationText = string.IsNullOrWhiteSpace(dto.JustificationText) ? null : dto.JustificationText.Trim();
+            line.JustificationAttachmentId = dto.JustificationAttachmentId;
+            line.CeCertificateAttachmentId = dto.CeCertificateAttachmentId;
+            line.CeAmrApprovalAttachmentId = dto.CeAmrApprovalAttachmentId;
 
             var result = await DemandLineWrites.EvaluateSaveAsync(context, rules, p, line, actor.OfficeLevel, ct);
             if (result.Refused)

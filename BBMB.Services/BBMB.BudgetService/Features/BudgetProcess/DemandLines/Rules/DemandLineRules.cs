@@ -24,7 +24,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules
             BudgetProposal proposal, IReadOnlyList<DemandLine> lines, RuleMoment moment, string actorLevel, CancellationToken ct = default)
         {
             var inputs = await loader.LoadAsync(proposal, lines, ct);
-            return DemandLineRuleEvaluator.Evaluate(new DemandLineRuleContext(proposal.Category, moment), inputs);
+            var ceilings = await loader.LoadCeilingsAsync(ct);
+            return DemandLineRuleEvaluator.Evaluate(new DemandLineRuleContext(proposal.Category, moment, ceilings), inputs);
         }
     }
 
@@ -33,8 +34,18 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules
     /// each work's state and resolved code, observations per line, and the expenditure up to date of the current
     /// year (latest UP_TO_DATE or UP_TO_MONTH EXPENDITURE row of T-35; none → unavailable).
     /// </summary>
-    public sealed class DemandLineRuleInputsLoader(BudgetContext context)
+    public sealed class DemandLineRuleInputsLoader(BudgetContext context, TimeProvider? clock = null)
     {
+        /// <summary>The three T-17 ceilings in force now (design §6.4); a key with no row in force is not applied.</summary>
+        public async Task<DemandCeilings> LoadCeilingsAsync(CancellationToken ct)
+        {
+            var reader = new Settings.BudgetSettingsReader(context);
+            var now = (clock ?? TimeProvider.System).GetUtcNow();
+            return new DemandCeilings(
+                (await reader.GetAsync(Settings.Entities.SettingKey.NoAaLimitRupees, now, ct))?.NumericValue,
+                (await reader.GetAsync(Settings.Entities.SettingKey.AaDemandCeilingPct, now, ct))?.NumericValue,
+                (await reader.GetAsync(Settings.Entities.SettingKey.AmrIncreasePct, now, ct))?.NumericValue);
+        }
         private static readonly string[] UpToDatePeriods = ["UP_TO_DATE", "UP_TO_MONTH"];
 
         public async Task<IReadOnlyList<DemandLineRuleInput>> LoadAsync(BudgetProposal proposal, IReadOnlyList<DemandLine> lines, CancellationToken ct)
@@ -55,7 +66,24 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules
                     equals new { h.MajorAccCode, SubMajorAccCode = h.SubMajorAccCode!, h.MinorAccCode, SubMinorAccCode = h.SubMinorAccCode!, h.DetailAccCode, h.ObjectAccCode }
                     into hj
                 from h in hj.DefaultIfEmpty()
-                select new { w.Id, w.PreDdd, AccountCodeId = (long?)h.AccountCodeId }).ToListAsync(ct);
+                select new { w.Id, w.PreDdd, AccountCodeId = (long?)h.AccountCodeId, w.WorkClass, w.PrecedingAmrWorkId }).ToListAsync(ct);
+            // VR-03 / VR-04: the approval of each work and the amount of its current version.
+            var approvals = (await context.AdminApprovals.AsNoTracking()
+                    .Where(a => workIds.Contains(a.WorkId))
+                    .Join(context.AdminApprovalVersions, a => new { a.AdminApprovalId, V = a.CurrentVersionNo },
+                        v => new { v.AdminApprovalId, V = v.VersionNo }, (a, v) => new { a.WorkId, v.AmountSanctioned })
+                    .ToListAsync(ct))
+                .GroupBy(x => x.WorkId).ToDictionary(g => g.Key, g => g.First().AmountSanctioned);
+            // VR-06: heads assigned live to the origin office.
+            var assigned = (await context.AccountHeadAssignments.AsNoTracking()
+                    .Where(a => a.OfficeId == proposal.OriginOfficeId && a.RemovedAt == null && codeIds.Contains(a.AccountCodeId))
+                    .Select(a => a.AccountCodeId).ToListAsync(ct)).ToHashSet();
+            // VR-10: evidence class of the CE attachments named on the lines.
+            var attachmentIds = lines.SelectMany(l => new[] { l.CeCertificateAttachmentId, l.CeAmrApprovalAttachmentId })
+                .Where(id => id is not null).Select(id => id!.Value).Distinct().ToList();
+            var evidence = (await context.BudgetAttachments.AsNoTracking()
+                    .Where(a => attachmentIds.Contains(a.AttachmentId) && a.EvidenceClass == Attachments.Entities.AttachmentEvidenceClass.Evidence)
+                    .Select(a => a.AttachmentId).ToListAsync(ct)).ToHashSet();
             var workById = works.GroupBy(w => w.Id).ToDictionary(g => g.Key, g => g.First());
 
             var lineIds = lines.Where(l => l.DemandLineId > 0).Select(l => l.DemandLineId).ToList();
@@ -98,7 +126,19 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules
                     WorkAccountCodeId = w?.AccountCodeId,
                     HasObservation = l.DemandLineId > 0 && observed.Contains(l.DemandLineId),
                     ExpenditureUpToDate = SpentFor(l),
-                    PercentageBase = null, // no percentage ceiling applies before P2 (VR-04/VR-05)
+                    WorkClass = w?.WorkClass,
+                    WorkHasApproval = l.WorkId is { } aw && approvals.ContainsKey(aw),
+                    AaAmount = l.WorkId is { } bw && approvals.TryGetValue(bw, out var amount) ? amount : null,
+                    PrecedingAmrWorkId = w?.PrecedingAmrWorkId,
+                    AmrApprovedBudget = null, // the latest approved budget comes from T-41 provisions (P4); BUD-276 "neither" until then
+                    HeadAssigned = l.LineType != DemandLineType.Head || l.AccountCodeId is null || assigned.Contains(l.AccountCodeId.Value),
+                    CeCertificateAttachmentId = l.CeCertificateAttachmentId,
+                    CeAmrApprovalAttachmentId = l.CeAmrApprovalAttachmentId,
+                    CeCertificateIsEvidence = l.CeCertificateAttachmentId is not { } cc || evidence.Contains(cc),
+                    CeAmrApprovalIsEvidence = l.CeAmrApprovalAttachmentId is not { } ca || evidence.Contains(ca),
+                    // The base of a percentage ceiling in force for the line (BUD-243 flags a nil or negative one):
+                    // VR-04 the approval's current amount; VR-05 the approved budget (P4).
+                    PercentageBase = l.WorkId is { } pw && approvals.TryGetValue(pw, out var basis) && w?.WorkClass == Works.Entities.WorkClass.Aa ? basis : null,
                 };
             }).ToList();
         }

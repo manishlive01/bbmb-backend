@@ -71,6 +71,9 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Add
                 RuleFor(x => x.Dto.RbeAmount).WholeRupees();
                 RuleFor(x => x.Dto.ObeNextAmount).WholeRupees();
                 RuleFor(x => x.Dto.JustificationText).MaximumLength(4000);
+                RuleFor(x => x.Dto.JustificationAttachmentId).GreaterThan(0).When(x => x.Dto.JustificationAttachmentId is not null);
+                RuleFor(x => x.Dto.CeCertificateAttachmentId).GreaterThan(0).When(x => x.Dto.CeCertificateAttachmentId is not null);
+                RuleFor(x => x.Dto.CeAmrApprovalAttachmentId).GreaterThan(0).When(x => x.Dto.CeAmrApprovalAttachmentId is not null);
             });
         }
     }

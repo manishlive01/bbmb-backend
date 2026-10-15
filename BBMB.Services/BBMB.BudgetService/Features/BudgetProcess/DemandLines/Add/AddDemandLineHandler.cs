@@ -53,6 +53,9 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Add
                 UnforeseenName = dto.UnforeseenName?.Trim(), RbeAmount = dto.RbeAmount, ObeNextAmount = dto.ObeNextAmount,
                 JustificationText = string.IsNullOrWhiteSpace(dto.JustificationText) ? null : dto.JustificationText.Trim(),
                 AddedOnReturn = p.StateCode == ProposalStateCode.S04,
+                JustificationAttachmentId = dto.JustificationAttachmentId,
+                CeCertificateAttachmentId = dto.CeCertificateAttachmentId,
+                CeAmrApprovalAttachmentId = dto.CeAmrApprovalAttachmentId,
             };
 
             await using var tx = await scope.BeginAsync(DemandLineWrites.AddAction, ct: ct);
