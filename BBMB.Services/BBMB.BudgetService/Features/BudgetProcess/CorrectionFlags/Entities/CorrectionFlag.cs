@@ -37,6 +37,9 @@ namespace BBMB.BudgetService.Features.BudgetProcess.CorrectionFlags.Entities
         public DateTimeOffset? ClearedAt { get; set; }
         [Column("cleared_by")]
         public Guid? ClearedBy { get; set; }
+        /// <summary>FK T-46 (P5): the re-appropriation whose SUBMIT cleared this flag (BUD-309).</summary>
+        [Column("cleared_by_reappropriation_id")]
+        public long? ClearedByReappropriationId { get; set; }
     }
 
     /// <summary>T-45 <c>reason</c> values (CHECK).</summary>

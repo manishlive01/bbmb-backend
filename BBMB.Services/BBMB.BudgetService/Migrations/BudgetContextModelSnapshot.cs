@@ -733,6 +733,10 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("cleared_by");
 
+                    b.Property<long?>("ClearedByReappropriationId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("cleared_by_reappropriation_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("timestamp with time zone")
@@ -777,6 +781,8 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnName("work_id");
 
                     b.HasKey("CorrectionFlagId");
+
+                    b.HasIndex("ClearedByReappropriationId");
 
                     b.HasIndex("ProvisionId");
 
@@ -2397,9 +2403,237 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("ProvisionId");
 
+                    b.HasIndex("ReappropriationId");
+
                     b.HasIndex("UnforeseenAuthorisationId");
 
                     b.ToTable("provision_movement", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Entities.Reappropriation", b =>
+                {
+                    b.Property<long>("ReappropriationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("reappropriation_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("ReappropriationId"));
+
+                    b.Property<decimal>("AdditionalAmount")
+                        .HasColumnType("budget.rupees")
+                        .HasColumnName("additional_amount");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<Guid?>("ClosedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("closed_by");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<int?>("DestinationNewWorkId")
+                        .HasColumnType("integer")
+                        .HasColumnName("destination_new_work_id");
+
+                    b.Property<long?>("DestinationProvisionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("destination_provision_id");
+
+                    b.Property<string>("EofficeOrderRef")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("eoffice_order_ref");
+
+                    b.Property<int>("FinYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("fin_year");
+
+                    b.Property<long?>("OrderAttachmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("order_attachment_id");
+
+                    b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("remarks");
+
+                    b.Property<int>("SerialNo")
+                        .HasColumnType("integer")
+                        .HasColumnName("serial_no");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ReappropriationId");
+
+                    b.HasIndex("DestinationNewWorkId");
+
+                    b.HasIndex("DestinationProvisionId");
+
+                    b.HasIndex("OrderAttachmentId");
+
+                    b.HasIndex("FinYear", "SerialNo")
+                        .IsUnique();
+
+                    b.ToTable("reappropriation", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Entities.ReappropriationRegisterRow", b =>
+                {
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<long>("EntryId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("entry_id");
+
+                    b.Property<string>("EntryKind")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("entry_kind");
+
+                    b.Property<string>("EofficeRef")
+                        .HasColumnType("text")
+                        .HasColumnName("eoffice_ref");
+
+                    b.Property<int>("FinYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("fin_year");
+
+                    b.Property<long>("OfficeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("office_id");
+
+                    b.Property<int?>("SerialNo")
+                        .HasColumnType("integer")
+                        .HasColumnName("serial_no");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("v_reappropriation_register", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Entities.ReappropriationSource", b =>
+                {
+                    b.Property<long>("ReappropriationSourceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("reappropriation_source_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("ReappropriationSourceId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("budget.rupees")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<bool>("IsRemoved")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_removed");
+
+                    b.Property<long>("ProvisionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("provision_id");
+
+                    b.Property<long>("ReappropriationId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("reappropriation_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("ReappropriationSourceId");
+
+                    b.HasIndex("ProvisionId");
+
+                    b.HasIndex("ReappropriationId", "ProvisionId")
+                        .IsUnique();
+
+                    b.ToTable("reappropriation_source", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Recommendations.Entities.CeRecommendation", b =>
@@ -4936,6 +5170,11 @@ namespace BBMB.BudgetService.Migrations
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.CorrectionFlags.Entities.CorrectionFlag", b =>
                 {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Entities.Reappropriation", null)
+                        .WithMany()
+                        .HasForeignKey("ClearedByReappropriationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Provisions.Entities.Provision", null)
                         .WithMany()
                         .HasForeignKey("ProvisionId")
@@ -5290,10 +5529,54 @@ namespace BBMB.BudgetService.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Entities.Reappropriation", null)
+                        .WithMany()
+                        .HasForeignKey("ReappropriationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Entities.UnforeseenAuthorisation", null)
                         .WithMany()
                         .HasForeignKey("UnforeseenAuthorisationId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Entities.Reappropriation", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", null)
+                        .WithMany()
+                        .HasForeignKey("DestinationNewWorkId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Provisions.Entities.Provision", null)
+                        .WithMany()
+                        .HasForeignKey("DestinationProvisionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BBMB.BudgetService.Features.FinancialYears.Entities.FinancialYear", null)
+                        .WithMany()
+                        .HasForeignKey("FinYear")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities.BudgetAttachment", null)
+                        .WithMany()
+                        .HasForeignKey("OrderAttachmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Entities.ReappropriationSource", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Provisions.Entities.Provision", null)
+                        .WithMany()
+                        .HasForeignKey("ProvisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Entities.Reappropriation", null)
+                        .WithMany()
+                        .HasForeignKey("ReappropriationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Recommendations.Entities.CeRecommendation", b =>

@@ -4,6 +4,7 @@ using BBMB.BudgetService.Features.BudgetProcess.Allocations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.EstimateAllocations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Freezes.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Provisions.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Entities;
@@ -82,6 +83,10 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<UnforeseenRequestMovement> UnforeseenRequestMovements { get; set; }
         public DbSet<UnforeseenAuthorisation> UnforeseenAuthorisations { get; set; }
         public DbSet<ProvisionBalanceRow> ProvisionBalances { get; set; }
+        // P5 (design §5.3 P5 table)
+        public DbSet<Reappropriation> Reappropriations { get; set; }
+        public DbSet<ReappropriationSource> ReappropriationSources { get; set; }
+        public DbSet<ReappropriationRegisterRow> ReappropriationRegister { get; set; }
 
         /// <summary>Partial UK names whose 23505 maps to a catalogue message (design §4.9).</summary>
         /// <summary>T-21 partial UK (office, account code) where removed_at is null.</summary>
@@ -579,6 +584,52 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
 
             // ---------------- V-02 v_provision_balance (design §5.4) ----------------
             modelBuilder.Entity<ProvisionBalanceRow>(e => e.HasNoKey().ToView("v_provision_balance", "budget"));
+
+            // ================= P5 (design §5.3 P5 table, §5.8) =================
+
+            // ---------------- T-46 reappropriation ----------------
+            // The partial UK (created_by) where OPEN (one entry in hand per officer, BUD-201) is a SQL object
+            // (filtered on an actor column), created in the migration.
+            modelBuilder.Entity<Reappropriation>(e =>
+            {
+                e.Property(x => x.ReappropriationId).UseIdentityAlwaysColumn();
+                e.Property(x => x.AdditionalAmount).HasColumnType(RupeesColumnType);
+                e.HasIndex(x => new { x.FinYear, x.SerialNo }).IsUnique();
+                e.HasOne<FinancialYear>().WithMany().HasForeignKey(x => x.FinYear).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Provision>().WithMany().HasForeignKey(x => x.DestinationProvisionId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Work>().WithMany().HasForeignKey(x => x.DestinationNewWorkId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.OrderAttachmentId).OnDelete(DeleteBehavior.Restrict);
+                // closed_by → employee.employee is added by SQL (cross-schema).
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-47 reappropriation_source ----------------
+            modelBuilder.Entity<ReappropriationSource>(e =>
+            {
+                e.Property(x => x.ReappropriationSourceId).UseIdentityAlwaysColumn();
+                e.Property(x => x.Amount).HasColumnType(RupeesColumnType);
+                e.Property(x => x.IsRemoved).HasDefaultValue(false);
+                e.HasIndex(x => new { x.ReappropriationId, x.ProvisionId }).IsUnique();
+                e.HasOne<Reappropriation>().WithMany().HasForeignKey(x => x.ReappropriationId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<Provision>().WithMany().HasForeignKey(x => x.ProvisionId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-42 reappropriation_id FK (P5) ----------------
+            modelBuilder.Entity<ProvisionMovement>(e =>
+            {
+                e.HasIndex(x => x.ReappropriationId);
+                e.HasOne<Reappropriation>().WithMany().HasForeignKey(x => x.ReappropriationId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---------------- T-45 cleared_by_reappropriation_id FK (P5) ----------------
+            modelBuilder.Entity<CorrectionFlag>(e =>
+            {
+                e.HasOne<Reappropriation>().WithMany().HasForeignKey(x => x.ClearedByReappropriationId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---------------- V-10 v_reappropriation_register (design §5.4) ----------------
+            modelBuilder.Entity<ReappropriationRegisterRow>(e => e.HasNoKey().ToView("v_reappropriation_register", "budget"));
 
             // ---------------- T-16 state_transition (seeded, design §6.2) ----------------
             modelBuilder.Entity<StateTransition>(e =>
