@@ -129,6 +129,20 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
                 case ProposalAction.Reopen when s == ProposalStateCode.S11:
                     return new ResolvedTransition(s, action, ProposalStateCode.S10, p.HolderOfficeId);
 
+                // T22 / T25: cycle-level placement before the BSC and the Full Board. The holder does not
+                // change (the proposal stays at its office; the cycle-level guards are in the slice handlers).
+                case ProposalAction.PlaceBsc when s == ProposalStateCode.S11:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S12, p.HolderOfficeId);
+
+                case ProposalAction.PlaceFb when s == ProposalStateCode.S13:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S14, p.HolderOfficeId);
+
+                // T24 (from S-12) / T27 (from S-14): refer a proposal back to the Secretariat (BUD-176, CON-005).
+                case ProposalAction.ReferBack when s is ProposalStateCode.S12 or ProposalStateCode.S14:
+                    return offices.SecretariatOfficeId is null
+                        ? null
+                        : new ResolvedTransition(s, action, ProposalStateCode.S08, offices.SecretariatOfficeId.Value);
+
                 default:
                     return null;
             }
