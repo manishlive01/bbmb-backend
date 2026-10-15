@@ -122,6 +122,8 @@ namespace BBMB.BudgetService.Shared.Messages
             // T-25 UKs, backstops behind the handler (one approval per work; serial allotted in the Division).
             ["ux_admin_approval_work"] = M19,
             ["ux_admin_approval_division_serial"] = M19,
+            // T-19 one limit per level and date (backstop behind CreateDelegationLimitHandler).
+            ["IX_delegation_limit_authority_level_effective_from"] = M19,
         };
 
         /// <summary>The uniqueness message id registered for <paramref name="constraintName"/>, or null.</summary>
