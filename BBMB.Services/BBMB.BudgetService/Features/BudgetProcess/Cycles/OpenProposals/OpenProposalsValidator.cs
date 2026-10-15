@@ -4,13 +4,15 @@ using FluentValidation;
 namespace BBMB.BudgetService.Features.BudgetProcess.Cycles.OpenProposals
 {
     /// <summary>
-    /// Design §8.2: categories non-empty, each WORKS or DNA in P1 (RECEIPTS and CAPEX arrive in P3, when F-15
-    /// and F-16 rules exist); officeIds positive.
+    /// Design §8.2: categories non-empty, each a category the deployed phase can open; officeIds positive.
+    /// P3 enables RECEIPTS (F-15) and CAPEX (F-16) alongside WORKS and DNA, now that their only added rule
+    /// exists (VR-15 is not applied to RECEIPTS, BUD-318; the expenditure nature follows the category).
     /// </summary>
     public sealed class OpenProposalsValidator : AbstractValidator<OpenProposalsCommand>
     {
-        /// <summary>Categories that may be opened in the deployed phase.</summary>
-        public static readonly IReadOnlyList<string> OpenableCategories = [ProposalCategory.Works, ProposalCategory.Dna];
+        /// <summary>Categories that may be opened in the deployed phase (all four from P3).</summary>
+        public static readonly IReadOnlyList<string> OpenableCategories =
+            [ProposalCategory.Works, ProposalCategory.Dna, ProposalCategory.Receipts, ProposalCategory.Capex];
 
         public OpenProposalsValidator()
         {
