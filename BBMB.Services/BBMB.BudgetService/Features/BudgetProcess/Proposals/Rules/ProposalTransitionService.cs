@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Features.BudgetProcess.Calendars.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Cycles.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Offices;
 using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
@@ -31,8 +32,10 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
         IAuthorizationService authorization,
         IHttpContextAccessor httpContextAccessor,
         IBudgetNotificationGateway notifications,
-        ILogger<ProposalTransitionService> logger) : IProposalTransitionService
+        ILogger<ProposalTransitionService> logger,
+        TimeProvider? clock = null) : IProposalTransitionService
     {
+        private static readonly TimeZoneInfo IndiaStandardTime = TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
         private static readonly ConcurrentDictionary<string, bool> StateModelAvailable = new(StringComparer.Ordinal);
 
         public async Task<bool> IsStateModelAvailableAsync(CancellationToken ct = default)
@@ -85,12 +88,33 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
             }
 
             await NotifyAsync(proposal.ProposalId, movement.MovementId, ct);
+            var state = await StateOfAsync(proposal.ProposalId, ct);
+            await AddCalendarWarningAsync(state, proposal.CycleId, actor.OfficeLevel, ct);
             return new Response<ProposalStateResponseDto>
             {
                 IsSucced = true,
                 Message = "Proposal moved",
-                Data = await StateOfAsync(proposal.ProposalId, ct),
+                Data = state,
             };
+        }
+
+        /// <summary>
+        /// BUD-212, M-26 (P3): a calendar lapse warns and refuses nothing. When the T-20 last date for the
+        /// actor's office level in the cycle is before today in IST, M-26 is added to the move's warnings. No
+        /// row, or a level with no row (the IT Cell never has one), warns nothing. The move has already
+        /// committed — this is advisory only.
+        /// </summary>
+        private async Task AddCalendarWarningAsync(ProposalStateResponseDto state, long cycleId, string actorLevel, CancellationToken ct)
+        {
+            var lastDate = await context.BudgetCalendarEntries.AsNoTracking()
+                .Where(e => e.CycleId == cycleId && e.OfficeLevel == actorLevel)
+                .Select(e => (DateOnly?)e.LastDate).FirstOrDefaultAsync(ct);
+            if (lastDate is null)
+                return;
+            var todayIst = DateOnly.FromDateTime(
+                TimeZoneInfo.ConvertTime((clock ?? TimeProvider.System).GetUtcNow(), IndiaStandardTime).DateTime);
+            if (lastDate.Value < todayIst && !state.Warnings.Contains(BudgetMessages.M26))
+                state.Warnings.Add(BudgetMessages.M26);
         }
 
         public async Task<Response> MoveAllAsync(
