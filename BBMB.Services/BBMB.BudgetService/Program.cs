@@ -120,6 +120,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Attachments
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Allocations.Rules.AllocationRules>();
 // F-20 freeze: the three preconditions of a cycle freeze (design §8.6, DB-19).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Freezes.Rules.FreezeRules>();
+// F-29 estimate-wise allocation: target resolution and VR-12 (design §8.6, DB-23).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.EstimateAllocations.Rules.EstimateAllocationRules>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
