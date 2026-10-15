@@ -61,6 +61,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<CorrectionFlag> CorrectionFlags { get; set; }
         public DbSet<AccountHeadAssignment> AccountHeadAssignments { get; set; }
         public DbSet<ManualOfAccountsCodeRow> ManualOfAccountsCodes { get; set; }
+        public DbSet<ReportDemandRow> ReportDemand { get; set; }
         // P3 (design §5.3 P3 table)
         public DbSet<BudgetCalendarEntry> BudgetCalendarEntries { get; set; }
         public DbSet<Distribution> Distributions { get; set; }
@@ -399,6 +400,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
             modelBuilder.Entity<DemandByCeRow>(e => e.HasNoKey().ToView("v_demand_by_ce", "budget"));
             modelBuilder.Entity<DistributionBalanceRow>(e => e.HasNoKey().ToView("v_distribution_balance", "budget"));
             modelBuilder.Entity<ManualOfAccountsCodeRow>(e => e.HasNoKey().ToView("v_manual_of_accounts_codes", "budget"));
+            modelBuilder.Entity<ReportDemandRow>(e => e.HasNoKey().ToView("v_report_demand", "budget"));
             // ---------------- T-21 account_head_assignment (P2) ----------------
             modelBuilder.Entity<AccountHeadAssignment>(e =>
             {

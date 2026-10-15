@@ -1483,6 +1483,62 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("distribution", "budget");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Distributions.Entities.DistributionBalanceRow", b =>
+                {
+                    b.Property<long>("AccountCodeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_code_id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("category");
+
+                    b.Property<long>("CeOfficeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("ce_office_id");
+
+                    b.Property<long>("CycleId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("cycle_id");
+
+                    b.Property<decimal>("ObeBalanceRetained")
+                        .HasColumnType("numeric")
+                        .HasColumnName("obe_balance_retained");
+
+                    b.Property<decimal>("ObeDistributed")
+                        .HasColumnType("numeric")
+                        .HasColumnName("obe_distributed");
+
+                    b.Property<decimal>("ObeNextRecommended")
+                        .HasColumnType("numeric")
+                        .HasColumnName("obe_next_recommended");
+
+                    b.Property<decimal>("RbeBalanceRetained")
+                        .HasColumnType("numeric")
+                        .HasColumnName("rbe_balance_retained");
+
+                    b.Property<decimal>("RbeDistributed")
+                        .HasColumnType("numeric")
+                        .HasColumnName("rbe_distributed");
+
+                    b.Property<decimal>("RbeRecommended")
+                        .HasColumnType("numeric")
+                        .HasColumnName("rbe_recommended");
+
+                    b.Property<long>("RecommendationId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("recommendation_id");
+
+                    b.Property<bool>("RedistributionRequired")
+                        .HasColumnType("boolean")
+                        .HasColumnName("redistribution_required");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("v_distribution_balance", "budget");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Observations.Entities.Observation", b =>
                 {
                     b.Property<long>("ObservationId")
@@ -2199,6 +2255,101 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable((string)null);
 
                     b.ToView("v_manual_of_accounts_codes", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Reports.Entities.ReportDemandRow", b =>
+                {
+                    b.Property<long?>("AccountCodeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_code_id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("category");
+
+                    b.Property<int?>("CeId")
+                        .HasColumnType("integer")
+                        .HasColumnName("ce_id");
+
+                    b.Property<int?>("CircleId")
+                        .HasColumnType("integer")
+                        .HasColumnName("circle_id");
+
+                    b.Property<string>("CompleteCode")
+                        .HasColumnType("text")
+                        .HasColumnName("complete_code");
+
+                    b.Property<int>("CurrentFinYear")
+                        .HasColumnType("integer")
+                        .HasColumnName("current_fin_year");
+
+                    b.Property<long>("CycleId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("cycle_id");
+
+                    b.Property<long>("DemandLineId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("demand_line_id");
+
+                    b.Property<decimal?>("DemandedObeNext")
+                        .HasColumnType("numeric")
+                        .HasColumnName("demanded_obe_next");
+
+                    b.Property<decimal?>("DemandedRbe")
+                        .HasColumnType("numeric")
+                        .HasColumnName("demanded_rbe");
+
+                    b.Property<decimal?>("DistributedObeNext")
+                        .HasColumnType("numeric")
+                        .HasColumnName("distributed_obe_next");
+
+                    b.Property<decimal?>("DistributedRbe")
+                        .HasColumnType("numeric")
+                        .HasColumnName("distributed_rbe");
+
+                    b.Property<int?>("DivisionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("division_id");
+
+                    b.Property<string>("HeadDesc")
+                        .HasColumnType("text")
+                        .HasColumnName("head_desc");
+
+                    b.Property<string>("LineType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("line_type");
+
+                    b.Property<long>("OriginOfficeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("origin_office_id");
+
+                    b.Property<string>("OriginOfficeLevel")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("origin_office_level");
+
+                    b.Property<long>("ProposalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("proposal_id");
+
+                    b.Property<string>("StateCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("state_code");
+
+                    b.Property<string>("WingCode")
+                        .HasColumnType("text")
+                        .HasColumnName("wing_code");
+
+                    b.Property<int?>("WorkId")
+                        .HasColumnType("integer")
+                        .HasColumnName("work_id");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("v_report_demand", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Settings.Entities.BudgetSetting", b =>
