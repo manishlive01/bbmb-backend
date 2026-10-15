@@ -113,6 +113,20 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines
             return mine;
         }
 
+        /// <summary>
+        /// The line addressed under a resolved proposal: not of the proposal → NOT_FOUND; marked deleted → M-19
+        /// (a deleted line is kept and shown, never written again, BUD-319).
+        /// </summary>
+        public static async Task<(DemandLine? Line, Response? Refusal)> FindLiveLineAsync(
+            BudgetContext context, BudgetProposal p, long demandLineId, bool track, CancellationToken ct)
+        {
+            var q = track ? context.DemandLines : context.DemandLines.AsNoTracking();
+            var line = await q.FirstOrDefaultAsync(l => l.DemandLineId == demandLineId && l.ProposalId == p.ProposalId, ct);
+            if (line is null)
+                return (null, BudgetResponses.Fail(BudgetMessages.NotFound));
+            return line.IsDeleted ? (null, BudgetResponses.Fail(BudgetMessages.M19)) : (line, null);
+        }
+
         /// <summary>A single field refusal in the rule-failure shape (design §4.9).</summary>
         public static Response<RuleFailuresDto> FieldFailure(DemandLine line, string field, string messageId) =>
             BudgetResponses.RuleFailures(new RuleFailuresDto

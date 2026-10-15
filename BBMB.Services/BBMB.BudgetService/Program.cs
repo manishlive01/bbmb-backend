@@ -86,6 +86,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetActors.IBudg
 // External boundary (design §4.11): no gateway integrated, nothing is sent.
 builder.Services.AddSingleton<BBMB.BudgetService.Shared.Services.Notifications.IBudgetNotificationGateway,
     BBMB.BudgetService.Shared.Services.Notifications.NoOpBudgetNotificationGateway>();
+builder.Services.AddSingleton<BBMB.BudgetService.Shared.Services.FinancialAccounting.IFinancialAccountingGateway,
+    BBMB.BudgetService.Shared.Services.FinancialAccounting.NotAvailableFinancialAccountingGateway>();
 // The single path by which a proposal moves (design §6.2).
 // T-17 value in force (design §5.3).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Settings.IBudgetSettingsReader,
