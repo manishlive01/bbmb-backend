@@ -417,4 +417,48 @@ public sealed class BudgetP2AttachmentsApprovalsSanctionsTests(BudgetDatabaseFix
                 "AND aa_amount_sanctioned = 1000 AND aa_reference_no = 'AA/5' AND ts_count = 1 AND ts_amount_to_date = 400"))
             .Should().Be(1);
     }
+
+    // ------------------------------------------------------------------ DB-09 serialisation (BudgetP2TsCeilingLock)
+
+    [Fact]
+    public async Task DB09_two_concurrent_sanctions_that_fit_alone_but_not_together_second_commit_refused_M06()
+    {
+        var aa = await CommittedApprovalAsync(1000);
+        var (c1, tx1) = await SanctionAsync(aa, 600, 1, "TS/1");
+        var second = Task.Run(async () =>
+        {
+            var (c2, tx2) = await SanctionAsync(aa, 600, 2, "TS/2");
+            await using (c2)
+            {
+                try { await tx2.CommitAsync(); return (PostgresException?)null; }
+                catch (PostgresException e) { return e; }
+            }
+        });
+        await Task.Delay(750);
+        second.IsCompleted.Should().BeFalse("the second writer waits for the first transaction's lock");
+        await using (c1) await tx1.CommitAsync();
+
+        var refused = await second;
+        refused.Should().NotBeNull();
+        refused!.MessageText.Should().Be("M-06");
+
+        var (c3, tx3) = await _w.BeginAsync(_w.ItCell);
+        await using var _ = c3;
+        (await ScalarAsync(c3, tx3,
+                "SELECT coalesce(sum(v.ts_amount), 0) FROM budget.technical_sanction t JOIN budget.technical_sanction_version v " +
+                $"ON v.technical_sanction_id = t.technical_sanction_id WHERE t.admin_approval_id = {aa}"))
+            .Should().Be(600, "the first sanction stays committed");
+    }
+
+    [Fact]
+    public async Task DB09_ceiling_check_takes_the_per_approval_advisory_lock_before_summing()
+    {
+        var (c, tx) = await _w.BeginAsync(_w.ItCell);
+        await using var _ = c;
+        await using var cmd = new NpgsqlCommand("SELECT pg_get_functiondef('budget.fn_ts_ceiling_check()'::regprocedure)", c, tx);
+        var def = (string)(await cmd.ExecuteScalarAsync())!;
+        var lockAt = def.IndexOf("pg_advisory_xact_lock(hashtext('budget.ts_ceiling')", StringComparison.Ordinal);
+        lockAt.Should().BePositive();
+        lockAt.Should().BeLessThan(def.IndexOf("sum(v.ts_amount)", StringComparison.Ordinal));
+    }
 }
