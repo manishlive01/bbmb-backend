@@ -106,6 +106,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.R
 // T-19 delegation limits in force (design §5.3; BUD-055 reads it).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Settings.IDelegationLimitReader,
     BBMB.BudgetService.Features.BudgetProcess.Settings.DelegationLimitReader>();
+// F-01 account-code rules (design §8.4, VR-01, BUD-308).
+builder.Services.AddScoped<BBMB.BudgetService.Features.HeadOfAccounts.Rules.AccountCodeRules>();
 // F-03 / F-04 application rules (design §8.4).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Rules.AdminApprovalRules>();
 // F-06 application rules: VR-02 under the DB-09 lock key, VR-11 via the FA gateway (design §8.4).

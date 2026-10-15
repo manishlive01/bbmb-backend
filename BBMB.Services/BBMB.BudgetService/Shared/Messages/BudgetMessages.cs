@@ -122,6 +122,15 @@ namespace BBMB.BudgetService.Shared.Messages
             // T-25 UKs, backstops behind the handler (one approval per work; serial allotted in the Division).
             ["ux_admin_approval_work"] = M19,
             ["ux_admin_approval_division_serial"] = M19,
+            // T-01 to T-06: a segment code exists once under its parent (VR-01, M-01; backstop behind F-01).
+            ["PK_fa_major_head"] = M01,
+            ["PK_fa_sub_major_head"] = M01,
+            ["PK_fa_minor_head"] = M01,
+            ["PK_fa_sub_minor_head"] = M01,
+            ["PK_fa_detail_head"] = M01,
+            ["PK_fa_object_head"] = M01,
+            // T-21 one live assignment per office and head (backstop behind AssignHeadsHandler).
+            ["ux_account_head_assignment_live"] = M19,
             // T-19 one limit per level and date (backstop behind CreateDelegationLimitHandler).
             ["IX_delegation_limit_authority_level_effective_from"] = M19,
         };

@@ -25,6 +25,13 @@ public sealed class RemovedRoutesTests
         { "PUT", "/api/sub-minor-heads/{code}" },
         { "PUT", "/api/detail-heads/{code}" },
         { "PUT", "/api/object-classifications/{code}" },
+        // Per-segment creation (P2-10): F-01 is the single creation route (BUD-045, design §4.7).
+        { "POST", "/api/Create-MajorHead" },
+        { "POST", "/api/accounting-heads/sub-major" },
+        { "POST", "/api/minor-heads" },
+        { "POST", "/api/sub-minor-heads" },
+        { "POST", "/api/detail-heads" },
+        { "POST", "/api/object-classifications" },
     };
 
     [Theory]

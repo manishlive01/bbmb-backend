@@ -28,6 +28,8 @@ public sealed class BudgetEndpointPolicyTests
         var method = e.Methods.Single();
         if (area == "BulkExcelUploads") return "Budget.View"; // handler authorises per upload type
         if (area == "Works" && slice == "GenerateWorkCodes") return "Works.Enter";
+        if (area == "HeadOfAccounts" && slice == "MarkNotForUse") return "F01.MarkNotForUse";
+        if (area == "HeadOfAccounts" && slice == "SetPartyEmpFlag") return "F01.FlagPartyEmp";
         var read = method == "GET" || slice is "GetById" or "GetDropdown" or "GetList";
         if (read) return "Budget.View";
         return area switch

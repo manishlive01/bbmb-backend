@@ -1,3 +1,4 @@
+using BBMB.BudgetService.Features.HeadOfAccounts.Rules;
 using BBMB.BudgetService.Features.HeadOfAccounts.Create;
 using BBMB.BudgetService.Features.HeadOfAccounts.Create.Dtos;
 using BBMB.BudgetService.Shared.Services.BudgetActors;
@@ -239,35 +240,34 @@ public sealed class BudgetP1ProposalSpineMastersTests(BudgetDatabaseFixture fixt
     [Fact]
     public async Task BUD267_HeadOfAccount_create_through_the_handler_inside_a_scope_succeeds()
     {
+        // P2-10 rewrote the slice as F-01 (origin CREATED, e-Office reference required); the P1 property under test,
+        // that the T-07 insert runs inside the action scope with the actor and BUD-267 flag, still holds.
         var seg = await TestMasters.InsertSegmentsAsync(fixture.PlainConnectionString, major: "9906");
         var actor = await TestActor.CreateAsync(fixture, name: "Officer H");
         await using var ctx = fixture.NewBudgetContext();
-        var handler = new CreateHeadOfAccountHandler(ctx, actor, new BudgetActionScope(ctx, actor));
-
+        var handler = new CreateHeadOfAccountHandler(ctx, actor, new BudgetActionScope(ctx, actor), new AccountCodeRules(ctx));
         var r = await handler.Handle(new CreateHeadOfAccountCommand(new CreateHeadOfAccountDto
         {
             MajorAccCode = seg.Major, SubMajorAccCode = seg.SubMajor, MinorAccCode = seg.Minor,
             SubMinorAccCode = seg.SubMinor, DetailAccCode = seg.Detail, ObjectAccCode = seg.Object,
-            HeadDesc = "Created head", PartyEmpRequired = "N", UserCode = "T",
+            HeadDesc = "Created head", EofficeApprovalRef = "EO/2026/1",
         }), default);
         r.IsSucced.Should().BeTrue(r.Message);
-
         await using var read = fixture.NewBudgetContext();
         var head = await read.HeadOfAccounts.AsNoTracking().SingleAsync(x => x.MajorAccCode == seg.Major && x.ObjectAccCode == seg.Object && x.MinorAccCode == seg.Minor);
-        head.Origin.Should().Be("LEGACY");
-        head.PartyEmpRequired.Should().Be("Y", "BUD-267 sets the flag for major 9906 whatever the request says");
+        head.Origin.Should().Be("CREATED");
+        head.PartyEmpRequired.Should().Be("Y", "BUD-267 sets the flag for major 9906; the request cannot carry it");
         head.CreatedBy.Should().Be(actor.Actor!.EmployeeId);
         head.CompleteCode.Should().Be(seg.Complete);
         (await read.AuditLog.CountAsync(a => a.TableName == "budget_head_master" && a.Operation == "I"
-                                             && a.ActionCode == "HEAD_OF_ACCOUNT_CREATE")).Should().BeGreaterThan(0);
+                                             && a.ActionCode == CreateHeadOfAccountHandler.ActionCode)).Should().BeGreaterThan(0);
     }
-
     [Fact]
     public async Task M20_HeadOfAccount_create_without_an_actor_is_refused()
     {
         await using var ctx = fixture.NewBudgetContext();
         var none = FakeBudgetActorSource.None();
-        var r = await new CreateHeadOfAccountHandler(ctx, none, new BudgetActionScope(ctx, none))
+        var r = await new CreateHeadOfAccountHandler(ctx, none, new BudgetActionScope(ctx, none), new AccountCodeRules(ctx))
             .Handle(new CreateHeadOfAccountCommand(new CreateHeadOfAccountDto { MajorAccCode = "0000" }), default);
         r.MessageId.Should().Be("M-20");
     }

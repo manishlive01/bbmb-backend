@@ -1,111 +1,36 @@
-using BBMB.BudgetService.Features.HeadOfAccounts.Create.Dtos;
-using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.Messages;
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-
 namespace BBMB.BudgetService.Features.HeadOfAccounts.Create
 {
-    public class CreateHeadOfAccountValidator : AbstractValidator<CreateHeadOfAccountDto>
+    /// <summary>
+    /// F-01 shape (design §8.4, §7 VR-01): segment patterns 4-2-3-2-3-3 digits (DDD T-01 to T-06 CHECKs, BUD-041);
+    /// e-Office reference required ≤ 50 (M-03, BUD-044); segment descriptions ≤ 200 as entered (AN(200); the object
+    /// column is wider only for the legacy load); head description required ≤ 150. Typed to the command (D-3), so it runs.
+    /// </summary>
+    public sealed class CreateHeadOfAccountValidator : AbstractValidator<CreateHeadOfAccountCommand>
     {
-        private readonly BudgetContext _context;
-
-        public CreateHeadOfAccountValidator(BudgetContext context)
+        public CreateHeadOfAccountValidator()
         {
-            _context = context;
-
-            RuleFor(x => x.MajorAccCode)
-                .NotEmpty().WithMessage("Major head code is required")
-                .MaximumLength(4).WithMessage("Major head code must not exceed 4 characters")
-                .MustAsync(MajorHeadExists).WithMessage("Major head code does not exist");
-
-            RuleFor(x => x.SubMajorAccCode)
-                .MaximumLength(4).WithMessage("Sub-major head code must not exceed 4 characters")
-                .MustAsync(SubMajorHeadExistsIfProvided).WithMessage("Sub-major head code does not exist")
-                .When(x => !string.IsNullOrEmpty(x.SubMajorAccCode));
-
-            RuleFor(x => x.MinorAccCode)
-                .NotEmpty().WithMessage("Minor head code is required")
-                .MaximumLength(3).WithMessage("Minor head code must not exceed 3 characters")
-                .MustAsync(MinorHeadExists).WithMessage("Minor head code does not exist");
-
-            RuleFor(x => x.SubMinorAccCode)
-                .MaximumLength(2).WithMessage("Sub-minor head code must not exceed 2 characters")
-                .MustAsync(SubMinorHeadExistsIfProvided).WithMessage("Sub-minor head code does not exist")
-                .When(x => !string.IsNullOrEmpty(x.SubMinorAccCode));
-
-            RuleFor(x => x.DetailAccCode)
-                .NotEmpty().WithMessage("Detail head code is required")
-                .MaximumLength(3).WithMessage("Detail head code must not exceed 3 characters")
-                .MustAsync(DetailHeadExists).WithMessage("Detail head code does not exist");
-
-            RuleFor(x => x.ObjectAccCode)
-                .NotEmpty().WithMessage("Object classification code is required")
-                .MaximumLength(3).WithMessage("Object classification code must not exceed 3 characters")
-                .MustAsync(ObjectClassificationExists).WithMessage("Object classification code does not exist");
-
-            RuleFor(x => x.HeadDesc)
-                .NotEmpty().WithMessage("Head description is required")
-                .MaximumLength(150).WithMessage("Head description must not exceed 150 characters");
-
-            RuleFor(x => x.UserCode)
-                .NotEmpty().WithMessage("User code is required")
-                .MaximumLength(6).WithMessage("User code must not exceed 6 characters");
-
-            RuleFor(x => x.PartyEmpRequired)
-                .MaximumLength(1).WithMessage("Party employee required must not exceed 1 character")
-                .When(x => !string.IsNullOrEmpty(x.PartyEmpRequired));
-
-            RuleFor(x => x.PartyLedgToPrint)
-                .MaximumLength(1).WithMessage("Party ledger to print must not exceed 1 character")
-                .When(x => !string.IsNullOrEmpty(x.PartyLedgToPrint));
-
-            RuleFor(x => x.TdsDeducted)
-                .MaximumLength(1).WithMessage("TDS deducted must not exceed 1 character")
-                .When(x => !string.IsNullOrEmpty(x.TdsDeducted));
-
-            RuleFor(x => x.AdvanceHead)
-                .MaximumLength(1).WithMessage("Advance head must not exceed 1 character")
-                .When(x => !string.IsNullOrEmpty(x.AdvanceHead));
-
-            RuleFor(x => x.BankCash)
-                .MaximumLength(1).WithMessage("Bank cash must not exceed 1 character")
-                .When(x => !string.IsNullOrEmpty(x.BankCash));
-
-            RuleFor(x => x.MonthlyCarryFwd)
-                .MaximumLength(1).WithMessage("Monthly carry forward must not exceed 1 character")
-                .When(x => !string.IsNullOrEmpty(x.MonthlyCarryFwd));
-        }
-
-        private async Task<bool> MajorHeadExists(string code, CancellationToken ct)
-        {
-            return await _context.MajorHeads.AnyAsync(m => m.MajorAccCode == code, ct);
-        }
-
-        private async Task<bool> SubMajorHeadExistsIfProvided(CreateHeadOfAccountDto dto, string? code, CancellationToken ct)
-        {
-            if (string.IsNullOrEmpty(code)) return true;
-            return await _context.SubMajorHeads.AnyAsync(s => s.SubMajorAccCode == code, ct);
-        }
-
-        private async Task<bool> MinorHeadExists(string code, CancellationToken ct)
-        {
-            return await _context.MinorHeads.AnyAsync(m => m.MinorAccCode == code, ct);
-        }
-
-        private async Task<bool> SubMinorHeadExistsIfProvided(CreateHeadOfAccountDto dto, string? code, CancellationToken ct)
-        {
-            if (string.IsNullOrEmpty(code)) return true;
-            return await _context.SubMinorHeads.AnyAsync(s => s.SubMinorAccCode == code, ct);
-        }
-
-        private async Task<bool> DetailHeadExists(string code, CancellationToken ct)
-        {
-            return await _context.DetailHeads.AnyAsync(d => d.DetailAccCode == code, ct);
-        }
-
-        private async Task<bool> ObjectClassificationExists(string code, CancellationToken ct)
-        {
-            return await _context.ObjectClassifications.AnyAsync(o => o.ObjectAccCode == code, ct);
+            RuleFor(x => x.Dto).NotNull();
+            When(x => x.Dto is not null, () =>
+            {
+                RuleFor(x => x.Dto.MajorAccCode).Matches(@"^\d{4}$").WithErrorCode(BudgetMessages.M22).WithMessage("majorAccCode: 4 digits.");
+                RuleFor(x => x.Dto.SubMajorAccCode).Matches(@"^\d{2}$").WithErrorCode(BudgetMessages.M22).WithMessage("subMajorAccCode: 2 digits.");
+                RuleFor(x => x.Dto.MinorAccCode).Matches(@"^\d{3}$").WithErrorCode(BudgetMessages.M22).WithMessage("minorAccCode: 3 digits.");
+                RuleFor(x => x.Dto.SubMinorAccCode).Matches(@"^\d{2}$").WithErrorCode(BudgetMessages.M22).WithMessage("subMinorAccCode: 2 digits.");
+                RuleFor(x => x.Dto.DetailAccCode).Matches(@"^\d{3}$").WithErrorCode(BudgetMessages.M22).WithMessage("detailAccCode: 3 digits.");
+                RuleFor(x => x.Dto.ObjectAccCode).Matches(@"^\d{3}$").WithErrorCode(BudgetMessages.M22).WithMessage("objectAccCode: 3 digits.");
+                RuleFor(x => x.Dto.MajorAccDesc).MaximumLength(200);
+                RuleFor(x => x.Dto.SubMajorAccDesc).MaximumLength(200);
+                RuleFor(x => x.Dto.MinorAccDesc).MaximumLength(200);
+                RuleFor(x => x.Dto.SubMinorAccDesc).MaximumLength(200);
+                RuleFor(x => x.Dto.DetailAccDesc).MaximumLength(200);
+                RuleFor(x => x.Dto.ObjectAccDesc).MaximumLength(200);
+                RuleFor(x => x.Dto.HeadDesc).Must(t => !string.IsNullOrWhiteSpace(t)).WithErrorCode(BudgetMessages.M21)
+                    .WithMessage(BudgetMessages.Format(BudgetMessages.M21)).MaximumLength(150);
+                RuleFor(x => x.Dto.EofficeApprovalRef).Must(t => !string.IsNullOrWhiteSpace(t)).WithErrorCode(BudgetMessages.M03)
+                    .WithMessage(BudgetMessages.Format(BudgetMessages.M03)).MaximumLength(50);
+            });
         }
     }
 }
