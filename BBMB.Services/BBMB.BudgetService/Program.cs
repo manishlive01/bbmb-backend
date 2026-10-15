@@ -73,6 +73,9 @@ TypeAdapterConfig.GlobalSettings.Scan(typeof(Program).Assembly);
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 builder.Services.AddScoped<IMapper, ServiceMapper>(); 
 builder.Services.AddScoped<IFileStorageService,  FileStorageService>();
+// Malware scanner boundary (design §4.8, OI-12): ClamAV when configured, no-scan in Development only, else refuse.
+BBMB.BudgetService.Shared.Services.Attachments.AttachmentScannerRegistration.AddAttachmentScanner(
+    builder.Services, builder.Configuration, builder.Environment);
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IChargeResolver, ChargeResolver>();
