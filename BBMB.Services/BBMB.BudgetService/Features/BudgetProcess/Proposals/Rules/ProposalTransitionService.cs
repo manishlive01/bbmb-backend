@@ -61,38 +61,10 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
             if (actor is null)
                 return BudgetResponses.Fail<ProposalStateResponseDto>(BudgetMessages.M20);
 
-            var proposal = await context.BudgetProposals.FirstOrDefaultAsync(p => p.ProposalId == proposalId, ct);
-            if (proposal is null)
-                return BudgetResponses.Fail<ProposalStateResponseDto>(BudgetMessages.NotFound);
-
-            var visible = await officeScope.GetVisibleOfficeIdsAsync(actor.OfficeId, ct);
-            if (!visible.Contains(proposal.OriginOfficeId) && !visible.Contains(proposal.HolderOfficeId))
-                return BudgetResponses.Fail<ProposalStateResponseDto>(BudgetMessages.NotFound);
-
-            if (action != ProposalAction.Recall && proposal.HolderOfficeId != actor.OfficeId)
-                return BudgetResponses.Fail<ProposalStateResponseDto>(BudgetMessages.M19);
-
-            var cycleStatus = await context.BudgetCycles.AsNoTracking()
-                .Where(c => c.CycleId == proposal.CycleId).Select(c => c.Status).SingleAsync(ct);
-            if (cycleStatus != CycleStatus.Open && action != ProposalAction.Freeze)
-                return BudgetResponses.Fail<ProposalStateResponseDto>(BudgetMessages.M17);
-
-            var resolved = await ResolveAsync(proposal, action, actor.OfficeId, ct);
-            if (resolved is null)
-                return BudgetResponses.Fail<ProposalStateResponseDto>(BudgetMessages.M19);
-
-            var transition = await context.StateTransitions.AsNoTracking().FirstOrDefaultAsync(t =>
-                t.FromState == resolved.FromState && t.ActionCode == resolved.ActionCode && t.ToState == resolved.ToState, ct);
-            if (transition is null)
-                return BudgetResponses.Fail<ProposalStateResponseDto>(BudgetMessages.M19);
-
-            var right = TransitionResolver.RightFor(action, proposal.StateCode, proposal.Category);
-            var user = httpContextAccessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal();
-            if (!(await authorization.AuthorizeAsync(user, null, BudgetRightRequirement.Policy(right))).Succeeded)
-                return BudgetResponses.Fail<ProposalStateResponseDto>(BudgetMessages.M20);
-
-            if (transition.RemarkRequired && string.IsNullOrWhiteSpace(remark))
-                return BudgetResponses.Fail<ProposalStateResponseDto>(BudgetMessages.M12);
+            var prepared = await PrepareAsync(proposalId, action, remark, actor, ct);
+            if (prepared.Refusal is { } refused)
+                return refused;
+            var (proposal, resolved) = (prepared.Proposal!, prepared.Resolved!);
 
             ProposalMovement movement;
             await using (var tx = await scope.BeginAsync(action, ct: ct))
@@ -102,29 +74,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
                 if (hooks.BeforeMove is not null && await hooks.BeforeMove(proposal, ct) is { } refusal)
                     return refusal;
 
-                movement = new ProposalMovement
-                {
-                    ProposalId = proposal.ProposalId,
-                    FromState = resolved.FromState,
-                    ActionCode = resolved.ActionCode,
-                    ToState = resolved.ToState,
-                    FromOfficeId = actor.OfficeId,
-                    ToOfficeId = resolved.ToOfficeId,
-                    Remark = string.IsNullOrWhiteSpace(remark) ? null : remark.Trim(),
-                    RoleCode = actor.RoleCode,
-                    OnBehalfOfPost = actor.OnBehalfOfPost,
-                    ClientIp = actor.ClientIp,
-                };
-                context.ProposalMovements.Add(movement);
-
-                proposal.StateCode = resolved.ToState;
-                proposal.HolderOfficeId = resolved.ToOfficeId;
-                if (action == ProposalAction.Submit && proposal.FirstSubmittedAt is null)
-                    proposal.FirstSubmittedAt = DateTimeOffset.UtcNow;
-                // The edit lease is cleared on every transition (design §6.2 rules list).
-                proposal.EditLeaseBy = null;
-                proposal.EditLeaseExpiresAt = null;
-
+                movement = AddMovement(proposal, resolved, action, remark, actor);
                 await context.SaveChangesAsync(ct);
                 if (hooks.AfterMove is not null)
                 {
@@ -134,22 +84,134 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
                 await tx.CommitAsync(ct);
             }
 
-            try
-            {
-                await notifications.NotifyMovementAsync(proposal.ProposalId, movement.MovementId, ct);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Movement notification failed for proposal {ProposalId}, movement {MovementId}",
-                    proposal.ProposalId, movement.MovementId);
-            }
-
+            await NotifyAsync(proposal.ProposalId, movement.MovementId, ct);
             return new Response<ProposalStateResponseDto>
             {
                 IsSucced = true,
                 Message = "Proposal moved",
                 Data = await StateOfAsync(proposal.ProposalId, ct),
             };
+        }
+
+        public async Task<Response> MoveAllAsync(
+            IReadOnlyList<long> proposalIds, string action, string? remark, CancellationToken ct = default)
+        {
+            if (!await IsStateModelAvailableAsync(ct))
+                return BudgetResponses.Fail<List<ProposalStateResponseDto>>(BudgetMessages.M19);
+            var actor = await actorSource.GetAsync(ct);
+            if (actor is null)
+                return BudgetResponses.Fail<List<ProposalStateResponseDto>>(BudgetMessages.M20);
+
+            var batch = new List<(BudgetProposal Proposal, ResolvedTransition Resolved)>();
+            foreach (var id in proposalIds)
+            {
+                var prepared = await PrepareAsync(id, action, remark, actor, ct);
+                if (prepared.Refusal is { } refused)
+                    return refused;
+                batch.Add((prepared.Proposal!, prepared.Resolved!));
+            }
+
+            var movements = new List<ProposalMovement>();
+            await using (var tx = await scope.BeginAsync(action, ct: ct))
+            {
+                foreach (var (proposal, resolved) in batch)
+                    movements.Add(AddMovement(proposal, resolved, action, remark, actor));
+                await context.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+            }
+
+            foreach (var m in movements)
+                await NotifyAsync(m.ProposalId, m.MovementId, ct);
+            var states = new List<ProposalStateResponseDto>();
+            foreach (var (proposal, _) in batch)
+                states.Add(await StateOfAsync(proposal.ProposalId, ct));
+            return new Response<List<ProposalStateResponseDto>> { IsSucced = true, Message = "Proposals moved", Data = states };
+        }
+
+        /// <summary>
+        /// Every check of a move up to the write (the order in the class summary). Null refusal → proceed with the
+        /// tracked proposal and its resolved transition.
+        /// </summary>
+        private async Task<(BudgetProposal? Proposal, ResolvedTransition? Resolved, Response? Refusal)> PrepareAsync(
+            long proposalId, string action, string? remark, BudgetActor actor, CancellationToken ct)
+        {
+            static (BudgetProposal?, ResolvedTransition?, Response?) Fail(string id) =>
+                (null, null, BudgetResponses.Fail<ProposalStateResponseDto>(id));
+
+            var proposal = await context.BudgetProposals.FirstOrDefaultAsync(p => p.ProposalId == proposalId, ct);
+            if (proposal is null)
+                return Fail(BudgetMessages.NotFound);
+
+            var visible = await officeScope.GetVisibleOfficeIdsAsync(actor.OfficeId, ct);
+            if (!visible.Contains(proposal.OriginOfficeId) && !visible.Contains(proposal.HolderOfficeId))
+                return Fail(BudgetMessages.NotFound);
+
+            if (action != ProposalAction.Recall && proposal.HolderOfficeId != actor.OfficeId)
+                return Fail(BudgetMessages.M19);
+
+            var cycleStatus = await context.BudgetCycles.AsNoTracking()
+                .Where(c => c.CycleId == proposal.CycleId).Select(c => c.Status).SingleAsync(ct);
+            if (cycleStatus != CycleStatus.Open && action != ProposalAction.Freeze)
+                return Fail(BudgetMessages.M17);
+
+            var resolved = await ResolveAsync(proposal, action, actor.OfficeId, ct);
+            if (resolved is null)
+                return Fail(BudgetMessages.M19);
+
+            var transition = await context.StateTransitions.AsNoTracking().FirstOrDefaultAsync(t =>
+                t.FromState == resolved.FromState && t.ActionCode == resolved.ActionCode && t.ToState == resolved.ToState, ct);
+            if (transition is null)
+                return Fail(BudgetMessages.M19);
+
+            var right = TransitionResolver.RightFor(action, proposal.StateCode, proposal.Category);
+            var user = httpContextAccessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal();
+            if (!(await authorization.AuthorizeAsync(user, null, BudgetRightRequirement.Policy(right))).Succeeded)
+                return Fail(BudgetMessages.M20);
+
+            if (transition.RemarkRequired && string.IsNullOrWhiteSpace(remark))
+                return Fail(BudgetMessages.M12);
+
+            return (proposal, resolved, null);
+        }
+
+        /// <summary>One T-33 row and the T-29 update of one move (DB-10); the lease is cleared (design §6.2).</summary>
+        private ProposalMovement AddMovement(
+            BudgetProposal proposal, ResolvedTransition resolved, string action, string? remark, BudgetActor actor)
+        {
+            var movement = new ProposalMovement
+            {
+                ProposalId = proposal.ProposalId,
+                FromState = resolved.FromState,
+                ActionCode = resolved.ActionCode,
+                ToState = resolved.ToState,
+                FromOfficeId = actor.OfficeId,
+                ToOfficeId = resolved.ToOfficeId,
+                Remark = string.IsNullOrWhiteSpace(remark) ? null : remark.Trim(),
+                RoleCode = actor.RoleCode,
+                OnBehalfOfPost = actor.OnBehalfOfPost,
+                ClientIp = actor.ClientIp,
+            };
+            context.ProposalMovements.Add(movement);
+            proposal.StateCode = resolved.ToState;
+            proposal.HolderOfficeId = resolved.ToOfficeId;
+            if (action == ProposalAction.Submit && proposal.FirstSubmittedAt is null)
+                proposal.FirstSubmittedAt = DateTimeOffset.UtcNow;
+            proposal.EditLeaseBy = null;
+            proposal.EditLeaseExpiresAt = null;
+            return movement;
+        }
+
+        private async Task NotifyAsync(long proposalId, long movementId, CancellationToken ct)
+        {
+            try
+            {
+                await notifications.NotifyMovementAsync(proposalId, movementId, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Movement notification failed for proposal {ProposalId}, movement {MovementId}",
+                    proposalId, movementId);
+            }
         }
 
         public async Task<IReadOnlyList<string>> GetAvailableActionsAsync(long proposalId, CancellationToken ct = default)

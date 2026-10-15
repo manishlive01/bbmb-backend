@@ -45,5 +45,13 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
         /// </summary>
         Task<Response> MoveAsync(
             long proposalId, string action, string? remark, CancellationToken ct = default, TransitionHooks? hooks = null);
+
+        /// <summary>
+        /// Moves several proposals by the same action all-or-nothing (a category-level action such as FINALISE,
+        /// BUD-134): every proposal passes every check of <see cref="MoveAsync"/> first, and the first refusal is
+        /// returned with nothing written; then all the movements are written in one action scope. Success is a
+        /// <c>Response&lt;List&lt;ProposalStateResponseDto&gt;&gt;</c>.
+        /// </summary>
+        Task<Response> MoveAllAsync(IReadOnlyList<long> proposalIds, string action, string? remark, CancellationToken ct = default);
     }
 }
