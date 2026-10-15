@@ -90,17 +90,18 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines
         }
 
         /// <summary>
-        /// Runs the Save moment over the proposal's non-deleted lines with <paramref name="candidate"/> in its new
+        /// Runs the Save moment (or the reviewer / Finance alteration moment) over the proposal's non-deleted lines with <paramref name="candidate"/> in its new
         /// form, and keeps only what concerns the candidate: a pre-existing incomplete line does not block the
         /// save of another (BUD-241). The candidate's flags are written onto it.
         /// </summary>
         public static async Task<DemandLineRuleResult> EvaluateSaveAsync(
-            BudgetContext context, IDemandLineRules rules, BudgetProposal p, DemandLine candidate, string actorLevel, CancellationToken ct)
+            BudgetContext context, IDemandLineRules rules, BudgetProposal p, DemandLine candidate, string actorLevel, CancellationToken ct,
+            RuleMoment moment = RuleMoment.Save)
         {
             var others = await context.DemandLines.AsNoTracking()
                 .Where(l => l.ProposalId == p.ProposalId && !l.IsDeleted && l.DemandLineId != candidate.DemandLineId)
                 .ToListAsync(ct);
-            var all = await rules.EvaluateAsync(p, [.. others, candidate], RuleMoment.Save, actorLevel, ct);
+            var all = await rules.EvaluateAsync(p, [.. others, candidate], moment, actorLevel, ct);
             long? id = candidate.DemandLineId > 0 ? candidate.DemandLineId : null;
             var mine = new DemandLineRuleResult();
             mine.Failures.AddRange(all.Failures.Where(f => f.DemandLineId == id));
