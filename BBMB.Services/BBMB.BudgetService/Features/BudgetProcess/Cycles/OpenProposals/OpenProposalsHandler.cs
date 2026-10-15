@@ -15,7 +15,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Cycles.OpenProposals
     /// <summary>
     /// Design §8.2, §6.2 expected set. Cycle absent → NOT_FOUND; not OPEN → M-17. WORKS: every active DIVISION
     /// office. Head-wise (DNA in P1): the named officeIds, each an active DIVISION, CIRCLE or CE office (DB-01),
-    /// else M-22 and nothing is created (P2 adds the offices with live T-21 assignments). Only missing proposals
+    /// else M-22 and nothing is created, together with every active office holding a live T-21 assignment (P2, OI-43). Only missing proposals
     /// are created (UK cycle, category, origin), at S-01 held by the origin, in one OPEN_PROPOSALS scope.
     /// </summary>
     public sealed class OpenProposalsHandler(BudgetContext context, IBudgetActorSource actorSource, IBudgetActionScope scope)
@@ -48,15 +48,22 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Cycles.OpenProposals
                 expected.AddRange(divisions.Select(id => (ProposalCategory.Works, id)));
             }
             var headWise = categories.Where(c => c != ProposalCategory.Works).ToList();
-            if (headWise.Count > 0 && named.Count > 0)
+            if (headWise.Count > 0)
             {
-                var valid = await context.BudgetOffices.AsNoTracking()
-                    .Where(o => named.Contains(o.OfficeId) && o.IsActive && HeadWiseLevels.Contains(o.OfficeLevel))
-                    .Select(o => o.OfficeId).ToListAsync(ct);
-                if (valid.Count != named.Count)
-                    return BudgetResponses.Fail<OpenProposalsResponseDto>(BudgetMessages.M22);
+                if (named.Count > 0)
+                {
+                    var valid = await context.BudgetOffices.AsNoTracking()
+                        .Where(o => named.Contains(o.OfficeId) && o.IsActive && HeadWiseLevels.Contains(o.OfficeLevel))
+                        .Select(o => o.OfficeId).ToListAsync(ct);
+                    if (valid.Count != named.Count)
+                        return BudgetResponses.Fail<OpenProposalsResponseDto>(BudgetMessages.M22);
+                }
+                // P2: every active office with a live T-21 assignment is expected in each head-wise category opened
+                // (OI-43: an assignment carries no category), together with any office named.
+                var assigned = await HeadWiseExpectedSet.AssignedOfficesAsync(context, ct);
+                var offices = assigned.Union(named).OrderBy(id => id).ToList();
                 foreach (var c in headWise)
-                    expected.AddRange(named.OrderBy(id => id).Select(id => (c, id)));
+                    expected.AddRange(offices.Select(id => (c, id)));
             }
 
             var result = new OpenProposalsResponseDto();

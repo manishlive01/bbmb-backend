@@ -38,6 +38,13 @@ public sealed class RecommendationTests(BudgetDatabaseFixture fixture) : IAsyncL
         lctx.DemandLines.Add(new DemandLine { ProposalId = _dna, LineType = "HEAD", AccountCodeId = _w.AccountCodeId, SerialNo = 1, RbeAmount = 10, ObeNextAmount = 20 });
         await lctx.SaveChangesAsync();
         await ltx.CommitAsync();
+        // From P2 the head-wise expected set is every office with a live T-21 assignment (design §6.2, OI-43). This
+        // test concerns one Division's DNA demand, so the world's other assignments are removed (by marking).
+        await using var actx = _w.NewContext();
+        await using var atx = await new BudgetActionScope(actx, _w.ItCell).BeginAsync("REMOVE_HEAD");
+        await actx.Database.ExecuteSqlRawAsync(
+            $"UPDATE budget.account_head_assignment SET removed_at = now() WHERE office_id <> {_w.DivisionAOfficeId}");
+        await atx.CommitAsync();
     }
     public Task DisposeAsync() => Task.CompletedTask;
     private FakeBudgetActorSource At(long officeId, string level, string role) =>

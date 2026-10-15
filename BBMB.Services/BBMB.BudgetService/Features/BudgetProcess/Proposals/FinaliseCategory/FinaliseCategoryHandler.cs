@@ -21,8 +21,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.FinaliseCategory
     /// NOT_FOUND; not OPEN → M-17;</item>
     /// <item>every proposal of (cycle, category) at S-10 or S-11, else M-19 with <c>outstanding[]</c>;</item>
     /// <item>the expected set re-computed: WORKS → every active DIVISION office (an office activated after the
-    /// last open-proposals run is caught here). Head-wise in P1 → the offices named at opening, which are the
-    /// proposals themselves (T-21 assignments arrive in P2). A missing office → M-19 with <c>missingOffices[]</c>;</item>
+    /// last open-proposals run is caught here). Head-wise → every active office with a live T-21
+    /// assignment (P2, OI-43) and the offices named at opening, which are the proposals themselves. A missing office → M-19 with <c>missingOffices[]</c>;</item>
     /// <item>head-wise: every (CE, head) row of V-03 carries a recommendation with a figure (BUD-302), else M-19
     /// with <c>missingRecommendations[]</c>;</item>
     /// <item>moment FinanceFinalise (VR-15, completeness) over the non-deleted lines of every S-10 proposal:
@@ -68,6 +68,13 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.FinaliseCategory
                     .OrderBy(o => o.OfficeId).Select(o => o.OfficeId).ToListAsync(ct);
                 var origins = proposals.Select(p => p.OriginOfficeId).ToHashSet();
                 result.MissingOffices = divisions.Where(d => !origins.Contains(d)).ToList();
+            }
+            else
+            {
+                // P2: an office with a live T-21 assignment and no proposal in the category is missing (OI-43).
+                var origins = proposals.Select(p => p.OriginOfficeId).ToHashSet();
+                result.MissingOffices = (await Cycles.HeadWiseExpectedSet.AssignedOfficesAsync(context, ct))
+                    .Where(o => !origins.Contains(o)).OrderBy(o => o).ToList();
             }
             if (result.Outstanding.Count > 0 || result.MissingOffices.Count > 0)
                 return BudgetResponses.Fail(BudgetMessages.M19, result);

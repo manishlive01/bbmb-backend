@@ -122,7 +122,10 @@ public sealed class BudgetCyclesTests(BudgetDatabaseFixture fixture) : IAsyncLif
             (await ctx.BudgetProposals.AnyAsync(p => p.Category == "DNA")).Should().BeFalse("nothing is created");
 
         var r = await OpenAsync(_w.CycleId, ["DNA"], [_w.CircleOfficeId, _w.CeOfficeId]);
-        r.Data!.Created.Select(c => c.OfficeId).Should().BeEquivalentTo(new[] { _w.CircleOfficeId, _w.CeOfficeId });
+        // From P2 the expected set also holds every office with a live T-21 assignment (the world assigns its code to
+        // the CE, the Circle and both Divisions, design §6.2, OI-43).
+        r.Data!.Created.Select(c => c.OfficeId).Should().BeEquivalentTo(
+            new[] { _w.CircleOfficeId, _w.CeOfficeId, _w.DivisionAOfficeId, _w.DivisionBOfficeId });
     }
 
     [Fact]
