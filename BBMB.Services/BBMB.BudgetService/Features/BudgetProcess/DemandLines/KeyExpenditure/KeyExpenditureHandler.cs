@@ -43,11 +43,19 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.KeyExpenditure
             if (line!.LineType == DemandLineType.Unforeseen)
                 return BudgetResponses.Fail(BudgetMessages.M19);
             var dto = request.Dto;
+            var currentYearForMode = await context.BudgetCycles.AsNoTracking()
+                .Where(c => c.CycleId == p.CycleId).Select(c => c.CurrentFinYear).SingleAsync(ct);
+            // The expenditure source mode of the origin office for the current year (T-18 absent => KEYED, BUD-025).
+            // A DRAWN column is filled from Financial Accounting, not keyed; keying it is refused. DRAWN cannot be
+            // set while the gateway is the not-available stub (BUD-312), so in this scope the mode is always KEYED.
+            var mode = await Settings.ExpenditureSourceReads.ModeInForceAsync(
+                context, p.OriginOfficeId, currentYearForMode, now, ct);
+            if (mode == Settings.Entities.ExpenditureSourceMode.Drawn)
+                return DemandLineWrites.FieldFailure(line, "amount", BudgetMessages.M19);
             var expectedNature = p.Category == ProposalCategory.Receipts ? ExpenditureValues.Receipt : ExpenditureValues.Expenditure;
             if (dto.Nature != expectedNature)
                 return DemandLineWrites.FieldFailure(line, "nature", BudgetMessages.M22);
-            var currentYear = await context.BudgetCycles.AsNoTracking()
-                .Where(c => c.CycleId == p.CycleId).Select(c => c.CurrentFinYear).SingleAsync(ct);
+            var currentYear = currentYearForMode;
             var isWork = line.LineType == DemandLineType.Work;
             var row = new ExpenditureFigure
             {
