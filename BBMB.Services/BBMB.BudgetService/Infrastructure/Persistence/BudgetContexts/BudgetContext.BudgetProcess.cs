@@ -64,6 +64,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         // P3 (design §5.3 P3 table)
         public DbSet<BudgetCalendarEntry> BudgetCalendarEntries { get; set; }
         public DbSet<Distribution> Distributions { get; set; }
+        public DbSet<DistributionBalanceRow> DistributionBalances { get; set; }
         public DbSet<ExpenditureSourceSetting> ExpenditureSourceSettings { get; set; }
 
         /// <summary>Partial UK names whose 23505 maps to a catalogue message (design §4.9).</summary>
@@ -396,6 +397,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 e.Property(x => x.LevelFigures).HasColumnType("jsonb");
             });
             modelBuilder.Entity<DemandByCeRow>(e => e.HasNoKey().ToView("v_demand_by_ce", "budget"));
+            modelBuilder.Entity<DistributionBalanceRow>(e => e.HasNoKey().ToView("v_distribution_balance", "budget"));
             modelBuilder.Entity<ManualOfAccountsCodeRow>(e => e.HasNoKey().ToView("v_manual_of_accounts_codes", "budget"));
             // ---------------- T-21 account_head_assignment (P2) ----------------
             modelBuilder.Entity<AccountHeadAssignment>(e =>
