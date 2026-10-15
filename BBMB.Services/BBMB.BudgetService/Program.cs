@@ -122,6 +122,9 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Allocations
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Freezes.Rules.FreezeRules>();
 // F-29 estimate-wise allocation: target resolution and VR-12 (design §8.6, DB-23).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.EstimateAllocations.Rules.EstimateAllocationRules>();
+// F-30 unforeseen work: the status-model mover and the balance reads (design §6.3, §8.6).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Rules.UnforeseenRequestMover>();
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Reads.UnforeseenReads>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
