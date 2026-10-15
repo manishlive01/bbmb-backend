@@ -34,18 +34,19 @@ public sealed class WorkRoutesP4RouteTests
     [Fact]
     public void Estimate_routes_rekeyed_to_workId()
     {
-        // Of the estimate routes, the DELETE (and the by-work GET) are IEndpoint classes that app.MapEndpoints()
-        // discovers; they are re-keyed to {workId:int} and no {workCode} form remains on any mapped estimate route.
+        // Every mapped estimate route is re-keyed to {workId:int}; no {workCode} form remains. GetById (GET) and
+        // Update (PUT) are static map-extension endpoints wired explicitly in Program.cs beside app.MapEndpoints();
+        // by-work (GET) and Delete are IEndpoint classes auto-discovered by app.MapEndpoints().
+        EndpointCatalog.Find("GET", "/api/estimates/{workId:int}/{estimateCode}").Should().NotBeNull();
+        EndpointCatalog.Find("PUT", "/api/estimates/{workId:int}/{estimateCode}").Should().NotBeNull();
         EndpointCatalog.Find("DELETE", "/api/estimates/{workId:int}/{estimateCode}").Should().NotBeNull();
         EndpointCatalog.Find("GET", "/api/estimates/by-work/{workId:int}").Should().NotBeNull();
         EndpointCatalog.All.Should().NotContain(
             e => e.Pattern.StartsWith("/api/estimates") && e.Pattern.Contains("{workCode}"),
             "every mapped estimate route is re-keyed to work id after the reset");
-        // GAP (raised, not fixed here): GetEstimateById and UpdateEstimate are static map-extension methods
-        // (MapGetEstimateByIdEndpoint / MapUpdateEstimateEndpoint) that Program.cs never calls, so GET/PUT
-        // /api/estimates/{workId:int}/{estimateCode} are not mapped at all. This is a pre-existing registration
-        // gap, independent of P4; their query/command/handler are re-keyed to WorkId so they are correct once
-        // wired. Wiring them adds reachable routes (a behaviour change) and is left for a reviewer decision.
+        // §9.3 policies: estimate reads carry Budget.View, estimate writes carry Legacy.BudgetEntry.
+        EndpointCatalog.Find("GET", "/api/estimates/{workId:int}/{estimateCode}")!.Policies.Should().Equal("BudgetRight:Budget.View");
+        EndpointCatalog.Find("PUT", "/api/estimates/{workId:int}/{estimateCode}")!.Policies.Should().Equal("BudgetRight:Legacy.BudgetEntry");
     }
 
     [Fact]

@@ -2,6 +2,8 @@
 // USING STATEMENTS
 // =======================
 using BBMB.BudgetService.Authorization.Extension;
+using BBMB.BudgetService.Features.Estimates.GetById;
+using BBMB.BudgetService.Features.Estimates.Update;
 using BBMB.BudgetService.Infrastructure.DependencyInjection;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
@@ -370,6 +372,13 @@ app.UseExceptionHandler(appBuilder =>
 // ENDPOINT MAPPING
 // ===================================================================
 app.MapEndpoints();
+
+// Estimate read/update are static map-extension endpoints (not IEndpoint classes), so they are wired here
+// beside app.MapEndpoints(). Both carry their design §9.3 policy (GET -> Budget.View, PUT -> Legacy.BudgetEntry)
+// and are re-keyed to {workId:int} after the P4 work-code reset (P4-03). Without these two calls the routes
+// are unreachable even though their query/command/handler exist — a defect, not intended behaviour.
+app.MapGetEstimateByIdEndpoint();
+app.MapUpdateEstimateEndpoint();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

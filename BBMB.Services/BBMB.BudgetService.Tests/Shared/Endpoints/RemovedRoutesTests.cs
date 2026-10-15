@@ -43,7 +43,9 @@ public sealed class RemovedRoutesTests
 
     [Theory]
     [InlineData("/api/head-of-accounts")]
-    [InlineData("/api/works/{code}")]
+    // P4-03 (design §4.6): the work read route is addressed by id (/api/works/{id:int}); the former
+    // /api/works/{code} form is gone with the int work code.
+    [InlineData("/api/works/{id:int}")]
     [InlineData("/api/Get-MajorHead-List")]
     [InlineData("/api/accounting-heads/sub-major/{code}")]
     [InlineData("/api/minor-heads/{code}")]
