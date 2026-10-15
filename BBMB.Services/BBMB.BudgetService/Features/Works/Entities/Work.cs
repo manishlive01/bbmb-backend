@@ -19,10 +19,38 @@ namespace BBMB.BudgetService.Features.Works.Entities
         [Column("id")]
         public int Id { get; set; }
 
-        [Required]
-        [MaxLength(8)]
+        // DDD T-23 (design §4.6): the work code is `DDD-YYZZ-SSS` for a generated code or the seven digits of a
+        // legacy code, held as text so a leading zero survives (BUD-231, BUD-306). Nullable: a work has no code
+        // until it is generated on one of the four occasions (BUD-232) or keyed as a legacy code (F-28). Written
+        // only by budget.fn_generate_work_code or by legacy-code entry; once written never altered (DB-05).
+        [MaxLength(12)]
         [Column("work_code")]
-        public int WorkCode { get; set; } // business key
+        public string? WorkCode { get; set; }
+
+        /// <summary>
+        /// §5.5 row b / §4.6 step 3 (gated DDD deviation CR-DDD-02): the integer code this build issued (D-4),
+        /// copied here under the migration actor before the P4 reset so no existing value is lost. Write-once.
+        /// </summary>
+        [Column("work_code_prev")]
+        public int? WorkCodePrev { get; set; }
+
+        /// <summary>DDD T-23: GENERATED or LEGACY; null exactly when <see cref="WorkCode"/> is null (CHECK).</summary>
+        [MaxLength(9)]
+        [Column("work_code_origin")]
+        public string? WorkCodeOrigin { get; set; }
+
+        /// <summary>DDD T-23: ALLOC_RBE, ALLOC_OBE, REAPPROPRIATION, UNFORESEEN_AUTH or LEGACY_OPENING. Set with the code.</summary>
+        [MaxLength(16)]
+        [Column("work_code_occasion")]
+        public string? WorkCodeOccasion { get; set; }
+
+        /// <summary>DDD T-23 (FK T-08): the year of allotment, BUD-313. Null for a legacy code.</summary>
+        [Column("work_code_fin_year")]
+        public int? WorkCodeFinYear { get; set; }
+
+        /// <summary>DDD T-23: when the code was set.</summary>
+        [Column("work_code_at")]
+        public DateTimeOffset? WorkCodeAt { get; set; }
 
         [Column("division_id")]
         public int DivisionId { get; set; } // ✅ FK
@@ -197,6 +225,23 @@ namespace BBMB.BudgetService.Features.Works.Entities
         public const string DemandEntry = "DEMAND_ENTRY";
         public const string TsEntry = "TS_ENTRY";
         public const string ReappropNew = "REAPPROP_NEW";
+        public const string LegacyOpening = "LEGACY_OPENING";
+    }
+
+    /// <summary>T-23 <c>work_code_origin</c> values (CHECK, DDD §1.7).</summary>
+    public static class WorkCodeOrigin
+    {
+        public const string Generated = "GENERATED";
+        public const string Legacy = "LEGACY";
+    }
+
+    /// <summary>T-23 <c>work_code_occasion</c> values (CHECK). The four generated occasions (BUD-232) plus legacy opening.</summary>
+    public static class WorkCodeOccasion
+    {
+        public const string AllocRbe = "ALLOC_RBE";
+        public const string AllocObe = "ALLOC_OBE";
+        public const string Reappropriation = "REAPPROPRIATION";
+        public const string UnforeseenAuth = "UNFORESEEN_AUTH";
         public const string LegacyOpening = "LEGACY_OPENING";
     }
 }
