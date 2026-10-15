@@ -87,6 +87,9 @@ builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetActors.IBudg
 builder.Services.AddSingleton<BBMB.BudgetService.Shared.Services.Notifications.IBudgetNotificationGateway,
     BBMB.BudgetService.Shared.Services.Notifications.NoOpBudgetNotificationGateway>();
 // The single path by which a proposal moves (design §6.2).
+// T-17 value in force (design §5.3).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Settings.IBudgetSettingsReader,
+    BBMB.BudgetService.Features.BudgetProcess.Settings.BudgetSettingsReader>();
 // Work-master rules (design §5.3 first-cycle guard, §11.3 reference rule).
 builder.Services.AddScoped<BBMB.BudgetService.Features.Works.Rules.WorkRules>();
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.IProposalTransitionService,
