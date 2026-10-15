@@ -108,6 +108,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Settings.ID
     BBMB.BudgetService.Features.BudgetProcess.Settings.DelegationLimitReader>();
 // F-03 / F-04 application rules (design §8.4).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Rules.AdminApprovalRules>();
+// F-06 application rules: VR-02 under the DB-09 lock key, VR-11 via the FA gateway (design §8.4).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Rules.TechnicalSanctionRules>();
 // Attachment download: "caller may view an owning record" (design §8.2).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Attachments.Rules.AttachmentAccessRules>();
 // ===================================================================
