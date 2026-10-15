@@ -58,5 +58,11 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities
         [Column("justification_attachment_id")] public long? JustificationAttachmentId { get; set; }
         [Column("ce_certificate_attachment_id")] public long? CeCertificateAttachmentId { get; set; }
         [Column("ce_amr_approval_attachment_id")] public long? CeAmrApprovalAttachmentId { get; set; }
+
+        // ---- V-04 version 3 (P3): columns 9/10 for the framing office, from T-37/T-39 (null = not available) ----
+        /// <summary>Column 9: the RBE share distributed to the origin office under its head's recommendation; null where none yet.</summary>
+        [Column("recommended_rbe_for_office")] public decimal? RecommendedRbeForOffice { get; set; }
+        /// <summary>Column 10: the OBE-next share distributed to the origin office; null where none yet.</summary>
+        [Column("recommended_obe_for_office")] public decimal? RecommendedObeForOffice { get; set; }
     }
 }

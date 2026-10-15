@@ -3,8 +3,10 @@ using BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.CorrectionFlags.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Calendars.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Cycles.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.Distributions.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Observations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities;
@@ -59,6 +61,10 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<CorrectionFlag> CorrectionFlags { get; set; }
         public DbSet<AccountHeadAssignment> AccountHeadAssignments { get; set; }
         public DbSet<ManualOfAccountsCodeRow> ManualOfAccountsCodes { get; set; }
+        // P3 (design §5.3 P3 table)
+        public DbSet<BudgetCalendarEntry> BudgetCalendarEntries { get; set; }
+        public DbSet<Distribution> Distributions { get; set; }
+        public DbSet<ExpenditureSourceSetting> ExpenditureSourceSettings { get; set; }
 
         /// <summary>Partial UK names whose 23505 maps to a catalogue message (design §4.9).</summary>
         /// <summary>T-21 partial UK (office, account code) where removed_at is null.</summary>
@@ -401,6 +407,36 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 e.HasIndex(x => x.AccountCodeId);
                 e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.OfficeId).OnDelete(DeleteBehavior.Restrict);
                 // account_code_id → budget_head_master(account_code_id) and removed_by → employee are added by SQL.
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-20 calendar (P3; F-23, mutable last date) ----------------
+            modelBuilder.Entity<BudgetCalendarEntry>(e =>
+            {
+                e.HasKey(x => new { x.CycleId, x.OfficeLevel });
+                e.HasOne<BudgetCycle>().WithMany().HasForeignKey(x => x.CycleId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-39 distribution (P3; F-14, DB-18 at commit) ----------------
+            modelBuilder.Entity<Distribution>(e =>
+            {
+                e.Property(x => x.DistributionId).UseIdentityAlwaysColumn();
+                e.Property(x => x.RbeAmount).HasColumnType(RupeesColumnType).HasDefaultValue(0m);
+                e.Property(x => x.ObeNextAmount).HasColumnType(RupeesColumnType).HasDefaultValue(0m);
+                e.HasIndex(x => new { x.RecommendationId, x.OfficeId }).IsUnique();
+                e.HasOne<CeRecommendation>().WithMany().HasForeignKey(x => x.RecommendationId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.OfficeId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-18 expenditure_source_setting (P3, append-only; BUD-025) ----------------
+            modelBuilder.Entity<ExpenditureSourceSetting>(e =>
+            {
+                e.Property(x => x.SourceSettingId).UseIdentityAlwaysColumn();
+                e.HasIndex(x => new { x.OfficeId, x.FinYear, x.EffectiveFrom }).IsUnique();
+                e.HasOne<BudgetOffice>().WithMany().HasForeignKey(x => x.OfficeId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<FinancialYear>().WithMany().HasForeignKey(x => x.FinYear).OnDelete(DeleteBehavior.Restrict);
                 ConfigureActorColumns(e);
             });
 
