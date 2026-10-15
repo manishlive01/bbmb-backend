@@ -858,6 +858,8 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasIndex("JustificationAttachmentId");
 
+                    b.HasIndex("UploadBatchId");
+
                     b.HasIndex("WorkId");
 
                     b.HasIndex("ProposalId", "AccountCodeId")
@@ -1301,6 +1303,51 @@ namespace BBMB.BudgetService.Migrations
                     NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("CycleId", "SubjectType", "WorkId", "OfficeId", "AccountCodeId", "FigureKind"), false);
 
                     b.ToTable("opening_figure", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities.UploadBatch", b =>
+                {
+                    b.Property<long>("UploadBatchId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("upload_batch_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("UploadBatchId"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<long>("FileAttachmentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_attachment_id");
+
+                    b.Property<int>("LinesCommitted")
+                        .HasColumnType("integer")
+                        .HasColumnName("lines_committed");
+
+                    b.Property<long>("ProposalId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("proposal_id");
+
+                    b.HasKey("UploadBatchId");
+
+                    b.HasIndex("FileAttachmentId");
+
+                    b.HasIndex("ProposalId");
+
+                    b.ToTable("upload_batch", "budget");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Observations.Entities.Observation", b =>
@@ -3834,6 +3881,11 @@ namespace BBMB.BudgetService.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities.UploadBatch", null)
+                        .WithMany()
+                        .HasForeignKey("UploadBatchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("BBMB.BudgetService.Features.Works.Entities.Work", null)
                         .WithMany()
                         .HasForeignKey("WorkId")
@@ -3897,6 +3949,21 @@ namespace BBMB.BudgetService.Migrations
                         .WithMany()
                         .HasForeignKey("WorkId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities.UploadBatch", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Attachments.Entities.BudgetAttachment", null)
+                        .WithMany()
+                        .HasForeignKey("FileAttachmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities.BudgetProposal", null)
+                        .WithMany()
+                        .HasForeignKey("ProposalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Observations.Entities.Observation", b =>

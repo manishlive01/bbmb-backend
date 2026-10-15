@@ -39,6 +39,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<BudgetSetting> BudgetSettings { get; set; }
         public DbSet<BudgetProposal> BudgetProposals { get; set; }
         public DbSet<DemandLine> DemandLines { get; set; }
+        public DbSet<UploadBatch> UploadBatches { get; set; }
         public DbSet<FigureVersion> FigureVersions { get; set; }
         public DbSet<Observation> Observations { get; set; }
         public DbSet<ProposalMovement> ProposalMovements { get; set; }
@@ -365,6 +366,21 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.JustificationAttachmentId).OnDelete(DeleteBehavior.Restrict);
                 e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.CeCertificateAttachmentId).OnDelete(DeleteBehavior.Restrict);
                 e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.CeAmrApprovalAttachmentId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ---------------- T-34 upload_batch (append-only, P2; F-08, BUD-101) ----------------
+            modelBuilder.Entity<UploadBatch>(e =>
+            {
+                e.Property(x => x.UploadBatchId).UseIdentityAlwaysColumn();
+                e.HasOne<BudgetProposal>().WithMany().HasForeignKey(x => x.ProposalId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<BudgetAttachment>().WithMany().HasForeignKey(x => x.FileAttachmentId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            // ---------------- T-30 upload_batch reference (P2, BUD-101) ----------------
+            modelBuilder.Entity<DemandLine>(e =>
+            {
+                e.HasOne<UploadBatch>().WithMany().HasForeignKey(x => x.UploadBatchId).OnDelete(DeleteBehavior.Restrict);
             });
 
             // ---------------- Views (design §5.4) ----------------
