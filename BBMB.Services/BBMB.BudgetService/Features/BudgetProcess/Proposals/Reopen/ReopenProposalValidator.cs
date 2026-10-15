@@ -1,0 +1,12 @@
+using FluentValidation;
+namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Reopen
+{
+    /// <summary>Shape only: remark ≤ 4000 (T-33). Whether a remark is required is T-16 <c>remark_required</c> (M-12).</summary>
+    public sealed class ReopenProposalValidator : AbstractValidator<ReopenProposalCommand>
+    {
+        public ReopenProposalValidator()
+        {
+            RuleFor(x => x.Remark).MaximumLength(4000);
+        }
+    }
+}

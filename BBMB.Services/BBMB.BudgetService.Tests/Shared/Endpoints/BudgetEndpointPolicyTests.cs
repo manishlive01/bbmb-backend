@@ -69,6 +69,23 @@ public sealed class BudgetEndpointPolicyTests
     }
 
     [Fact]
+    public void S81_EveryBudgetProcessEndpointCarriesOneBudgetRightPolicyFromTheMatrix()
+    {
+        var routes = EndpointCatalog.All
+            .Where(e => e.Namespace.StartsWith("BBMB.BudgetService.Features.BudgetProcess.", StringComparison.Ordinal)).ToList();
+        routes.Should().HaveCountGreaterThan(25);
+        var keys = DefaultRightKeys();
+        foreach (var e in routes)
+        {
+            var label = $"{string.Join(",", e.Methods)} {e.Pattern} ({e.EndpointType?.Name})";
+            e.RequiresAuthorization.Should().BeTrue(label);
+            var rights = e.Policies.Where(p => p.StartsWith("BudgetRight:", StringComparison.Ordinal)).ToList();
+            rights.Should().ContainSingle(label);
+            keys.Should().Contain(rights[0]["BudgetRight:".Length..], label + ": key exists in the default BudgetRights");
+        }
+    }
+
+    [Fact]
     public void D1_POST_api_budgets_requires_authorization()
     {
         var create = EndpointCatalog.Find("POST", "/api/budgets");
