@@ -54,6 +54,10 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetById
                 headOfAccount.ObjectClassification?.ObjectAccDesc ?? string.Empty;
 
             response.FullAccountCode = headOfAccount.FullAccountCode;
+            response.AccountCodeId = headOfAccount.AccountCodeId;
+            response.CompleteCode = headOfAccount.CompleteCode;
+            response.NotForUse = headOfAccount.NotForUse;
+            response.Origin = headOfAccount.Origin;
 
             return response;
         }
