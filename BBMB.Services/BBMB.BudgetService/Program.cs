@@ -106,6 +106,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.R
 // T-19 delegation limits in force (design §5.3; BUD-055 reads it).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Settings.IDelegationLimitReader,
     BBMB.BudgetService.Features.BudgetProcess.Settings.DelegationLimitReader>();
+// F-03 / F-04 application rules (design §8.4).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Rules.AdminApprovalRules>();
 // Attachment download: "caller may view an owning record" (design §8.2).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Attachments.Rules.AttachmentAccessRules>();
 // ===================================================================
