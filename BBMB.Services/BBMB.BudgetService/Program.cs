@@ -125,6 +125,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.EstimateAll
 // F-30 unforeseen work: the status-model mover and the balance reads (design §6.3, §8.6).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Rules.UnforeseenRequestMover>();
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Reads.UnforeseenReads>();
+// F-30 unforeseen authorisation: VR-13 / VR-04 and the CE-of-charge check (design §8.6).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Rules.UnforeseenRules>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
