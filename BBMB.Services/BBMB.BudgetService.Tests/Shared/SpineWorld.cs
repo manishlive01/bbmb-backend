@@ -41,7 +41,8 @@ public sealed class SpineWorld
     private static FakeBudgetActorSource As(FakeBudgetActorSource source, long officeId, string level, string role) =>
         new(source.Actor! with { OfficeId = officeId, OfficeLevel = level, RoleCode = role });
 
-    public static async Task<SpineWorld> CreateAsync(BudgetDatabaseFixture fixture, string name)
+    /// <param name="withCycle">False leaves T-14 and T-29 empty (CycleId and WorksProposalAId are 0).</param>
+    public static async Task<SpineWorld> CreateAsync(BudgetDatabaseFixture fixture, string name, bool withCycle = true)
     {
         var cs = await fixture.CreateFreshDatabaseAsync(name);
         await fixture.MigrateToAsync(cs, null);
@@ -54,7 +55,7 @@ public sealed class SpineWorld
         await ctx.Database.ExecuteSqlRawAsync(
             "INSERT INTO budget.irr_pwr (irr_pwr_code, irr_pwr_desc, modification_date, user_code) VALUES ('I', 'Irrigation', now(), 'T') ON CONFLICT DO NOTHING; " +
             "INSERT INTO budget.fa_financial_years (fin_year_closing, start_date, end_date) VALUES " +
-            "(2026, '2025-04-01', '2026-03-31'), (2027, '2026-04-01', '2027-03-31') ON CONFLICT DO NOTHING");
+            "(2026, '2025-04-01', '2026-03-31'), (2027, '2026-04-01', '2027-03-31'), (2028, '2027-04-01', '2028-03-31') ON CONFLICT DO NOTHING");
 
         long finance, secretariat, ce, circle, divA, divB, cycle, accountCodeId;
         await using (var tx = await new BudgetActionScope(ctx, it).BeginAsync("TEST_SETUP"))
@@ -67,10 +68,14 @@ public sealed class SpineWorld
             divA = await Office(new BudgetOffice { OfficeLevel = "DIVISION", DivisionId = a.DivisionId, ParentOfficeId = circle });
             divB = await Office(new BudgetOffice { OfficeLevel = "DIVISION", DivisionId = b.DivisionId, ParentOfficeId = circle });
 
-            var c = new BudgetCycle { CurrentFinYear = 2026, NextFinYear = 2027, IsFirstCycle = true, Status = "OPEN" };
-            ctx.BudgetCycles.Add(c);
-            await ctx.SaveChangesAsync();
-            cycle = c.CycleId;
+            cycle = 0;
+            if (withCycle)
+            {
+                var c = new BudgetCycle { CurrentFinYear = 2026, NextFinYear = 2027, IsFirstCycle = true, Status = "OPEN" };
+                ctx.BudgetCycles.Add(c);
+                await ctx.SaveChangesAsync();
+                cycle = c.CycleId;
+            }
 
             await ctx.Database.ExecuteSqlRawAsync(
                 "INSERT INTO budget.budget_head_master (major_acc_code, sub_major_acc_code, minor_acc_code, sub_minor_acc_code, " +
@@ -104,7 +109,8 @@ public sealed class SpineWorld
         var workA = await NewWork(divisionA, a.DivisionId, 500001);
         var workB = await NewWork(divisionB, b.DivisionId, 500002);
 
-        long proposal;
+        long proposal = 0;
+        if (withCycle)
         await using (var pctx = BudgetDatabaseFixture.NewBudgetContext(cs))
         await using (var ptx = await new BudgetActionScope(pctx, it).BeginAsync("OPEN_PROPOSALS"))
         {

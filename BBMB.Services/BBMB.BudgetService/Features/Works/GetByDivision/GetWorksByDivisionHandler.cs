@@ -1,5 +1,8 @@
 using BBMB.BudgetService.Features.Works.GetList.Dtos;
+using BBMB.BudgetService.Features.Works.Rules;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.Services.BudgetActors;
+using BBMB.BudgetService.Shared.Services.BudgetOffices;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -9,18 +12,30 @@ namespace BBMB.BudgetService.Features.Works.GetByDivision
     public class GetWorksByDivisionHandler : IRequestHandler<GetWorksByDivisionQuery, PagedResponse<GetWorkListResponseDto>>
     {
         private readonly BudgetContext _context;
+        private readonly IBudgetActorSource _actorSource;
+        private readonly IBudgetOfficeScope _officeScope;
+        private readonly WorkRules _rules;
 
-        public GetWorksByDivisionHandler(BudgetContext context)
+        public GetWorksByDivisionHandler(BudgetContext context, IBudgetActorSource actorSource, IBudgetOfficeScope officeScope, WorkRules rules)
         {
             _context = context;
+            _actorSource = actorSource;
+            _officeScope = officeScope;
+            _rules = rules;
         }
 
         public async Task<PagedResponse<GetWorkListResponseDto>> Handle(GetWorksByDivisionQuery request, CancellationToken ct)
         {
-            var divisionExists = await _context.Divisions.FirstOrDefaultAsync(d => d.DivisionCode == request.DivisionCode, ct);
+            // Office scope (design §9.3, BUD-031): a Division outside the actor's visible set yields no rows.
+            // An unknown division code also yields no rows (it previously dereferenced null).
+            var visibleDivisions = await _rules.GetVisibleDivisionIdsAsync(_actorSource, _officeScope, ct);
+            var divisionId = await _context.Divisions.AsNoTracking()
+                .Where(d => d.DivisionCode == request.DivisionCode)
+                .Select(d => (int?)d.Id)
+                .FirstOrDefaultAsync(ct);
             var query = _context.Works
                 .Include(w => w.Division)
-                .Where(w => w.DivisionId == divisionExists.Id);
+                .Where(w => divisionId != null && w.DivisionId == divisionId && visibleDivisions.Contains(w.DivisionId));
 
             var totalCount = await query.CountAsync(ct);
 

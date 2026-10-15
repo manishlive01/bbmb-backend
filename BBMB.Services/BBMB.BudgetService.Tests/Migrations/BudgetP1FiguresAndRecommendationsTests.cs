@@ -50,7 +50,7 @@ public sealed class BudgetP1FiguresAndRecommendationsTests(BudgetDatabaseFixture
         (await RunAsync(_w.DivisionA, OpeningWork(_w.CycleId))).Should().BeGreaterThan(0);
 
         var second = await RunAsync(_w.ItCell,
-            "INSERT INTO budget.fa_financial_years (fin_year_closing, start_date, end_date) VALUES (2028, '2027-04-01', '2028-03-31'); " +
+            "INSERT INTO budget.fa_financial_years (fin_year_closing, start_date, end_date) VALUES (2028, '2027-04-01', '2028-03-31') ON CONFLICT DO NOTHING; " +
             "INSERT INTO budget.budget_cycle (current_fin_year, next_fin_year, is_first_cycle, status) VALUES (2027, 2028, false, 'OPEN') " +
             "RETURNING cycle_id");
         (await RefusedAsync(_w.DivisionA, OpeningWork(second))).MessageText.Should().Be("DB-16");

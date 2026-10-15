@@ -1,5 +1,8 @@
 using BBMB.BudgetService.Features.Works.GetById.Dtos;
+using BBMB.BudgetService.Features.Works.Rules;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.Services.BudgetActors;
+using BBMB.BudgetService.Shared.Services.BudgetOffices;
 using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -9,17 +12,25 @@ namespace BBMB.BudgetService.Features.Works.GetById
     public class GetWorkByIdHandler : IRequestHandler<GetWorkByIdQuery, GetWorkByIdResponseDto>
     {
         private readonly BudgetContext _context;
+        private readonly IBudgetActorSource _actorSource;
+        private readonly IBudgetOfficeScope _officeScope;
+        private readonly WorkRules _rules;
 
-        public GetWorkByIdHandler(BudgetContext context)
+        public GetWorkByIdHandler(BudgetContext context, IBudgetActorSource actorSource, IBudgetOfficeScope officeScope, WorkRules rules)
         {
             _context = context;
+            _actorSource = actorSource;
+            _officeScope = officeScope;
+            _rules = rules;
         }
 
         public async Task<GetWorkByIdResponseDto> Handle(GetWorkByIdQuery request, CancellationToken ct)
         {
+            // A work outside the actor's visible Divisions is reported as not found (design §4.9, BUD-031).
+            var visibleDivisions = await _rules.GetVisibleDivisionIdsAsync(_actorSource, _officeScope, ct);
             var work = await _context.Works
                 .Include(w => w.Division)
-                .FirstOrDefaultAsync(w => w.WorkCode == request.Code, ct);
+                .FirstOrDefaultAsync(w => w.WorkCode == request.Code && visibleDivisions.Contains(w.DivisionId), ct);
 
             if (work == null)
                 throw new KeyNotFoundException($"Work with code '{request.Code}' not found");

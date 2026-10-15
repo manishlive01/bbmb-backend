@@ -1,175 +1,130 @@
+using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
+using BBMB.BudgetService.Features.Works.Entities;
+using BBMB.BudgetService.Features.Works.Rules;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.Messages;
 using BBMB.BudgetService.Shared.Services.BudgetActors;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-
 namespace BBMB.BudgetService.Features.Works.Update
 {
+    /// <summary>
+    /// Design §11.3 row 2. Field rules, each checked against the stored row: <c>division_id</c> never changes;
+    /// <c>work_desc</c> in any cycle; <c>accountCodeId</c>, <c>workClass</c> and the AM&amp;R predecessor only while
+    /// <see cref="WorkRules.IsReferencedAsync"/> is false (else M-19); clearing <c>pre_ddd</c> needs
+    /// <c>workClass</c> and the first-cycle guard, and sets <c>entered_via = LEGACY_OPENING</c> server-side.
+    /// </summary>
     public class UpdateWorkHandler : IRequestHandler<UpdateWorkCommand, Response>
     {
         private readonly BudgetContext _context;
         private readonly IBudgetActorSource _actorSource;
         private readonly IBudgetActionScope _scope;
-        public UpdateWorkHandler(BudgetContext context, IBudgetActorSource actorSource, IBudgetActionScope scope)
+        private readonly WorkRules _rules;
+        public UpdateWorkHandler(BudgetContext context, IBudgetActorSource actorSource, IBudgetActionScope scope, WorkRules rules)
         {
             _context = context;
             _actorSource = actorSource;
             _scope = scope;
+            _rules = rules;
         }
         public async Task<Response> Handle(UpdateWorkCommand request, CancellationToken ct)
         {
             // work carries fn_require_actor from P1 (DB-28): every write runs inside the action scope.
-            if (await _actorSource.GetAsync(ct) is null)
+            var actor = await _actorSource.GetAsync(ct);
+            if (actor is null)
                 return BudgetResponses.Fail(BudgetMessages.M20);
-            var work = await _context.Works
-                .FirstOrDefaultAsync(w => w.WorkCode == request.Code, ct);
 
+            // Division: only a work of the actor's Division is addressed; any other is 404 (design §4.9).
+            var actorDivisionId = await _context.BudgetOffices.AsNoTracking()
+                .Where(o => o.OfficeId == actor.OfficeId && o.OfficeLevel == OfficeLevel.Division)
+                .Select(o => o.DivisionId)
+                .FirstOrDefaultAsync(ct);
+            var work = actorDivisionId is null
+                ? null
+                : await _context.Works.FirstOrDefaultAsync(w => w.WorkCode == request.Code && w.DivisionId == actorDivisionId, ct);
             if (work == null)
-                return new Response
+                return BudgetResponses.Fail(BudgetMessages.NotFound);
+
+            var dto = request.dto;
+            var classChanges =
+                (dto.WorkClass is not null && dto.WorkClass != work.WorkClass) ||
+                (dto.PrecedingAmrWorkId is not null && dto.PrecedingAmrWorkId != work.PrecedingAmrWorkId);
+            var headChangeRequested = dto.AccountCodeId is not null;
+
+            // Reference rule first, before the code lookup (design §5.2): once a record references the work,
+            // its head and class are part of that record; the change goes through F-04 revision (BUD-269).
+            if ((classChanges || headChangeRequested) && await _rules.IsReferencedAsync(work.Id, ct))
+            {
+                var headDiffers = false;
+                if (headChangeRequested)
                 {
-                    IsSucced = false,
-                    Message = $"Work with code '{request.Code}' not found"
-                };
+                    var current = await _context.HeadOfAccounts.AsNoTracking()
+                        .AnyAsync(h => h.AccountCodeId == dto.AccountCodeId &&
+                                       h.MajorAccCode == work.MajorAccCode && (h.SubMajorAccCode ?? "") == work.SubMajorAccCode &&
+                                       h.MinorAccCode == work.MinorAccCode && (h.SubMinorAccCode ?? "") == work.SubMinorAccCode &&
+                                       h.DetailAccCode == work.DetailAccCode && h.ObjectAccCode == work.ObjectAccCode, ct);
+                    headDiffers = !current;
+                }
+                if (classChanges || headDiffers)
+                    return BudgetResponses.Fail(BudgetMessages.M19);
+            }
 
-            // Validate division exists
-            //var divisionExists = await _context.Divisions
-            //    .AnyAsync(d => d.Id == request.dto.DivisionId, ct);
+            if (headChangeRequested)
+            {
+                var (code, codeFailure) = await _rules.ResolveAccountCodeAsync(dto.AccountCodeId!.Value, ct);
+                if (code is null)
+                    return BudgetResponses.Fail(codeFailure!);
+                if (!WorkRules.HasSegments(work, code))
+                    WorkRules.ApplySegments(work, code);
+            }
 
-            //if (!divisionExists)
-            //    return new Response
-            //    {
-            //        IsSucced = false,
-            //        Message = $"Division with code '{request.dto.DivisionId}' not found"
-            //    };
+            // Clearing pre_ddd (design §5.2 row a, §11.3): workClass supplied, first-cycle guard, server-side origin.
+            if (work.PreDdd && dto.WorkClass is not null)
+            {
+                if (await _rules.CheckFirstCycleAsync(actor.OfficeId, ct) is { } guard)
+                    return BudgetResponses.Fail(guard);
+                work.PreDdd = false;
+                work.EnteredVia = WorkEnteredVia.LegacyOpening;
+            }
+            if (dto.WorkClass is not null)
+                work.WorkClass = dto.WorkClass;
+            if (dto.PrecedingAmrWorkId is not null)
+                work.PrecedingAmrWorkId = dto.PrecedingAmrWorkId;
 
-            // Validate major head exists
-            var majorHeadExists = await _context.MajorHeads
-                .AnyAsync(m => m.MajorAccCode == request.dto.MajorAccCode, ct);
-
-            if (!majorHeadExists)
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = $"Major account code '{request.dto.MajorAccCode}' not found"
-                };
-
-            // Validate sub-major head exists
-            var subMajorHeadExists = await _context.SubMajorHeads
-                .AnyAsync(s => s.MajorAccCode == request.dto.MajorAccCode &&
-                              s.SubMajorAccCode == request.dto.SubMajorAccCode, ct);
-
-            if (!subMajorHeadExists)
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = $"Sub-major account code '{request.dto.SubMajorAccCode}' not found for major code '{request.dto.MajorAccCode}'"
-                };
-
-            // Validate minor head exists
-            var minorHeadExists = await _context.MinorHeads
-                .AnyAsync(m => 
-                //m.MajorAccCode == request.dto.MajorAccCode &&
-                //              m.SubMajorAccCode == request.dto.SubMajorAccCode &&
-                              m.MinorAccCode == request.dto.MinorAccCode, ct);
-
-            if (!minorHeadExists)
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = $"Minor account code '{request.dto.MinorAccCode}' not found"
-                };
-
-            // Validate sub-minor head exists
-            var subMinorHeadExists = await _context.SubMinorHeads
-                .AnyAsync(s => 
-                //s.MajorAccCode == request.dto.MajorAccCode &&
-                //              s.SubMajorAccCode == request.dto.SubMajorAccCode &&
-                              s.MinorAccCode == request.dto.MinorAccCode &&
-                              s.SubMinorAccCode == request.dto.SubMinorAccCode, ct);
-
-            if (!subMinorHeadExists)
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = $"Sub-minor account code '{request.dto.SubMinorAccCode}' not found"
-                };
-
-            //// Validate detail head exists
-            //var detailHeadExists = await _context.DetailHeads
-            //    .AnyAsync(d => d.MajorAccCode == request.dto.MajorAccCode &&
-            //                  d.SubMajorAccCode == request.dto.SubMajorAccCode &&
-            //                  d.MinorAccCode == request.dto.MinorAccCode &&
-            //                  d.SubMinorAccCode == request.dto.SubMinorAccCode &&
-            //                  d.DetailAccCode == request.dto.DetailAccCode, ct);
-
-            //if (!detailHeadExists)
-            //    return new Response
-            //    {
-            //        IsSucced = false,
-            //        Message = $"Detail account code '{request.dto.DetailAccCode}' not found"
-            //    };
-
-            // Validate object classification exists
-            var objectClassExists = await _context.ObjectClassifications
-                .AnyAsync(o => o.ObjectAccCode == request.dto.ObjectAccCode, ct);
-
-            if (!objectClassExists)
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = $"Object account code '{request.dto.ObjectAccCode}' not found"
-                };
-
-            // Validate designation if provided
-            if (!string.IsNullOrEmpty(request.dto.DesignationCode))
+            if (!string.IsNullOrEmpty(dto.DesignationCode))
             {
                 var designationExists = await _context.Designations
-                    .AnyAsync(d => d.DesignationCode == request.dto.DesignationCode, ct);
-
+                    .AnyAsync(d => d.DesignationCode == dto.DesignationCode, ct);
                 if (!designationExists)
                     return new Response
                     {
                         IsSucced = false,
-                        Message = $"Designation code '{request.dto.DesignationCode}' not found"
+                        Message = $"Designation code '{dto.DesignationCode}' not found"
                     };
             }
 
-            // ================= UPDATE ALL FIELDS =================
-
-            work.WorkDesc = request.dto.WorkDesc;
-            //work.DivisionCode = request.dto.DivisionCode;
-            //work.DivSection = request.dto.DivSection;
-            work.MajorAccCode = request.dto.MajorAccCode;
-            work.SubMajorAccCode = request.dto.SubMajorAccCode;
-            work.MinorAccCode = request.dto.MinorAccCode;
-            work.SubMinorAccCode = request.dto.SubMinorAccCode;
-            work.DetailAccCode = request.dto.DetailAccCode;
-            work.ObjectAccCode = request.dto.ObjectAccCode;
-
-            //work.CECode = request.dto.CECode;
-            //work.CRCode = request.dto.CRCode;
-
-            work.OriginalBudget = request.dto.OriginalBudget ?? string.Empty;
-            work.RevisedBudget = request.dto.RevisedBudget ?? string.Empty;
-            work.ProposedBudget = request.dto.ProposedBudget ?? string.Empty;
-            work.Remarks = request.dto.Remarks ?? string.Empty;
-
-            work.UserCode = request.dto.UserCode;
-            work.FinYrStart = request.dto.FinYrStart;
-            work.FinYrEnd = request.dto.FinYrEnd;
-            work.SanctionNo = request.dto.SanctionNo;
-            work.SanctionDate = request.dto.SanctionDate;
-            work.DesignationCode = request.dto.DesignationCode;
-            work.EstimatedCost = request.dto.EstimatedCost;
-            work.Status = request.dto.Status;
-            work.Nature = request.dto.Nature;
-            work.RefWorkCode = request.dto.RefWorkCode;
+            // ================= UPDATE THE REMAINING FIELDS =================
+            work.WorkDesc = dto.WorkDesc;
+#pragma warning disable CS0618 // Deprecated, not dropped (D-5, design §5.2); kept writable as before.
+            work.OriginalBudget = dto.OriginalBudget ?? string.Empty;
+            work.RevisedBudget = dto.RevisedBudget ?? string.Empty;
+            work.ProposedBudget = dto.ProposedBudget ?? string.Empty;
+#pragma warning restore CS0618
+            work.Remarks = dto.Remarks ?? string.Empty;
+            work.UserCode = dto.UserCode;
+            work.FinYrStart = dto.FinYrStart;
+            work.FinYrEnd = dto.FinYrEnd;
+            work.SanctionNo = dto.SanctionNo;
+            work.SanctionDate = dto.SanctionDate;
+            work.DesignationCode = dto.DesignationCode;
+            work.EstimatedCost = dto.EstimatedCost;
+            work.Status = dto.Status;
+            work.Nature = dto.Nature;
+            work.RefWorkCode = dto.RefWorkCode;
             await using var tx = await _scope.BeginAsync("WORKS_UPDATE", ct: ct);
             await _context.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
-
             return new Response
             {
                 IsSucced = true,

@@ -1,7 +1,9 @@
 using BBMB.BudgetService.Features.Works.GetList.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.ResponseDTOs;
-using BBMB.BudgetService.Shared.Services.EmployeeChargeServices;
+using BBMB.BudgetService.Features.Works.Rules;
+using BBMB.BudgetService.Shared.Services.BudgetActors;
+using BBMB.BudgetService.Shared.Services.BudgetOffices;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,28 +12,29 @@ namespace BBMB.BudgetService.Features.Works.GetList
     public class GetWorkListHandler : IRequestHandler<GetWorkListQuery, PagedResponse<GetWorkListResponseDto>>
     {
         private readonly BudgetContext _context;
-        private readonly IChargeResolver _chargeResolver;
+        private readonly IBudgetActorSource _actorSource;
+        private readonly IBudgetOfficeScope _officeScope;
+        private readonly WorkRules _rules;
 
         public GetWorkListHandler(
             BudgetContext context,
-            IChargeResolver chargeResolver)
+            IBudgetActorSource actorSource,
+            IBudgetOfficeScope officeScope,
+            WorkRules rules)
         {
             _context = context;
-            _chargeResolver = chargeResolver;
+            _actorSource = actorSource;
+            _officeScope = officeScope;
+            _rules = rules;
         }
 
         public async Task<PagedResponse<GetWorkListResponseDto>> Handle(
             GetWorkListQuery request,
             CancellationToken ct)
         {
-            // ================= GET CURRENT USER CHARGE =================
-
-            var charge = await _chargeResolver.GetCurrentChargeAsync(ct);
-
-            // NOTE:
-            // If charge is null → no filtering (return all data)
-            // If charge exists → apply filters
-
+            // ================= OFFICE SCOPE (design §9.3, BUD-031) =================
+            // Only works of the Divisions visible from the actor's office; no actor sees none (fail closed).
+            var visibleDivisions = await _rules.GetVisibleDivisionIdsAsync(_actorSource, _officeScope, ct);
             // ================= BASE QUERY =================
 
             var query =
@@ -98,20 +101,7 @@ namespace BBMB.BudgetService.Features.Works.GetList
                     cr
                 };
 
-            // ================= CHARGE BASED FILTER =================
-
-            if (charge != null)
-            {
-                if (charge.DivisionId != null)
-                    query = query.Where(x => x.w.DivisionId == charge.DivisionId);
-
-                //if (charge.CEId != null)
-                //    query = query.Where(x => x.w.CeId == charge.CEId);
-
-                //if (charge.CRCode != null)
-                //    query = query.Where(x => x.w.CRCode == charge.CRCode);
-            }
-
+            query = query.Where(x => visibleDivisions.Contains(x.w.DivisionId));
             // ================= REQUEST FILTERS =================
 
             //if (!string.IsNullOrWhiteSpace(request.WorkCode))

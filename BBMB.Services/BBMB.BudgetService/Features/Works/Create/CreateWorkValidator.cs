@@ -28,30 +28,15 @@ namespace BBMB.BudgetService.Features.Works.Create
             //RuleFor(x => x.dto.DivSection)
             //    .NotEmpty().WithMessage("Division section is required.");
 
-            RuleFor(x => x.dto.MajorAccCode)
-                .NotEmpty().WithMessage("Major account code is required.")
-                .MaximumLength(4).WithMessage("Major account code must not exceed 4 characters.");
-
-            RuleFor(x => x.dto.SubMajorAccCode)
-                .NotEmpty().WithMessage("Sub-major account code is required.")
-                .MaximumLength(2).WithMessage("Sub-major account code must not exceed 2 characters.");
-
-            RuleFor(x => x.dto.MinorAccCode)
-                .NotEmpty().WithMessage("Minor account code is required.")
-                .MaximumLength(3).WithMessage("Minor account code must not exceed 3 characters.");
-
-            RuleFor(x => x.dto.SubMinorAccCode)
-                .NotEmpty().WithMessage("Sub-minor account code is required.")
-                .MaximumLength(2).WithMessage("Sub-minor account code must not exceed 2 characters.");
-
-            RuleFor(x => x.dto.DetailAccCode)
-                .NotEmpty().WithMessage("Detail account code is required.")
-                .MaximumLength(3).WithMessage("Detail account code must not exceed 3 characters.");
-
-            RuleFor(x => x.dto.ObjectAccCode)
-                .NotEmpty().WithMessage("Object account code is required.")
-                .MaximumLength(3).WithMessage("Object account code must not exceed 3 characters.");
-
+            // Design §5.2: the code is resolved to the six segments by the handler (M-05 when absent or not for use).
+            RuleFor(x => x.dto.AccountCodeId)
+                .GreaterThan(0).WithMessage("Account code is required.");
+            RuleFor(x => x.dto.PrecedingAmrWorkId)
+                .GreaterThan(0).When(x => x.dto.PrecedingAmrWorkId.HasValue)
+                .WithMessage("Preceding AM&R work id must be positive.");
+            RuleFor(x => x.dto.PrecedingAmrWorkId)
+                .Null().When(x => x.dto.WorkClass != "AMR")
+                .WithMessage("A preceding AM&R work applies to an AMR work only.");
             RuleFor(x => x.dto.CECode)
                 .NotEmpty().WithMessage("CE code is required.");
 
