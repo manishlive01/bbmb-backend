@@ -63,6 +63,8 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
         /// <summary>Sheet row being saved, for "Row &lt;n&gt;: M-nn" (first row of the failing batch).</summary>
         private int _failingRow = 2;
+        /// <summary>The batch being saved; its index of the failing entity locates the sheet row (rows map 1:1).</summary>
+        private IReadOnlyList<object>? _currentBatch;
 
         public BulkUploadHandler(
             BudgetContext context,
@@ -95,6 +97,16 @@ namespace BBMB.BudgetService.Features.BulkUploads
             var mapped = BudgetMessages.FromPostgres(pg);
             if (mapped is null)
                 return null;
+            // EF reports the entry of the failing statement (Npgsql batch error): name its own sheet row,
+            // not the first row of the batch (design §14 "Row 7: M-").
+            if (ex is DbUpdateException { Entries.Count: 1 } du && _currentBatch is { } current)
+            {
+                var index = -1;
+                for (var k = 0; k < current.Count && index < 0; k++)
+                    if (ReferenceEquals(current[k], du.Entries[0].Entity)) index = k;
+                if (index >= 0)
+                    _failingRow += index;
+            }
 
             _logger.LogWarning(
                 "Bulk upload {UploadType} refused at row {Row}: {MessageId} (sqlstate {SqlState}, constraint {Constraint}, where {Where})",
@@ -275,6 +287,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.MajorHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -408,6 +421,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.SubMajorHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -519,6 +533,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.MinorHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -655,6 +670,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.SubMinorHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -772,6 +788,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.DetailHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -892,6 +909,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.ObjectClassifications.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -1076,6 +1094,7 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.HeadOfAccounts.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);

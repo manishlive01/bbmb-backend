@@ -114,6 +114,9 @@ namespace BBMB.BudgetService.Shared.Messages
             ["IX_budget_cycle_is_first_cycle"] = M19,   // T-28 one first cycle
             ["IX_setting_setting_key_effective_from"] = M19, // T-17 one row per key and instant
             ["IX_proposal_cycle_id_category_origin_office_id"] = M19, // T-29 one proposal per cycle, category, origin
+            // T-07: the six segments, and the complete code they form, exist once in the Manual (VR-01, BUD-042).
+            ["PK_budget_head_master"] = M02,
+            ["IX_budget_head_master_complete_code"] = M02,
         };
 
         /// <summary>The uniqueness message id registered for <paramref name="constraintName"/>, or null.</summary>
