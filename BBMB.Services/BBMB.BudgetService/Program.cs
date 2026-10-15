@@ -103,6 +103,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.DemandLines
 builder.Services.AddScoped<BBMB.BudgetService.Features.Works.Rules.WorkRules>();
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.IProposalTransitionService,
     BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.ProposalTransitionService>();
+// Attachment download: "caller may view an owning record" (design §8.2).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Attachments.Rules.AttachmentAccessRules>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
