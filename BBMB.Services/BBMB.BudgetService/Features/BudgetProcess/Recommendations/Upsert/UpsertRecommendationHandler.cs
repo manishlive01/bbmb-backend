@@ -54,6 +54,28 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Recommendations.Upsert
             if (states.Count == 0 || states.Any(s => !Finalisable.Contains(s)))
                 return BudgetResponses.Fail<long>(BudgetMessages.M19);
 
+            // P4 (DB-17, BUD-301): once an allocation of the cycle exists, a changed recommended figure must
+            // cite a minutes allocation of this cycle. Pre-checked so the response is M-19, not a raw trigger
+            // error; the DB trigger fn_recommendation_cites_minutes enforces it on the update as well.
+            var allocationExists = await context.Allocations.AsNoTracking()
+                .AnyAsync(a => a.CycleId == request.CycleId, ct);
+            if (allocationExists)
+            {
+                var existing = await context.CeRecommendations.AsNoTracking().FirstOrDefaultAsync(r =>
+                    r.CycleId == request.CycleId && r.Category == dto.Category && r.CeOfficeId == dto.CeOfficeId &&
+                    r.AccountCodeId == dto.AccountCodeId, ct);
+                var figureChanges = existing is null
+                    ? dto.RbeRecommended is not null || dto.ObeNextRecommended is not null
+                    : existing.RbeRecommended != dto.RbeRecommended || existing.ObeNextRecommended != dto.ObeNextRecommended;
+                if (figureChanges)
+                {
+                    if (dto.MinutesAllocationId is null ||
+                        !await context.Allocations.AsNoTracking().AnyAsync(a =>
+                            a.AllocationId == dto.MinutesAllocationId && a.CycleId == request.CycleId, ct))
+                        return BudgetResponses.Fail<long>(BudgetMessages.M19);
+                }
+            }
+
             await using var tx = await scope.BeginAsync(ActionCode, ct: ct);
             await context.Database.ExecuteSqlRawAsync("LOCK TABLE budget.ce_recommendation IN SHARE ROW EXCLUSIVE MODE", ct);
             var row = await context.CeRecommendations.FirstOrDefaultAsync(r =>
@@ -70,6 +92,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Recommendations.Upsert
             row.RbeRecommended = dto.RbeRecommended;
             row.ObeNextRecommended = dto.ObeNextRecommended;
             row.ConcurrenceRef = string.IsNullOrWhiteSpace(dto.ConcurrenceRef) ? null : dto.ConcurrenceRef.Trim();
+            if (dto.MinutesAllocationId is not null)
+                row.MinutesAllocationId = dto.MinutesAllocationId; // DB-17 citation, where supplied
             await context.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
             return new Response<long> { IsSucced = true, Message = "Recommendation recorded", Data = row.RecommendationId };

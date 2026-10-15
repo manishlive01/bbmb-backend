@@ -151,6 +151,10 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
                 case ProposalAction.AllocateObe when s == ProposalStateCode.S14:
                     return new ResolvedTransition(s, action, ProposalStateCode.S15, p.HolderOfficeId);
 
+                // T28: freeze, driven only by F-20 (DB-19). The holder does not change.
+                case ProposalAction.Freeze when s == ProposalStateCode.S15:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S16, p.HolderOfficeId);
+
                 default:
                     return null;
             }

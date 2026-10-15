@@ -118,6 +118,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.TechnicalSa
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Attachments.Rules.AttachmentAccessRules>();
 // F-19 allocation: the plan computation shared by preview and allocate (design §8.6).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Allocations.Rules.AllocationRules>();
+// F-20 freeze: the three preconditions of a cycle freeze (design §8.6, DB-19).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Freezes.Rules.FreezeRules>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================

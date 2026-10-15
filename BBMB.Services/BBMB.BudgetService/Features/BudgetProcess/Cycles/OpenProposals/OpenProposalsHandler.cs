@@ -1,4 +1,5 @@
 using BBMB.BudgetService.Features.BudgetProcess.Cycles.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities;
@@ -87,9 +88,89 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Cycles.OpenProposals
                 created.Add(p);
             }
             await context.SaveChangesAsync(ct);
+
+            // P4 (BUD-080): a newly opened WORKS proposal carries in the continuing works of the Division — the
+            // non-AMR works that hold a live operative WORK provision from the previous cycle's approved budget,
+            // with their codes. They enter as WORK demand lines without figures (a part entry the Division then
+            // completes). AM&R works are not carried in (a new AM&R demand continues the predecessor explicitly).
+            await CarryInContinuingWorksAsync(created, ct);
+
+            await context.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
             result.Created = created.Select(p => new OpenedProposalDto(p.ProposalId, p.Category, p.OriginOfficeId)).ToList();
             return new Response<OpenProposalsResponseDto> { IsSucced = true, Message = "Proposals opened", Data = result };
+        }
+
+        /// <summary>
+        /// BUD-080: for each newly opened WORKS proposal, add a WORK demand line for every continuing non-AM&R
+        /// work of the proposal's Division — a work with a code and a live operative WORK provision (V-02).
+        /// Figures are left null (a part entry); each line is given the next serial. A work already lined in the
+        /// proposal is skipped (idempotent with the partial UK on (proposal, work_id)).
+        /// </summary>
+        private async Task CarryInContinuingWorksAsync(IReadOnlyList<BudgetProposal> created, CancellationToken ct)
+        {
+            var worksProposals = created.Where(p => p.Category == ProposalCategory.Works).ToList();
+            if (worksProposals.Count == 0)
+                return;
+
+            // Division id of each WORKS proposal's origin office (works are keyed by division_id).
+            var officeIds = worksProposals.Select(p => p.OriginOfficeId).ToList();
+            var officeDivision = await context.BudgetOffices.AsNoTracking()
+                .Where(o => officeIds.Contains(o.OfficeId) && o.DivisionId != null)
+                .Select(o => new { o.OfficeId, DivisionId = o.DivisionId!.Value })
+                .ToDictionaryAsync(o => o.OfficeId, o => o.DivisionId, ct);
+
+            var divisionIds = officeDivision.Values.Distinct().ToList();
+            if (divisionIds.Count == 0)
+                return;
+
+            // Continuing non-AM&R works with a code and a live operative WORK provision (the previous cycle's
+            // approved budget), by Division. V-02 is the single source of "a provision is live".
+            var continuing = await (
+                from w in context.Works.AsNoTracking()
+                where w.WorkCode != null && w.WorkClass != Works.Entities.WorkClass.Amr && divisionIds.Contains(w.DivisionId)
+                join v in context.ProvisionBalances.AsNoTracking().Where(v => v.IsOperative && v.HolderType == "WORK")
+                    on w.Id equals v.WorkId
+                select new
+                {
+                    w.Id, w.DivisionId,
+                    w.MajorAccCode, w.SubMajorAccCode, w.MinorAccCode, w.SubMinorAccCode, w.DetailAccCode, w.ObjectAccCode,
+                }).Distinct().ToListAsync(ct);
+            if (continuing.Count == 0)
+                return;
+
+            // Resolve each work's six segments to a T-07 account code for the carried-in line.
+            var codeByWork = new Dictionary<int, long?>();
+            foreach (var w in continuing)
+            {
+                var codeId = await context.HeadOfAccounts.AsNoTracking()
+                    .Where(h => h.MajorAccCode == w.MajorAccCode && (h.SubMajorAccCode ?? "") == w.SubMajorAccCode &&
+                                h.MinorAccCode == w.MinorAccCode && (h.SubMinorAccCode ?? "") == w.SubMinorAccCode &&
+                                h.DetailAccCode == w.DetailAccCode && h.ObjectAccCode == w.ObjectAccCode)
+                    .Select(h => (long?)h.AccountCodeId).FirstOrDefaultAsync(ct);
+                codeByWork[w.Id] = codeId;
+            }
+
+            foreach (var proposal in worksProposals)
+            {
+                if (!officeDivision.TryGetValue(proposal.OriginOfficeId, out var divisionId))
+                    continue;
+                var works = continuing.Where(w => w.DivisionId == divisionId).Select(w => w.Id).Distinct().ToList();
+                if (works.Count == 0)
+                    continue;
+                var serial = 0;
+                foreach (var workId in works.OrderBy(id => id))
+                {
+                    context.DemandLines.Add(new DemandLine
+                    {
+                        ProposalId = proposal.ProposalId,
+                        LineType = DemandLineType.Work,
+                        SerialNo = ++serial,
+                        WorkId = workId,
+                        AccountCodeId = codeByWork.GetValueOrDefault(workId),
+                    });
+                }
+            }
         }
     }
 }
