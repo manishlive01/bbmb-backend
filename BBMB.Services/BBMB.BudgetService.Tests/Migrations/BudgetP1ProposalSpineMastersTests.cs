@@ -91,7 +91,11 @@ public sealed class BudgetP1ProposalSpineMastersTests(BudgetDatabaseFixture fixt
                                      "AND created_at IS NULL AND created_charge_id IS NULL")).Should().Be(2);
 
         await using var ctx = BudgetDatabaseFixture.NewBudgetContext(cs);
-        var audit = await ctx.AuditLog.AsNoTracking().Where(a => a.TableName == "work").ToListAsync();
+        // The full chain also runs P4-01 (BudgetP4WorkCodeConformance), which resets work codes under its own
+        // migration actor and so writes further `work` audit rows. This test is about the pre_ddd marker written
+        // by BudgetP1ProposalSpineMasters, so it scopes to that migration's rows (end-of-run fix).
+        var audit = await ctx.AuditLog.AsNoTracking()
+            .Where(a => a.TableName == "work" && a.ActionCode == Action).ToListAsync();
         audit.Where(a => a.ColumnName == "pre_ddd").Select(a => a.RecordKey)
             .Should().BeEquivalentTo(works.Select(w => w.ToString()), "one T-51 row per work for pre_ddd");
         audit.Should().OnlyContain(a => a.ActionCode == Action && a.Operation == "U" && a.ActorRoleCode == "MIGRATION");

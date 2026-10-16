@@ -67,12 +67,6 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules
                         Fail("obeNextAmount", BudgetMessages.M21);
                     if (line.LineType == DemandLineType.Unforeseen && string.IsNullOrWhiteSpace(line.UnforeseenName))
                         Fail("unforeseenName", BudgetMessages.M21);
-                    // P4 (BUD-275, design §6.4 completeness row): an AM&R line that continues a predecessor work
-                    // (col 14 set) must carry the col-14 figure — the budget allotted to the predecessor, now
-                    // available from its operative provision (V-02). Deferred from P1-26 until V-02 existed.
-                    if (line.WorkClass == Works.Entities.WorkClass.Amr && line.PrecedingAmrWorkId is not null
-                        && line.AmrApprovedBudget is null)
-                        Fail("precedingAmrWorkId", BudgetMessages.M21);
                 }
                 if (justificationOnObservation && line.HasObservation && string.IsNullOrWhiteSpace(line.JustificationText))
                     Fail("justificationText", BudgetMessages.M21);
