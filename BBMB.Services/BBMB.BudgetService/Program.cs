@@ -129,6 +129,8 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenW
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Rules.UnforeseenRules>();
 // F-21 re-appropriation: the surrender arithmetic (VR-08, M-18) (design §8.7).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Rules.ReappropriationRules>();
+// F-22 re-appropriation reads: the entry/register loaders (design §8.7).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Reads.ReappropriationReads>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
