@@ -28,6 +28,7 @@ namespace BBMB.BudgetService.Features.ObjectClassifications.GetList
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetObjectClassificationList")
             .WithTags("ObjectClassifications")
             .WithSummary("Get a paginated list of object classifications")

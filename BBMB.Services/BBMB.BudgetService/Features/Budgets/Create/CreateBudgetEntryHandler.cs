@@ -1,5 +1,6 @@
 using BBMB.BudgetService.Features.Budgets.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.Messages;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using Mapster;
 using MediatR;
@@ -18,29 +19,28 @@ namespace BBMB.BudgetService.Features.Budgets.Create
 
         public async Task<Response> Handle(CreateBudgetEntryCommand request, CancellationToken ct)
         {
-            // Validate division exists
-            var divisionExists = await _context.Divisions
-                .AnyAsync(d => d.DivisionCode == request.dto.DivisionCode, ct);
-            if (!divisionExists)
+            // D-2 (design §3): the DTO carries the Division code, the entity the Division id. Resolve the
+            // id here; Adapt alone left DivisionId = 0, which fails the FK or links the wrong row.
+            var divisionId = await _context.Divisions
+                .Where(d => d.DivisionCode == request.dto.DivisionCode)
+                .Select(d => (int?)d.Id)
+                .FirstOrDefaultAsync(ct);
+            if (divisionId is null)
             {
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = $"Division with code '{request.dto.DivisionCode}' not found"
-                };
+                return BudgetResponses.Fail(BudgetMessages.M05);
             }
 
-            // Validate work code if provided
-            if (!string.IsNullOrWhiteSpace(request.dto.WorkCode.ToString()))
+            // Validate the referenced work by its id (design §4.6): the DTO carries WorkId, every work code
+            // being null after the reset.
+            if (request.dto.WorkId is { } workId)
             {
-                var workExists = await _context.Works
-                    .AnyAsync(w => w.WorkCode == request.dto.WorkCode, ct);
+                var workExists = await _context.Works.AnyAsync(w => w.Id == workId, ct);
                 if (!workExists)
                 {
                     return new Response
                     {
                         IsSucced = false,
-                        Message = $"Work with code '{request.dto.WorkCode}' not found"
+                        Message = $"Work with id '{workId}' not found"
                     };
                 }
             }
@@ -59,6 +59,7 @@ namespace BBMB.BudgetService.Features.Budgets.Create
 
             // Map DTO to Entity
             var budgetEntry = request.dto.Adapt<BudgetEntry>();
+            budgetEntry.DivisionId = divisionId.Value;
 
             // Persist
             _context.BudgetEntries.Add(budgetEntry);

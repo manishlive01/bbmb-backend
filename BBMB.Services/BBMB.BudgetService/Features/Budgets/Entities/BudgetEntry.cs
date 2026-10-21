@@ -69,16 +69,14 @@ namespace BBMB.BudgetService.Features.Budgets.Entities
         [Column("budget_description")]
         public string BudgetDescription { get; set; } = string.Empty;
 
+        // Column type budget.rupees, configured in BudgetContext (design §4.5).
         [Column("budget_amount")]
-        [Precision(12, 2)]
         public decimal? BudgetAmount { get; set; }
 
         [Column("revised_amount")]
-        [Precision(12, 2)]
         public decimal? RevisedAmount { get; set; }
 
         [Column("proposed_budget")]
-        [Precision(12, 2)]
         public decimal? ProposedBudget { get; set; }
 
         [Required]

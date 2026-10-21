@@ -2,7 +2,8 @@ namespace BBMB.BudgetService.Features.Works.GetById.Dtos
 {
     public class GetWorkByIdResponseDto
     {
-        public string WorkCode { get; set; } = string.Empty;
+        // P4 (design §4.6): work_code is varchar(12) and nullable (null until generated on allocation, BUD-232).
+        public string? WorkCode { get; set; }
         public string WorkDesc { get; set; } = string.Empty;
         public int DivisionCode { get; set; }
         public string? DivisionDesc { get; set; }

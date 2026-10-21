@@ -20,7 +20,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
                 [FromQuery] int? divisionCode = null,
                 [FromQuery] int? calendarYear = null,
                 [FromQuery] BudgetType? budgetType = null,
-                [FromQuery] int? workCode = null) =>
+                [FromQuery] int? workId = null) =>
             {
                 var query = new GetBudgetEntryListQuery(
                     pageNumber,
@@ -30,12 +30,12 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
                     divisionCode,
                     calendarYear,
                     budgetType,
-                    workCode);
+                    workId);
 
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
-            .RequireAuthorization("Budget:Admin")
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetBudgetEntryList")
             .WithTags("BudgetEntries")
             .Produces<PagedResponse<GetBudgetEntryListResponseDto>>(StatusCodes.Status200OK);

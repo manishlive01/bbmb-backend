@@ -16,6 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Hand SQL executed by migrations (design §11.1 rule 2), read through SqlResource. -->
+    <EmbeddedResource Include="Infrastructure\Persistence\BudgetContexts\Sql\*.sql" />
+    <EmbeddedResource Include="Shared\Services\BudgetActors\MigrationActor.sql" LogicalName="BBMB.BudgetService.MigrationActor.sql" />
+  </ItemGroup>
+  <ItemGroup>
 	  <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
 	  <PackageReference Include="Dapper" Version="2.1.79" />
 	  <PackageReference Include="EPPlus" Version="8.7.0" />
@@ -36,7 +41,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\AccountingHeads\SubMajorHeads\Delete\" />
     <Folder Include="Features\Budgets\GetList\" />
     <Folder Include="Features\Budgets\Create\" />
     <Folder Include="Features\Budgets\GetById\" />
@@ -51,9 +55,7 @@
     <Folder Include="Features\Designations\Delete\" />
     <Folder Include="Features\Designations\Create\" />
     <Folder Include="Features\DetailHeads\GetList\" />
-    <Folder Include="Features\DetailHeads\Delete\" />
     <Folder Include="Features\DetailHeads\Create\" />
-    <Folder Include="Features\DetailHeads\Update\" />
     <Folder Include="Features\Employees\Delete\" />
     <Folder Include="Features\FinancialYears\GetList\" />
     <Folder Include="Features\FinancialYears\GetById\" />

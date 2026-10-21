@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.GetById
                     return Results.NotFound(new { message = ex.Message });
                 }
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetDetailHeadById")
             .WithTags("DetailHeads")
             .Produces(200)

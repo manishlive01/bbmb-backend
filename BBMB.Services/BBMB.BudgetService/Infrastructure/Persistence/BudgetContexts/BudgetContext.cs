@@ -31,7 +31,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
 {
-    public class BudgetContext : DbContext
+    public partial class BudgetContext : DbContext
     {
         public BudgetContext(DbContextOptions<BudgetContext> options)
             : base(options)
@@ -62,26 +62,47 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<Region> Regions { get; set; }
         public DbSet<UnitMaster> Units { get; set; }
         public DbSet<Work> Works { get; set; }
+        public DbSet<WorkCodeSerial> WorkCodeSerials { get; set; }
         public DbSet<CEManagement> CEManagements { get; set; }
         public DbSet<CRManagement> CRManagements { get; set; }
         public DbSet<CRSection> CRSections { get; set; }
         public DbSet<Levels> Levels { get; set; }
+        /// <summary>DDD §1.7: numeric(15,2), whole rupees, |v| &lt;= 9999999999999.</summary>
+        public const string RupeesColumnType = "budget.rupees";
+
+        /// <summary>DDD §1.7: numeric(17,2), unrounded figures from Financial Accounting (BUD-266).</summary>
+        public const string RupeesPaiseColumnType = "budget.rupees_paise";
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // DEFAULT SCHEMA FOR BUDGET
             modelBuilder.HasDefaultSchema("budget");
 
             base.OnModelCreating(modelBuilder);
+            // Money: whole rupees, DDD §1.7 domain budget.rupees (design §4.5). The domain is created by
+            // migration BudgetP1RupeesAndMoneyColumns before the columns are altered to it.
+            modelBuilder.Entity<BudgetEntry>().Property(e => e.BudgetAmount).HasColumnType(RupeesColumnType);
+            modelBuilder.Entity<BudgetEntry>().Property(e => e.RevisedAmount).HasColumnType(RupeesColumnType);
+            modelBuilder.Entity<BudgetEntry>().Property(e => e.ProposedBudget).HasColumnType(RupeesColumnType);
+            modelBuilder.Entity<Estimate>().Property(e => e.EstimateAmt).HasColumnType(RupeesColumnType);
+            modelBuilder.Entity<Work>().Property(e => e.EstimatedCost).HasColumnType(RupeesColumnType);
 
-            // Configure composite key for Estimate
+            // Estimate re-keyed after the P4 reset (design §4.6 step 2): key and FK move from work_code to work_id,
+            // the FK pointing at work.id (RESTRICT). work_code is kept as a plain int column, no key and no FK.
             modelBuilder.Entity<Estimate>()
-                .HasKey(e => new { e.WorkCode, e.EstimateCode });
+                .HasKey(e => new { e.WorkId, e.EstimateCode });
 
             modelBuilder.Entity<Estimate>()
                 .HasOne(e => e.Work)
                 .WithMany()
-                .HasForeignKey(e => e.WorkCode)
+                .HasForeignKey(e => e.WorkId)
+                .HasPrincipalKey(w => w.Id)
                 .OnDelete(DeleteBehavior.Restrict);
+
+#pragma warning disable CS0618 // work_code is intentionally retained (design §4.6 step 2, OI-46)
+            modelBuilder.Entity<Estimate>()
+                .Property(e => e.WorkCode);
+#pragma warning restore CS0618
              
             // =====================================================
             // SubMajorHead Configuration
@@ -105,7 +126,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .IsRequired();
 
                 entity.Property(x => x.SubMajorAccDesc)
-                      .HasMaxLength(100)
+                      .HasMaxLength(200)
                       .IsRequired();
 
                 // 🔹 FK → MajorHead
@@ -137,7 +158,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .IsRequired();
 
                 entity.Property(x => x.SubMinorAccDesc)
-                      .HasMaxLength(100)
+                      .HasMaxLength(200)
                       .IsRequired();
             });
 
@@ -171,7 +192,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
 
                 // 🔹 Property rules
                 entity.Property(x => x.MajorAccCode).HasMaxLength(4).IsRequired();
-                entity.Property(x => x.SubMajorAccCode).HasMaxLength(4);
+                entity.Property(x => x.SubMajorAccCode).HasMaxLength(2); // DDD T-07 varchar(2) (design §5.2)
                 entity.Property(x => x.MinorAccCode).HasMaxLength(3).IsRequired();
                 entity.Property(x => x.SubMinorAccCode).HasMaxLength(2);
                 entity.Property(x => x.DetailAccCode).HasMaxLength(3).IsRequired();
@@ -300,9 +321,10 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
             {
                 entity.HasKey(e => e.Id);
 
-                // ✅ business key
-                entity.HasAlternateKey(e => e.WorkCode);
-                entity.HasIndex(e => e.WorkCode).IsUnique();
+                // work_code is varchar(12), nullable, after the P4 reset (design §4.6). The alternate key and the
+                // plain unique index are dropped by BudgetP4WorkCodeConformance and replaced by a partial unique
+                // index on work_code WHERE work_code IS NOT NULL, created in the migration SQL (step 4).
+                entity.Property(e => e.WorkCode).HasColumnType("character varying(12)");
 
                 // ✅ FK → Division
                 entity.HasOne(w => w.Division)
@@ -317,6 +339,16 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .HasPrincipalKey(d => d.DesignationCode)
                       .OnDelete(DeleteBehavior.Restrict);
             });
+
+            // T-24 work_code_serial (design §4.6 step 5): composite PK (division_code, fin_year). The 1-999 CHECKs
+            // on division_code and last_serial and the FK to the financial-year master are added in the migration SQL.
+            modelBuilder.Entity<WorkCodeSerial>(entity =>
+            {
+                entity.HasKey(e => new { e.DivisionCode, e.FinYear });
+            });
+
+            // Budget-process tables (design §2.1: partial class BudgetContext.BudgetProcess.cs).
+            ConfigureBudgetProcess(modelBuilder);
         }
     }
 }

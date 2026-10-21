@@ -33,8 +33,9 @@ namespace BBMB.BudgetService.Features.Budgets.GetList
             if (request.BudgetType.HasValue)
                 query = query.Where(b => b.BudgetType == request.BudgetType.Value);
 
-            if (!string.IsNullOrEmpty(request.WorkCode.ToString()))
-                query = query.Where(b => b.Work.WorkCode == request.WorkCode);
+            // P4 (design §4.6, §9.3 Budgets P4): filter by the work's stable id (work_code is null after the reset).
+            if (request.WorkId.HasValue)
+                query = query.Where(b => b.WorkId == request.WorkId.Value);
 
             // Get total count
             var totalCount = await query.CountAsync(ct);

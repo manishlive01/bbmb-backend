@@ -35,6 +35,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetList
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetHeadOfAccountList")
             .WithTags("HeadOfAccounts")
             .Produces<PagedResponse<GetHeadOfAccountListResponseDto>>(StatusCodes.Status200OK);

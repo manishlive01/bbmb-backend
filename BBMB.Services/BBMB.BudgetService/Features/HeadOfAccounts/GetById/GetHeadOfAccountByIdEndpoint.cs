@@ -35,6 +35,7 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetById
                     data = result
                 });
             })
+.RequireAuthorization("BudgetRight:Budget.View")
 .WithName("GetHeadOfAccountByKey")
 .WithTags("HeadOfAccounts")
 .Produces<GetHeadOfAccountByIdResponseDto>(StatusCodes.Status200OK)

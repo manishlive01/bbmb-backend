@@ -91,6 +91,10 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.GetList
 
                     HeadDesc = h.HeadDesc,
                     FullAccountCode = h.FullAccountCode,
+                    AccountCodeId = h.AccountCodeId,
+                    CompleteCode = h.CompleteCode,
+                    NotForUse = h.NotForUse,
+                    Origin = h.Origin,
                     ModificationDate = h.ModificationDate,
                     UserCode = h.UserCode
                 })

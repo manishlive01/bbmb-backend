@@ -27,6 +27,7 @@ namespace BBMB.BudgetService.Features.Estimates.GetList
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetEstimateList")
             .WithTags("Estimates")
             .Produces<PagedResponse<GetEstimateListResponseDto>>(StatusCodes.Status200OK);

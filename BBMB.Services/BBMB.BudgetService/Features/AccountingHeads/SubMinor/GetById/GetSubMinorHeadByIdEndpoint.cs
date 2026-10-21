@@ -21,6 +21,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMinor.GetById
                     return Results.NotFound(new { error = "sub_minor_head_not_found", message = ex.Message });
                 }
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetSubMinorHeadById")
             .WithTags("SubMinorHeads")
             .Produces<GetSubMinorHeadByIdResponseDto>(StatusCodes.Status200OK)

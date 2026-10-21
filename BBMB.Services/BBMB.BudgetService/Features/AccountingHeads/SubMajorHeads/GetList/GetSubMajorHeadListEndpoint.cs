@@ -29,6 +29,7 @@ namespace BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.GetList
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetSubMajorHeadList")
             .WithTags("SubMajorHeads")
             .Produces(StatusCodes.Status200OK);

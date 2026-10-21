@@ -18,6 +18,7 @@ namespace BBMB.BudgetService.Features.Estimates.Create
                     ? Results.Created($"/api/estimates/{dto.WorkCode}/{dto.EstimateCode}", response)
                     : Results.Conflict(response);
             })
+            .RequireAuthorization("BudgetRight:Legacy.BudgetEntry")
             .WithName("CreateEstimate")
             .WithTags("Estimates")
             .Produces<Response>(StatusCodes.Status201Created)

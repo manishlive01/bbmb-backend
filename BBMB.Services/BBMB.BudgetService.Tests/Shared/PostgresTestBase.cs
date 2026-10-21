@@ -1,47 +1,28 @@
 ﻿using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
-using Microsoft.EntityFrameworkCore;
-using Testcontainers.PostgreSql;
 
 namespace BBMB.BudgetService.Tests.Shared;
 
+/// <summary>
+/// Per-test-class database (one postgres:17 container each). Prepared exactly as
+/// <see cref="BudgetDatabaseFixture"/> prepares the shared one, because the budget migrations need what a
+/// deployment needs (design §11.1 rules 5, 8, 9): EmployeeContext first, the executing officer passed through
+/// the migration connection's Options, every bbmb_gate.* set. <see cref="DbContext"/> uses the plain
+/// connection string, as an application session does.
+/// </summary>
 public abstract class PostgresTestBase : IAsyncLifetime
 {
     protected BudgetContext DbContext = default!;
-    private PostgreSqlContainer _container = default!;
+    protected BudgetDatabaseFixture Database { get; } = new();
 
     public async Task InitializeAsync()
     {
-        // 1️⃣ Start PostgreSQL container
-        _container = new PostgreSqlBuilder()
-            .WithImage("postgres:17")
-            .WithHostname("10.147.8.83")
-            .WithDatabase("budget_test")
-            .WithUsername("postgres")
-            .WithPassword("postgres")
-            .Build();
-
-        await _container.StartAsync();
-        var connectionString = _container.GetConnectionString();
-        Console.WriteLine("==================================");
-        Console.WriteLine("PostgreSQL Testcontainer running");
-        Console.WriteLine(connectionString);
-        Console.WriteLine("==================================");
-
-        // 2️⃣ Build DbContext options using container connection string
-        var options = new DbContextOptionsBuilder<BudgetContext>()
-            .UseNpgsql(_container.GetConnectionString())
-            .Options;
-
-        // 3️⃣ Create DbContext
-        DbContext = new BudgetContext(options);
-
-        // 4️⃣ Apply migrations (this creates schema + tables)
-        await DbContext.Database.MigrateAsync();
+        await Database.InitializeAsync();
+        DbContext = Database.NewBudgetContext();
     }
 
     public async Task DisposeAsync()
     {
         await DbContext.DisposeAsync();
-        await _container.DisposeAsync();
+        await Database.DisposeAsync();
     }
 }

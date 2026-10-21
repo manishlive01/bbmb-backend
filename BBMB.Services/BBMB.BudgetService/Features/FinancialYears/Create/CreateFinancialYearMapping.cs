@@ -10,8 +10,9 @@ namespace BBMB.BudgetService.Features.FinancialYears.Create
         {
             config.NewConfig<CreateFinancialYearDto, FinancialYear>()
                 .Map(dest => dest.FinYearClosing, src => src.FinYearClosing)
-                .Map(dest => dest.StartDate, src => src.StartDate)
-                .Map(dest => dest.EndDate, src => src.EndDate)
+                // The request keeps DateTime (no API change); the column is a business date (T-08).
+                .Map(dest => dest.StartDate, src => DateOnly.FromDateTime(src.StartDate))
+                .Map(dest => dest.EndDate, src => DateOnly.FromDateTime(src.EndDate))
                 .Map(dest => dest.Closed, src => src.Closed);
         }
     }

@@ -1,4 +1,5 @@
 using BBMB.BudgetService.Features.Works.Create.Dtos;
+using BBMB.BudgetService.Shared.Validators;
 using FluentValidation;
 
 namespace BBMB.BudgetService.Features.Works.Create
@@ -15,7 +16,11 @@ namespace BBMB.BudgetService.Features.Works.Create
 
             RuleFor(x => x.dto.WorkDesc)
                 .NotEmpty().WithMessage("Work description is required.")
-                .MaximumLength(200).WithMessage("Work description must not exceed 200 characters.");
+                .MaximumLength(500).WithMessage("Work description must not exceed 500 characters.");
+            // DDD T-23: work_class AA or AMR (design §9.3).
+            RuleFor(x => x.dto.WorkClass)
+                .NotEmpty().WithMessage("Work class is required.")
+                .Must(c => c is "AA" or "AMR").WithMessage("Work class must be AA or AMR.");
 
             RuleFor(x => x.dto.DivisionId)
                 .NotEmpty().WithMessage("Division code is required.");
@@ -23,30 +28,15 @@ namespace BBMB.BudgetService.Features.Works.Create
             //RuleFor(x => x.dto.DivSection)
             //    .NotEmpty().WithMessage("Division section is required.");
 
-            RuleFor(x => x.dto.MajorAccCode)
-                .NotEmpty().WithMessage("Major account code is required.")
-                .MaximumLength(4).WithMessage("Major account code must not exceed 4 characters.");
-
-            RuleFor(x => x.dto.SubMajorAccCode)
-                .NotEmpty().WithMessage("Sub-major account code is required.")
-                .MaximumLength(2).WithMessage("Sub-major account code must not exceed 2 characters.");
-
-            RuleFor(x => x.dto.MinorAccCode)
-                .NotEmpty().WithMessage("Minor account code is required.")
-                .MaximumLength(3).WithMessage("Minor account code must not exceed 3 characters.");
-
-            RuleFor(x => x.dto.SubMinorAccCode)
-                .NotEmpty().WithMessage("Sub-minor account code is required.")
-                .MaximumLength(2).WithMessage("Sub-minor account code must not exceed 2 characters.");
-
-            RuleFor(x => x.dto.DetailAccCode)
-                .NotEmpty().WithMessage("Detail account code is required.")
-                .MaximumLength(3).WithMessage("Detail account code must not exceed 3 characters.");
-
-            RuleFor(x => x.dto.ObjectAccCode)
-                .NotEmpty().WithMessage("Object account code is required.")
-                .MaximumLength(3).WithMessage("Object account code must not exceed 3 characters.");
-
+            // Design §5.2: the code is resolved to the six segments by the handler (M-05 when absent or not for use).
+            RuleFor(x => x.dto.AccountCodeId)
+                .GreaterThan(0).WithMessage("Account code is required.");
+            RuleFor(x => x.dto.PrecedingAmrWorkId)
+                .GreaterThan(0).When(x => x.dto.PrecedingAmrWorkId.HasValue)
+                .WithMessage("Preceding AM&R work id must be positive.");
+            RuleFor(x => x.dto.PrecedingAmrWorkId)
+                .Null().When(x => x.dto.WorkClass != "AMR")
+                .WithMessage("A preceding AM&R work applies to an AMR work only.");
             RuleFor(x => x.dto.CECode)
                 .NotEmpty().WithMessage("CE code is required.");
 
@@ -110,6 +100,7 @@ namespace BBMB.BudgetService.Features.Works.Create
             RuleFor(x => x.dto.EstimatedCost)
                 .GreaterThanOrEqualTo(0).WithMessage("Estimated cost cannot be negative.")
                 .When(x => x.dto.EstimatedCost.HasValue);
+            RuleFor(x => x.dto.EstimatedCost).WholeRupees(); // BUD-013, design §4.5 step 4
         }
     }
 }

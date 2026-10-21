@@ -3,7 +3,6 @@ using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
 using BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads;
-using BBMB.BudgetService.Features.Designations.Entities;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
@@ -18,9 +17,13 @@ using BBMB.BudgetService.Features.Pools.Entities;
 using BBMB.BudgetService.Features.Projects.Entities;
 using BBMB.BudgetService.Features.Regions.Entities;
 using BBMB.BudgetService.Features.Units.Entities;
-using BBMB.BudgetService.Features.Works.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Shared.Messages;
+using BBMB.BudgetService.Shared.Services.BudgetActors;
 using BBMB.BudgetService.Shared.ResponseDTOs;
+using Microsoft.AspNetCore.Authorization;
+using Npgsql;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
@@ -29,11 +32,91 @@ namespace BBMB.BudgetService.Features.BulkUploads
 {
     public class BulkUploadHandler : IRequestHandler<BulkUploadCommand, Response>
     {
-        private readonly BudgetContext _context;
-
-        public BulkUploadHandler(BudgetContext context)
+        /// <summary>
+        /// Design §9.3: the right each upload type needs, checked before the sheet is read. Head and segment
+        /// masters are the L-04 bulk load of F-01; hierarchy masters are office master loading. The
+        /// "workmaster" type is removed (D-11): works enter only through the module (DDD T-23, L-08).
+        /// </summary>
+        private static readonly IReadOnlyDictionary<string, string> RightByType = new Dictionary<string, string>
         {
+            ["majormaster"] = "F01.Create",
+            ["submajormaster"] = "F01.Create",
+            ["minormaster"] = "F01.Create",
+            ["subminormaster"] = "F01.Create",
+            ["detailmaster"] = "F01.Create",
+            ["objectmaster"] = "F01.Create",
+            ["headofaccountmaster"] = "F01.Create",
+            ["cemaster"] = "Offices.Load",
+            ["circlemaster"] = "Offices.Load",
+            ["circlesectionmaster"] = "Offices.Load",
+            ["divisionmaster"] = "Offices.Load",
+            ["divisionsectionmaster"] = "Offices.Load",
+        };
+
+        private readonly BudgetContext _context;
+        private readonly IAuthorizationService _authorization;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<BulkUploadHandler> _logger;
+        private readonly IBudgetActorSource _actorSource;
+        private readonly IBudgetActionScope _scope;
+        private string _uploadType = string.Empty;
+
+        /// <summary>Sheet row being saved, for "Row &lt;n&gt;: M-nn" (first row of the failing batch).</summary>
+        private int _failingRow = 2;
+        /// <summary>The batch being saved; its index of the failing entity locates the sheet row (rows map 1:1).</summary>
+        private IReadOnlyList<object>? _currentBatch;
+
+        public BulkUploadHandler(
+            BudgetContext context,
+            IAuthorizationService authorization,
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<BulkUploadHandler> logger,
+            IBudgetActorSource actorSource,
+            IBudgetActionScope scope)
+        {
+            _actorSource = actorSource;
+            _scope = scope;
             _context = context;
+            _authorization = authorization;
+            _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Translates a PostgreSQL rule failure through the same mapping as the global handler
+        /// (<see cref="BudgetMessages.FromPostgres"/>) into "Row &lt;n&gt;: M-nn: &lt;catalogue text&gt;".
+        /// Returns null for anything it does not map; the caller rethrows (design §9.3, §10).
+        /// </summary>
+        private Response? MapDatabaseFailure(Exception ex)
+        {
+            PostgresException? pg = null;
+            for (var e = ex; e is not null && pg is null; e = e.InnerException)
+                pg = e as PostgresException;
+            if (pg is null)
+                return null;
+            var mapped = BudgetMessages.FromPostgres(pg);
+            if (mapped is null)
+                return null;
+            // EF reports the entry of the failing statement (Npgsql batch error): name its own sheet row,
+            // not the first row of the batch (design §14 "Row 7: M-").
+            if (ex is DbUpdateException { Entries.Count: 1 } du && _currentBatch is { } current)
+            {
+                var index = -1;
+                for (var k = 0; k < current.Count && index < 0; k++)
+                    if (ReferenceEquals(current[k], du.Entries[0].Entity)) index = k;
+                if (index >= 0)
+                    _failingRow += index;
+            }
+
+            _logger.LogWarning(
+                "Bulk upload {UploadType} refused at row {Row}: {MessageId} (sqlstate {SqlState}, constraint {Constraint}, where {Where})",
+                _uploadType, _failingRow, mapped.Value.MessageId, pg.SqlState, pg.ConstraintName, pg.Where);
+            return new Response
+            {
+                IsSucced = false,
+                MessageId = mapped.Value.MessageId,
+                Message = $"Row {_failingRow}: {BudgetMessages.Format(mapped.Value.MessageId)}",
+            };
         }
 
         public async Task<Response> Handle(
@@ -54,14 +137,42 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = "UploadType is required"
                 };
 
+            var type = request.uploadType.Trim().ToLower();
+            _uploadType = type;
+            if (!RightByType.TryGetValue(type, out var right))
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = "Invalid UploadType"
+                };
+
+            // Authorise by upload type before the sheet is read (design §9.3).
+            var user = _httpContextAccessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal();
+            var authorised = await _authorization.AuthorizeAsync(user, null, BudgetRightRequirement.Policy(right));
+            if (!authorised.Succeeded)
+                return BudgetResponses.Fail(BudgetMessages.M20);
+
             try
             {
                 using var stream = new MemoryStream();
                 await request.File.CopyToAsync(stream, cancellationToken);
-
                 ExcelPackage.License.SetNonCommercialPersonal("BBMB");
-
-                using var package = new ExcelPackage(stream);
+                ExcelPackage package;
+                try
+                {
+                    package = new ExcelPackage(stream);
+                    _ = package.Workbook.Worksheets.Count;
+                }
+                catch (Exception)
+                {
+                    // Not a readable workbook: the existing message, never the parser's exception text.
+                    return new Response
+                    {
+                        IsSucced = false,
+                        Message = "Invalid Excel file"
+                    };
+                }
+                using var ownedPackage = package;
                 var worksheet = package.Workbook.Worksheets.FirstOrDefault();
 
                 if (worksheet == null)
@@ -80,8 +191,6 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         Message = "Excel has no data"
                     };
 
-                var type = request.uploadType.Trim().ToLower();
-
                 // 🚀 NO TRANSACTION HERE NOW
                 return type switch
                 {
@@ -97,7 +206,6 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     "circlesectionmaster" => await UploadCRSectionMaster(worksheet, rowCount, cancellationToken),
                     "divisionmaster" => await UploadDivisionMaster(worksheet, rowCount, cancellationToken),
                     "divisionsectionmaster" => await UploadDivSectionMaster(worksheet, rowCount, cancellationToken),
-                    "workmaster" => await UploadWorkMaster(worksheet, rowCount, cancellationToken),
                     _ => new Response
                     {
                         IsSucced = false,
@@ -105,13 +213,21 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     }
                 };
             }
-            catch (Exception ex)
+            catch (BulkUploadRowException ex)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = ex.InnerException?.Message ?? ex.Message
+                    Message = ex.Message
                 };
+            }
+            catch (Exception ex)
+            {
+                // BUD-012, BUD-261: no exception text in the response; unmapped errors go to the global handler.
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -145,13 +261,13 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     var desc = worksheet.Cells[row, 2].Text.Trim();
 
                     if (string.IsNullOrWhiteSpace(code) || code.Length != 4)
-                        throw new Exception($"Invalid Major code at row {row}");
+                        throw new BulkUploadRowException($"Invalid Major code at row {row}");
 
                     if (!excelDuplicateCheck.Add(code))
-                        throw new Exception($"Duplicate Major code in Excel: {code}");
+                        throw new BulkUploadRowException($"Duplicate Major code in Excel: {code}");
 
                     if (dbSet.Contains(code))
-                        throw new Exception($"Major already exists: {code}");
+                        throw new BulkUploadRowException($"Major already exists: {code}");
 
                     list.Add(new MajorHead
                     {
@@ -168,7 +284,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 for (int i = 0; i < list.Count; i += batchSize)
                 {
+
+                    _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.MajorHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -186,15 +305,26 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{list.Count} Major records uploaded successfully"
                 };
             }
-            catch (Exception ex)
+            catch (BulkUploadRowException ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
 
+                // App-authored sheet validation message (row, field); never exception text from the database.
                 return new Response
                 {
                     IsSucced = false,
                     Message = ex.Message
                 };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -240,13 +370,13 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         string.IsNullOrWhiteSpace(subMajor) ||
                         string.IsNullOrWhiteSpace(desc))
                     {
-                        throw new Exception($"Empty data at row {row}");
+                        throw new BulkUploadRowException($"Empty data at row {row}");
                     }
 
                     // 🔹 Length validation
                     if (major.Length != 4 || subMajor.Length != 2)
                     {
-                        throw new Exception(
+                        throw new BulkUploadRowException(
                             $"Invalid format at row {row}. Major must be 4 & SubMajor must be 2 characters.");
                     }
 
@@ -256,19 +386,19 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     // 🔹 Excel duplicate check
                     if (!excelDuplicateCheck.Add(excelKey))
                     {
-                        throw new Exception($"Duplicate SubMajor in Excel: {excelKey}");
+                        throw new BulkUploadRowException($"Duplicate SubMajor in Excel: {excelKey}");
                     }
 
                     // 🔹 FK check
                     if (!majorSet.Contains(major))
                     {
-                        throw new Exception($"Major does not exist: {major}");
+                        throw new BulkUploadRowException($"Major does not exist: {major}");
                     }
 
                     // 🔹 DB duplicate check
                     if (subMajorSet.Contains(compositeKey))
                     {
-                        throw new Exception($"SubMajor already exists: {excelKey}");
+                        throw new BulkUploadRowException($"SubMajor already exists: {excelKey}");
                     }
 
                     list.Add(new SubMajorHead
@@ -288,7 +418,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 for (int i = 0; i < list.Count; i += batchSize)
                 {
+
+                    _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.SubMajorHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -304,15 +437,26 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{list.Count} SubMajor records uploaded successfully"
                 };
             }
-            catch (Exception ex)
+            catch (BulkUploadRowException ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
 
+                // App-authored sheet validation message (row, field); never exception text from the database.
                 return new Response
                 {
                     IsSucced = false,
                     Message = ex.Message
                 };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -348,26 +492,26 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     if (string.IsNullOrWhiteSpace(code) ||
                         string.IsNullOrWhiteSpace(desc))
                     {
-                        throw new Exception($"Empty Minor at row {row}");
+                        throw new BulkUploadRowException($"Empty Minor at row {row}");
                     }
 
                     // 🔹 Format validation
                     if (code.Length != 3 || !code.All(char.IsDigit))
                     {
-                        throw new Exception(
+                        throw new BulkUploadRowException(
                             $"Invalid Minor at row {row}. Must be 3 digit numeric.");
                     }
 
                     // 🔹 Excel duplicate check
                     if (!excelDuplicateCheck.Add(code))
                     {
-                        throw new Exception($"Duplicate Minor in Excel: {code}");
+                        throw new BulkUploadRowException($"Duplicate Minor in Excel: {code}");
                     }
 
                     // 🔹 DB duplicate check
                     if (existingSet.Contains(code))
                     {
-                        throw new Exception($"Minor already exists: {code}");
+                        throw new BulkUploadRowException($"Minor already exists: {code}");
                     }
 
                     list.Add(new MinorHead
@@ -386,7 +530,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 for (int i = 0; i < list.Count; i += batchSize)
                 {
+
+                    _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.MinorHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -404,17 +551,30 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{list.Count} Minor records uploaded successfully"
                 };
             }
+            catch (BulkUploadRowException ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+
+                _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
+                // App-authored sheet validation message (row, field); never exception text from the database.
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = ex.Message
+                };
+            }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
 
                 _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = ex.Message
-                };
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
         // ============================================================
@@ -461,14 +621,14 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         string.IsNullOrWhiteSpace(subMinor) ||
                         string.IsNullOrWhiteSpace(desc))
                     {
-                        throw new Exception($"Empty SubMinor at row {row}");
+                        throw new BulkUploadRowException($"Empty SubMinor at row {row}");
                     }
 
                     // 🔹 Format validation
                     if (minor.Length != 3 || !minor.All(char.IsDigit) ||
                         subMinor.Length != 2 || !subMinor.All(char.IsDigit))
                     {
-                        throw new Exception(
+                        throw new BulkUploadRowException(
                             $"Invalid format at row {row}. Minor must be 3 digit & SubMinor must be 2 digit.");
                     }
 
@@ -477,19 +637,19 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     // 🔹 Excel duplicate check
                     if (!excelDuplicateCheck.Add(compositeKey))
                     {
-                        throw new Exception($"Duplicate SubMinor in Excel: {minor}-{subMinor}");
+                        throw new BulkUploadRowException($"Duplicate SubMinor in Excel: {minor}-{subMinor}");
                     }
 
                     // 🔹 FK check
                     if (!minorSet.Contains(minor))
                     {
-                        throw new Exception($"Minor does not exist: {minor}");
+                        throw new BulkUploadRowException($"Minor does not exist: {minor}");
                     }
 
                     // 🔹 DB duplicate check
                     if (subMinorSet.Contains(compositeKey))
                     {
-                        throw new Exception($"SubMinor already exists: {minor}-{subMinor}");
+                        throw new BulkUploadRowException($"SubMinor already exists: {minor}-{subMinor}");
                     }
 
                     list.Add(new SubMinorHead
@@ -507,7 +667,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 for (int i = 0; i < list.Count; i += batchSize)
                 {
+
+                    _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.SubMinorHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -525,17 +688,30 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{list.Count} SubMinor records uploaded successfully"
                 };
             }
+            catch (BulkUploadRowException ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+
+                _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
+                // App-authored sheet validation message (row, field); never exception text from the database.
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = ex.Message
+                };
+            }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
 
                 _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = ex.Message
-                };
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -573,26 +749,26 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     if (string.IsNullOrWhiteSpace(code) ||
                         string.IsNullOrWhiteSpace(desc))
                     {
-                        throw new Exception($"Empty Detail at row {row}");
+                        throw new BulkUploadRowException($"Empty Detail at row {row}");
                     }
 
                     // 🔹 Format validation
                     if (code.Length != 3 || !code.All(char.IsDigit))
                     {
-                        throw new Exception(
+                        throw new BulkUploadRowException(
                             $"Invalid Detail code at row {row}. Must be 3 digit numeric.");
                     }
 
                     // 🔹 Excel duplicate check
                     if (!excelDuplicateCheck.Add(code))
                     {
-                        throw new Exception($"Duplicate Detail in Excel: {code}");
+                        throw new BulkUploadRowException($"Duplicate Detail in Excel: {code}");
                     }
 
                     // 🔹 DB duplicate check
                     if (existingSet.Contains(code))
                     {
-                        throw new Exception($"Detail already exists: {code}");
+                        throw new BulkUploadRowException($"Detail already exists: {code}");
                     }
 
                     list.Add(new DetailHead
@@ -609,7 +785,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 for (int i = 0; i < list.Count; i += batchSize)
                 {
+
+                    _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.DetailHeads.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -627,17 +806,30 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{list.Count} Detail records uploaded successfully"
                 };
             }
+            catch (BulkUploadRowException ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+
+                _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
+                // App-authored sheet validation message (row, field); never exception text from the database.
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = ex.Message
+                };
+            }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
 
                 _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = ex.Message
-                };
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -675,28 +867,28 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     if (string.IsNullOrWhiteSpace(code) ||
                         string.IsNullOrWhiteSpace(desc))
                     {
-                        throw new Exception(
+                        throw new BulkUploadRowException(
                             $"Object code or description is empty at row {row}");
                     }
 
                     // 🔹 Format validation
                     if (code.Length != 3 || !code.All(char.IsDigit))
                     {
-                        throw new Exception(
+                        throw new BulkUploadRowException(
                             $"Invalid Object code at row {row}. Must be 3 digit numeric.");
                     }
 
                     // 🔹 Excel duplicate check
                     if (!excelDuplicateCheck.Add(code))
                     {
-                        throw new Exception(
+                        throw new BulkUploadRowException(
                             $"Duplicate Object code in Excel: {code}");
                     }
 
                     // 🔹 DB duplicate check
                     if (existingSet.Contains(code))
                     {
-                        throw new Exception(
+                        throw new BulkUploadRowException(
                             $"Object already exists in database: {code}");
                     }
 
@@ -714,7 +906,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 for (int i = 0; i < list.Count; i += batchSize)
                 {
+
+                    _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.ObjectClassifications.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -732,17 +927,30 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{list.Count} Object records uploaded successfully"
                 };
             }
+            catch (BulkUploadRowException ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+
+                _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
+                // App-authored sheet validation message (row, field); never exception text from the database.
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = ex.Message
+                };
+            }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
 
                 _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = ex.Message
-                };
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -754,8 +962,12 @@ namespace BBMB.BudgetService.Features.BulkUploads
     int rowCount,
     CancellationToken cancellationToken)
         {
+            // T-07 carries fn_require_actor from P1 (DB-28): the action scope REPLACES the arm's own
+            // transaction (a second BeginTransactionAsync would throw); every batch and the commit stay in it.
+            if (await _actorSource.GetAsync(cancellationToken) is null)
+                return BudgetResponses.Fail(BudgetMessages.M20);
             await using var transaction =
-                await _context.Database.BeginTransactionAsync(cancellationToken);
+                await _scope.BeginAsync("BULK_UPLOAD:headofaccountmaster", ct: cancellationToken);
 
             _context.ChangeTracker.AutoDetectChangesEnabled = false;
 
@@ -816,16 +1028,16 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     if (string.IsNullOrWhiteSpace(fullCode) ||
                         string.IsNullOrWhiteSpace(desc))
-                        throw new Exception($"Empty HeadOfAccount at row {row}");
+                        throw new BulkUploadRowException($"Empty HeadOfAccount at row {row}");
 
                     if (fullCode.Length != 17 || !fullCode.All(char.IsDigit))
-                        throw new Exception($"Invalid 17 digit code at row {row}");
+                        throw new BulkUploadRowException($"Invalid 17 digit code at row {row}");
 
                     if (!excelDuplicateCheck.Add(fullCode))
-                        throw new Exception($"Duplicate in Excel: {fullCode}");
+                        throw new BulkUploadRowException($"Duplicate in Excel: {fullCode}");
 
                     if (existingHoaSet.Contains(fullCode))
-                        throw new Exception($"HeadOfAccount already exists: {fullCode}");
+                        throw new BulkUploadRowException($"HeadOfAccount already exists: {fullCode}");
 
                     var major = fullCode.Substring(0, 4);
                     var subMajor = fullCode.Substring(4, 2);
@@ -835,22 +1047,22 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     var obj = fullCode.Substring(14, 3);
 
                     if (!majors.Contains(major))
-                        throw new Exception($"Major missing: {major}");
+                        throw new BulkUploadRowException($"Major missing: {major}");
 
                     if (!subMajors.Contains((major, subMajor)))
-                        throw new Exception($"SubMajor missing: {major}{subMajor}");
+                        throw new BulkUploadRowException($"SubMajor missing: {major}{subMajor}");
 
                     if (!minors.Contains(minor))
-                        throw new Exception($"Minor missing: {minor}");
+                        throw new BulkUploadRowException($"Minor missing: {minor}");
 
                     if (!subMinors.Contains((minor, subMinor)))
-                        throw new Exception($"SubMinor missing: {minor}{subMinor}");
+                        throw new BulkUploadRowException($"SubMinor missing: {minor}{subMinor}");
 
                     if (!details.Contains(detail))
-                        throw new Exception($"Detail missing: {detail}");
+                        throw new BulkUploadRowException($"Detail missing: {detail}");
 
                     if (!objects.Contains(obj))
-                        throw new Exception($"Object missing: {obj}");
+                        throw new BulkUploadRowException($"Object missing: {obj}");
 
                     list.Add(new HeadOfAccount
                     {
@@ -861,7 +1073,9 @@ namespace BBMB.BudgetService.Features.BulkUploads
                         DetailAccCode = detail,
                         ObjectAccCode = obj,
                         HeadDesc = desc,
-                        PartyEmpRequired = "N",
+                        // L-04 path (design §9.3): legacy origin; the flag by the BUD-267 rule.
+                        Origin = HeadOfAccountOrigin.Legacy,
+                        PartyEmpRequired = HeadOfAccountOrigin.PartyEmpRequiredFor(major),
                         PartyLedgToPrint = "N",
                         TdsDeducted = "N",
                         AdvanceHead = "N",
@@ -877,7 +1091,10 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                 for (int i = 0; i < list.Count; i += batchSize)
                 {
+
+                    _failingRow = i + 2; // first sheet row of this batch (rows map 1:1 from row 2)
                     var batch = list.Skip(i).Take(batchSize).ToList();
+                    _currentBatch = batch;
 
                     await _context.HeadOfAccounts.AddRangeAsync(batch, cancellationToken);
                     await _context.SaveChangesAsync(cancellationToken);
@@ -895,17 +1112,30 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{list.Count} HeadOfAccount records uploaded successfully"
                 };
             }
+            catch (BulkUploadRowException ex)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+
+                _context.ChangeTracker.AutoDetectChangesEnabled = true;
+
+                // App-authored sheet validation message (row, field); never exception text from the database.
+                return new Response
+                {
+                    IsSucced = false,
+                    Message = ex.Message
+                };
+            }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(cancellationToken);
 
                 _context.ChangeTracker.AutoDetectChangesEnabled = true;
 
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = ex.Message
-                };
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -958,23 +1188,23 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     // 🔹 CECode validation
                     if (ceCodeValue == null || !int.TryParse(ceCodeValue.ToString(), out int ceCode))
-                        throw new Exception($"Invalid CECode at row {row}");
+                        throw new BulkUploadRowException($"Invalid CECode at row {row}");
 
                     // 🔹 Required validation
                     if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(projectCode))
-                        throw new Exception($"Required fields missing at row {row}");
+                        throw new BulkUploadRowException($"Required fields missing at row {row}");
 
                     // 🔹 Excel duplicate
                     if (!duplicateExcelCheck.Add(ceCode))
-                        throw new Exception($"Duplicate CECode in Excel: {ceCode}");
+                        throw new BulkUploadRowException($"Duplicate CECode in Excel: {ceCode}");
 
                     // 🔹 DB duplicate
                     if (existingSet.Contains(ceCode))
-                        throw new Exception($"CECode already exists: {ceCode}");
+                        throw new BulkUploadRowException($"CECode already exists: {ceCode}");
 
                     // 🔹 FK validation
                     if (!projectSet.Contains(projectCode))
-                        throw new Exception($"ProjectCode not found: {projectCode}");
+                        throw new BulkUploadRowException($"ProjectCode not found: {projectCode}");
 
                     // 🔥 WRITE ROW
                     writer.StartRow();
@@ -1000,13 +1230,22 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{successCount} CEManagement records uploaded successfully."
                 };
             }
-            catch (Exception ex)
+            catch (BulkUploadRowException ex)
             {
+                // App-authored sheet validation message (row, field); never exception text from the database.
                 return new Response
                 {
                     IsSucced = false,
                     Message = ex.Message
                 };
+            }
+            catch (Exception ex)
+            {
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -1060,27 +1299,27 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     // 🔹 CECode validation
                     if (ceCodeValue == null || !int.TryParse(ceCodeValue.ToString(), out int ceCode))
-                        throw new Exception($"Invalid CECode at row {row}");
+                        throw new BulkUploadRowException($"Invalid CECode at row {row}");
 
                     // 🔹 CRCode validation
                     if (crCodeValue == null || !int.TryParse(crCodeValue.ToString(), out int crCode))
-                        throw new Exception($"Invalid CRCode at row {row}");
+                        throw new BulkUploadRowException($"Invalid CRCode at row {row}");
 
                     // 🔹 Required validation
                     if (string.IsNullOrWhiteSpace(name))
-                        throw new Exception($"Name is required at row {row}");
+                        throw new BulkUploadRowException($"Name is required at row {row}");
 
                     // 🔹 Excel duplicate
                     if (!duplicateExcelCheck.Add(crCode))
-                        throw new Exception($"Duplicate CRCode in Excel: {crCode}");
+                        throw new BulkUploadRowException($"Duplicate CRCode in Excel: {crCode}");
 
                     // 🔹 DB duplicate
                     if (existingCRSet.Contains(crCode))
-                        throw new Exception($"CRCode already exists: {crCode}");
+                        throw new BulkUploadRowException($"CRCode already exists: {crCode}");
 
                     // 🔹 FK mapping (CECode → CEId)
                     if (!ceDictionary.TryGetValue(ceCode, out int ceId))
-                        throw new Exception($"CECode not found: {ceCode}");
+                        throw new BulkUploadRowException($"CECode not found: {ceCode}");
 
                     // 🔥 WRITE ROW (FASTEST)
                     writer.StartRow();
@@ -1106,13 +1345,22 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{successCount} CRManagement records uploaded successfully (BULK)"
                 };
             }
-            catch (Exception ex)
+            catch (BulkUploadRowException ex)
             {
+                // App-authored sheet validation message (row, field); never exception text from the database.
                 return new Response
                 {
                     IsSucced = false,
                     Message = ex.Message
                 };
+            }
+            catch (Exception ex)
+            {
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -1166,30 +1414,30 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     // 🔹 Validate CRCode
                     if (crCodeValue == null || !int.TryParse(crCodeValue.ToString(), out int crCode))
-                        throw new Exception($"Invalid CRCode at row {row}");
+                        throw new BulkUploadRowException($"Invalid CRCode at row {row}");
 
                     // 🔹 Map CRId FIRST (⚠️ important)
                     if (!crDictionary.TryGetValue(crCode, out int crId))
-                        throw new Exception($"CRCode not found: {crCode} at row {row}");
+                        throw new BulkUploadRowException($"CRCode not found: {crCode} at row {row}");
 
                     // 🔹 Validate CRSectionCode
                     if (crSectionCodeValue == null || !int.TryParse(crSectionCodeValue.ToString(), out int crSectionCode))
-                        throw new Exception($"Invalid CRSectionCode at row {row}");
+                        throw new BulkUploadRowException($"Invalid CRSectionCode at row {row}");
 
                     // 🔹 Required validation
                     if (string.IsNullOrWhiteSpace(name))
-                        throw new Exception($"Name is required at row {row}");
+                        throw new BulkUploadRowException($"Name is required at row {row}");
 
                     // 🔹 Create composite key
                     var key = (crId, crSectionCode);
 
                     // 🔹 Excel duplicate check
                     if (!duplicateExcelCheck.Add(key))
-                        throw new Exception($"Duplicate CRId + CRSectionCode in Excel: {crId}-{crSectionCode} (row {row})");
+                        throw new BulkUploadRowException($"Duplicate CRId + CRSectionCode in Excel: {crId}-{crSectionCode} (row {row})");
 
                     // 🔹 DB duplicate check
                     if (existingCRSectionSet.Contains(key))
-                        throw new Exception($"CRSection already exists for CRId: {crId} and Code: {crSectionCode} (row {row})");
+                        throw new BulkUploadRowException($"CRSection already exists for CRId: {crId} and Code: {crSectionCode} (row {row})");
 
                     // 🔥 WRITE ROW
                     writer.StartRow();
@@ -1214,13 +1462,22 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{successCount} CRSection records uploaded successfully (BULK)"
                 };
             }
-            catch (Exception ex)
+            catch (BulkUploadRowException ex)
             {
+                // App-authored sheet validation message (row, field); never exception text from the database.
                 return new Response
                 {
                     IsSucced = false,
                     Message = ex.Message
                 };
+            }
+            catch (Exception ex)
+            {
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
 
@@ -1301,25 +1558,25 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     int? parent = string.IsNullOrWhiteSpace(parentText) ? null : int.Parse(parentText);
 
                     if (!excelDuplicateCheck.Add(divisionCode))
-                        throw new Exception($"Duplicate DivisionCode {divisionCode}");
+                        throw new BulkUploadRowException($"Duplicate DivisionCode {divisionCode}");
 
                     if (divisionSet.Contains(divisionCode))
-                        throw new Exception($"DivisionCode exists {divisionCode}");
+                        throw new BulkUploadRowException($"DivisionCode exists {divisionCode}");
 
                     if (!crDict.TryGetValue(crCode, out int crId))
-                        throw new Exception($"CRCode not found {crCode}");
+                        throw new BulkUploadRowException($"CRCode not found {crCode}");
 
                     if (!string.IsNullOrWhiteSpace(major) && !majorSet.Contains(major))
-                        throw new Exception($"MajorAccCode not found {major}");
+                        throw new BulkUploadRowException($"MajorAccCode not found {major}");
 
                     if (!string.IsNullOrWhiteSpace(acc) && !accOfficeSet.Contains(acc))
-                        throw new Exception($"AccOffice not found {acc}");
+                        throw new BulkUploadRowException($"AccOffice not found {acc}");
 
                     if (!string.IsNullOrWhiteSpace(unit) && !unitSet.Contains(unit))
-                        throw new Exception($"UnitCode not found {unit}");
+                        throw new BulkUploadRowException($"UnitCode not found {unit}");
 
                     if (!string.IsNullOrWhiteSpace(region) && !regionSet.Contains(region))
-                        throw new Exception($"RegionCode not found {region}");
+                        throw new BulkUploadRowException($"RegionCode not found {region}");
 
                     // 🔥 WRITE
                     writer.StartRow();
@@ -1352,13 +1609,22 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{successCount} Division uploaded successfully"
                 };
             }
-            catch (Exception ex)
+            catch (BulkUploadRowException ex)
             {
+                // App-authored sheet validation message (row, field); never exception text from the database.
                 return new Response
                 {
                     IsSucced = false,
                     Message = ex.Message
                 };
+            }
+            catch (Exception ex)
+            {
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
         private async Task<Response> UploadDivSectionMaster(
@@ -1407,30 +1673,30 @@ namespace BBMB.BudgetService.Features.BulkUploads
 
                     // 🔹 Validate DivisionCode
                     if (divisionCodeValue == null || !int.TryParse(divisionCodeValue.ToString(), out int divisionCode))
-                        throw new Exception($"Invalid DivisionCode at row {row}");
+                        throw new BulkUploadRowException($"Invalid DivisionCode at row {row}");
 
                     // 🔹 Map DivisionId FIRST
                     if (!divisionDict.TryGetValue(divisionCode, out int divisionId))
-                        throw new Exception($"DivisionCode not found: {divisionCode} at row {row}");
+                        throw new BulkUploadRowException($"DivisionCode not found: {divisionCode} at row {row}");
 
                     // 🔹 Validate DivSectionCode
                     if (divSectionCodeValue == null || !int.TryParse(divSectionCodeValue.ToString(), out int divSectionCode))
-                        throw new Exception($"Invalid DivSectionCode at row {row}");
+                        throw new BulkUploadRowException($"Invalid DivSectionCode at row {row}");
 
                     // 🔹 Required validation
                     if (string.IsNullOrWhiteSpace(name))
-                        throw new Exception($"Name is required at row {row}");
+                        throw new BulkUploadRowException($"Name is required at row {row}");
 
                     // 🔹 Composite key
                     var key = (divisionId, divSectionCode);
 
                     // 🔹 Excel duplicate check
                     if (!duplicateExcelCheck.Add(key))
-                        throw new Exception($"Duplicate DivisionId + DivSectionCode in Excel: {divisionId}-{divSectionCode} (row {row})");
+                        throw new BulkUploadRowException($"Duplicate DivisionId + DivSectionCode in Excel: {divisionId}-{divSectionCode} (row {row})");
 
                     // 🔹 DB duplicate check
                     if (existingSet.Contains(key))
-                        throw new Exception($"DivSection already exists for DivisionId: {divisionId} and Code: {divSectionCode} (row {row})");
+                        throw new BulkUploadRowException($"DivSection already exists for DivisionId: {divisionId} and Code: {divSectionCode} (row {row})");
 
                     // 🔥 WRITE ROW
                     writer.StartRow();
@@ -1455,13 +1721,22 @@ namespace BBMB.BudgetService.Features.BulkUploads
                     Message = $"{successCount} DivSection records uploaded successfully (BULK)"
                 };
             }
-            catch (Exception ex)
+            catch (BulkUploadRowException ex)
             {
+                // App-authored sheet validation message (row, field); never exception text from the database.
                 return new Response
                 {
                     IsSucced = false,
                     Message = ex.Message
                 };
+            }
+            catch (Exception ex)
+            {
+                // BUD-012, BUD-261: database text never reaches the response (design §9.3).
+                var mapped = MapDatabaseFailure(ex);
+                if (mapped is null)
+                    throw;
+                return mapped;
             }
         }
         //    private async Task<Response> UploadDivisionMaster(
@@ -1556,62 +1831,62 @@ namespace BBMB.BudgetService.Features.BulkUploads
         //                    string.IsNullOrWhiteSpace(divSectionText) ||
         //                    string.IsNullOrWhiteSpace(divisionDesc))
         //                {
-        //                    throw new Exception($"Required fields missing at row {row}");
+        //                    throw new BulkUploadRowException($"Required fields missing at row {row}");
         //                }
 
         //                if (!int.TryParse(divisionCodeText, out var divisionCode))
-        //                    throw new Exception($"Invalid DivisionCode '{divisionCodeText}' at row {row}");
+        //                    throw new BulkUploadRowException($"Invalid DivisionCode '{divisionCodeText}' at row {row}");
 
         //                if (!int.TryParse(divSectionText, out var divSection))
-        //                    throw new Exception($"Invalid DivSection '{divSectionText}' at row {row}");
+        //                    throw new BulkUploadRowException($"Invalid DivSection '{divSectionText}' at row {row}");
 
         //                if (ceCodeValue == null || !int.TryParse(ceCodeValue.ToString(), out var ceCode))
-        //                    throw new Exception($"Invalid CECode at row {row}");
+        //                    throw new BulkUploadRowException($"Invalid CECode at row {row}");
 
         //                if (crCodeValue == null || !int.TryParse(crCodeValue.ToString(), out var crCode))
-        //                    throw new Exception($"Invalid CRCode at row {row}");
+        //                    throw new BulkUploadRowException($"Invalid CRCode at row {row}");
 
         //                int? parentDivision = null;
         //                if (!string.IsNullOrWhiteSpace(parentDivisionText))
         //                {
         //                    if (!int.TryParse(parentDivisionText, out var parent))
-        //                        throw new Exception($"Invalid ParentDivisionCode '{parentDivisionText}' at row {row}");
+        //                        throw new BulkUploadRowException($"Invalid ParentDivisionCode '{parentDivisionText}' at row {row}");
 
         //                    parentDivision = parent;
         //                }
 
         //                // 🔹 Excel duplicate
         //                if (!excelDuplicateCheck.Add(divisionCode))
-        //                    throw new Exception($"Duplicate DivisionCode '{divisionCode}' in Excel (row {row})");
+        //                    throw new BulkUploadRowException($"Duplicate DivisionCode '{divisionCode}' in Excel (row {row})");
 
         //                // 🔹 DB duplicate
         //                if (divisionSet.Contains(divisionCode))
-        //                    throw new Exception($"DivisionCode '{divisionCode}' already exists in database (row {row})");
+        //                    throw new BulkUploadRowException($"DivisionCode '{divisionCode}' already exists in database (row {row})");
 
         //                // 🔹 FK validations
         //                if (!ceSet.Contains(ceCode))
-        //                    throw new Exception($"CECode '{ceCode}' not found (row {row})");
+        //                    throw new BulkUploadRowException($"CECode '{ceCode}' not found (row {row})");
 
         //                if (!crSet.Contains(crCode))
-        //                    throw new Exception($"CRCode '{crCode}' not found (row {row})");
+        //                    throw new BulkUploadRowException($"CRCode '{crCode}' not found (row {row})");
 
         //                if (!string.IsNullOrWhiteSpace(majorAccCode) && !majorSet.Contains(majorAccCode))
-        //                    throw new Exception($"MajorAccCode '{majorAccCode}' not found (row {row})");
+        //                    throw new BulkUploadRowException($"MajorAccCode '{majorAccCode}' not found (row {row})");
 
         //                if (!string.IsNullOrWhiteSpace(roCode) && !roSet.Contains(roCode))
-        //                    throw new Exception($"RoCode '{roCode}' not found (row {row})");
+        //                    throw new BulkUploadRowException($"RoCode '{roCode}' not found (row {row})");
 
         //                if (!string.IsNullOrWhiteSpace(accOffice) && !accOfficeSet.Contains(accOffice))
-        //                    throw new Exception($"AccOffice '{accOffice}' not found (row {row})");
+        //                    throw new BulkUploadRowException($"AccOffice '{accOffice}' not found (row {row})");
 
         //                if (!string.IsNullOrWhiteSpace(unitCode) && !unitSet.Contains(unitCode))
-        //                    throw new Exception($"UnitCode '{unitCode}' not found (row {row})");
+        //                    throw new BulkUploadRowException($"UnitCode '{unitCode}' not found (row {row})");
 
         //                if (!string.IsNullOrWhiteSpace(poolCode) && !poolSet.Contains(poolCode))
-        //                    throw new Exception($"PoolCode '{poolCode}' not found (row {row})");
+        //                    throw new BulkUploadRowException($"PoolCode '{poolCode}' not found (row {row})");
 
         //                if (!string.IsNullOrWhiteSpace(regionCode) && !regionSet.Contains(regionCode))
-        //                    throw new Exception($"RegionCode '{regionCode}' not found (row {row})");
+        //                    throw new BulkUploadRowException($"RegionCode '{regionCode}' not found (row {row})");
 
         //                list.Add(new Division
         //                {
@@ -1668,231 +1943,11 @@ namespace BBMB.BudgetService.Features.BulkUploads
         //            };
         //        }
         //    }
-
-        // ============================================================
-        // WORK MASTER
-        // ============================================================
-        private async Task<Response> UploadWorkMaster(
-    ExcelWorksheet worksheet,
-    int rowCount,
-    CancellationToken cancellationToken)
-        {
-            await using var transaction =
-                await _context.Database.BeginTransactionAsync(cancellationToken);
-
-            _context.ChangeTracker.AutoDetectChangesEnabled = false;
-
-            try
-            {
-                var list = new List<Work>();
-                var duplicateExcelCheck = new HashSet<string>();
-
-                // 🔥 PRELOAD DATA (ONE TIME DB HITS)
-
-                var workSet = new HashSet<int>(
-                    await _context.Set<Work>()
-                        .AsNoTracking()
-                        .Select(x => x.WorkCode)
-                        .ToListAsync(cancellationToken));
-
-                var divisionSet = new HashSet<int>(
-                    await _context.Set<Division>()
-                        .AsNoTracking()
-                        .Select(x => x.DivisionCode)
-                        .ToListAsync(cancellationToken));
-
-                var majorSet = new HashSet<string>(
-                    await _context.Set<MajorHead>()
-                        .AsNoTracking()
-                        .Select(x => x.MajorAccCode)
-                        .ToListAsync(cancellationToken));
-
-                var subMajorSet = new HashSet<(string, string)>(
-                    (await _context.Set<SubMajorHead>()
-                        .AsNoTracking()
-                        .Select(x => new { x.MajorAccCode, x.SubMajorAccCode })
-                        .ToListAsync(cancellationToken))
-                    .Select(x => (x.MajorAccCode, x.SubMajorAccCode)));
-
-                var minorSet = new HashSet<string>(
-                    await _context.Set<MinorHead>()
-                        .AsNoTracking()
-                        .Select(x => x.MinorAccCode)
-                        .ToListAsync(cancellationToken));
-
-                var subMinorSet = new HashSet<(string, string)>(
-                    (await _context.Set<SubMinorHead>()
-                        .AsNoTracking()
-                        .Select(x => new { x.MinorAccCode, x.SubMinorAccCode })
-                        .ToListAsync(cancellationToken))
-                    .Select(x => (x.MinorAccCode, x.SubMinorAccCode)));
-
-                var detailSet = new HashSet<string>(
-                    await _context.Set<DetailHead>()
-                        .AsNoTracking()
-                        .Select(x => x.DetailAccCode)
-                        .ToListAsync(cancellationToken));
-
-                var objectSet = new HashSet<string>(
-                    await _context.Set<ObjectClassification>()
-                        .AsNoTracking()
-                        .Select(x => x.ObjectAccCode)
-                        .ToListAsync(cancellationToken));
-
-                var designationSet = new HashSet<string>(
-                    await _context.Set<Designation>()
-                        .AsNoTracking()
-                        .Select(x => x.DesignationCode)
-                        .ToListAsync(cancellationToken));
-
-                for (int row = 2; row <= rowCount; row++)
-                {
-                    var workCode = worksheet.Cells[row, 1].Text?.Trim();
-                    var divisionText = worksheet.Cells[row, 2].Text?.Trim();
-                    var divSectionText = worksheet.Cells[row, 3].Text?.Trim();
-                    var majorCode = worksheet.Cells[row, 4].Text?.Trim();
-                    var subMajorCode = worksheet.Cells[row, 5].Text?.Trim();
-                    var minorCode = worksheet.Cells[row, 6].Text?.Trim();
-                    var subMinorCode = worksheet.Cells[row, 7].Text?.Trim();
-                    var detailCode = worksheet.Cells[row, 8].Text?.Trim();
-                    var objectCode = worksheet.Cells[row, 9].Text?.Trim();
-                    var finYrStart = worksheet.Cells[row, 10].Text?.Trim();
-                    var finYrEnd = worksheet.Cells[row, 11].Text?.Trim();
-                    var sanctionNo = worksheet.Cells[row, 12].Text?.Trim();
-                    var sanctionDate = worksheet.Cells[row, 13].Text?.Trim();
-                    var designationCode = worksheet.Cells[row, 14].Text?.Trim();
-                    var estimatedCostText = worksheet.Cells[row, 15].Text?.Trim();
-                    var status = worksheet.Cells[row, 16].Text?.Trim();
-                    var workDesc = worksheet.Cells[row, 17].Text?.Trim();
-                    var nature = worksheet.Cells[row, 18].Text?.Trim();
-                    var refWorkCode = worksheet.Cells[row, 19].Text?.Trim();
-
-                    // Required validation
-                    if (string.IsNullOrWhiteSpace(workCode) ||
-                        string.IsNullOrWhiteSpace(divisionText) ||
-                        string.IsNullOrWhiteSpace(divSectionText) ||
-                        string.IsNullOrWhiteSpace(majorCode) ||
-                        string.IsNullOrWhiteSpace(subMajorCode) ||
-                        string.IsNullOrWhiteSpace(minorCode) ||
-                        string.IsNullOrWhiteSpace(subMinorCode) ||
-                        string.IsNullOrWhiteSpace(detailCode) ||
-                        string.IsNullOrWhiteSpace(objectCode) ||
-                        string.IsNullOrWhiteSpace(workDesc))
-                        throw new Exception($"Required fields missing at row {row}");
-
-                    if (!int.TryParse(divisionText, out int divisionCode))
-                        throw new Exception($"Invalid DivisionCode at row {row}");
-
-                    if (!int.TryParse(divSectionText, out int divSection))
-                        throw new Exception($"Invalid DivSection at row {row}");
-
-                    decimal? estimatedCost = null;
-                    if (!string.IsNullOrWhiteSpace(estimatedCostText))
-                    {
-                        if (!decimal.TryParse(estimatedCostText, out decimal cost))
-                            throw new Exception($"Invalid EstimatedCost at row {row}");
-
-                        estimatedCost = cost;
-                    }
-
-                    if (!duplicateExcelCheck.Add(workCode))
-                        throw new Exception($"Duplicate WorkCode in Excel: {workCode}");
-
-                    if (workSet.Contains(Convert.ToInt32(workCode)))
-                        throw new Exception($"WorkCode already exists: {workCode}");
-
-                    // FK validations
-                    if (!divisionSet.Contains(divisionCode))
-                        throw new Exception($"Invalid DivisionCode at row {row}");
-
-                    if (!majorSet.Contains(majorCode))
-                        throw new Exception($"Invalid MajorAccCode at row {row}");
-
-                    if (!subMajorSet.Contains((majorCode, subMajorCode)))
-                        throw new Exception($"Invalid SubMajorAccCode at row {row}");
-
-                    if (!minorSet.Contains(minorCode))
-                        throw new Exception($"Invalid MinorAccCode at row {row}");
-
-                    if (!subMinorSet.Contains((minorCode, subMinorCode)))
-                        throw new Exception($"Invalid SubMinorAccCode at row {row}");
-
-                    if (!detailSet.Contains(detailCode))
-                        throw new Exception($"Invalid DetailAccCode at row {row}");
-
-                    if (!objectSet.Contains(objectCode))
-                        throw new Exception($"Invalid ObjectAccCode at row {row}");
-
-                    if (!string.IsNullOrWhiteSpace(designationCode) &&
-                        !designationSet.Contains(designationCode))
-                        throw new Exception($"Invalid DesignationCode at row {row}");
-
-                    if (!string.IsNullOrWhiteSpace(refWorkCode) &&
-                        !workSet.Contains(Convert.ToInt32(refWorkCode)))
-                        throw new Exception($"Invalid RefWorkCode at row {row}");
-
-                    list.Add(new Work
-                    {
-                        //WorkCode = workCode,
-                        //DivisionCode = divisionCode,
-                        //DivSection = divSection,
-                        MajorAccCode = majorCode,
-                        SubMajorAccCode = subMajorCode,
-                        MinorAccCode = minorCode,
-                        SubMinorAccCode = subMinorCode,
-                        DetailAccCode = detailCode,
-                        ObjectAccCode = objectCode,
-                        FinYrStart = finYrStart,
-                        FinYrEnd = finYrEnd,
-                        SanctionNo = sanctionNo,
-                        SanctionDate = sanctionDate,
-                        DesignationCode = designationCode,
-                        EstimatedCost = estimatedCost,
-                        Status = string.IsNullOrWhiteSpace(status) ? "P" : status,
-                        WorkDesc = workDesc,
-                        Nature = nature,
-                        RefWorkCode = refWorkCode,
-                        UserCode = "SYSTEM"
-                    });
-                }
-
-                // 🔥 BATCH INSERT
-                const int batchSize = 5000;
-
-                for (int i = 0; i < list.Count; i += batchSize)
-                {
-                    var batch = list.Skip(i).Take(batchSize).ToList();
-
-                    await _context.Set<Work>().AddRangeAsync(batch, cancellationToken);
-                    await _context.SaveChangesAsync(cancellationToken);
-
-                    _context.ChangeTracker.Clear();
-                }
-
-                await transaction.CommitAsync(cancellationToken);
-
-                _context.ChangeTracker.AutoDetectChangesEnabled = true;
-
-                return new Response
-                {
-                    IsSucced = true,
-                    Message = $"{list.Count} Work records uploaded successfully"
-                };
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-
-                _context.ChangeTracker.AutoDetectChangesEnabled = true;
-
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = ex.Message
-                };
-            }
-        }
-
-       
     }
+
+    /// <summary>
+    /// A sheet validation failure the handler itself raises (row, field, value). Its message is written by the
+    /// handler and safe to return; any other exception's text is never returned (design §9.3).
+    /// </summary>
+    public sealed class BulkUploadRowException(string message) : Exception(message);
 }

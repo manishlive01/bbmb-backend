@@ -13,6 +13,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.GetBySubMinorHead
                 var result = await sender.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetDetailHeadsBySubMinorHead")
             .WithTags("DetailHeads")
             .Produces(200);

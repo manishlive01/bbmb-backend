@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.Estimates.GetByFinancialYear
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetEstimatesByFinancialYear")
             .WithTags("Estimates")
             .Produces<PagedResponse<GetEstimateListResponseDto>>(StatusCodes.Status200OK);

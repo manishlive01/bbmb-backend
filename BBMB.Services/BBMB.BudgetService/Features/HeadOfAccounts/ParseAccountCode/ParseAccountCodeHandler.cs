@@ -46,6 +46,18 @@ namespace BBMB.BudgetService.Features.HeadOfAccounts.ParseAccountCode
             var objectClassification = await _context.ObjectClassifications.FirstOrDefaultAsync(o => o.ObjectAccCode == response.ObjectAccCode, ct);
             response.ObjectClassificationDescription = objectClassification?.ObjectAccDesc;
 
+            // Design §9.3: the T-07 code the six segments form, where it exists in the Manual (null otherwise).
+            var code = await _context.HeadOfAccounts.AsNoTracking()
+                .Where(h => h.MajorAccCode == response.MajorAccCode && h.SubMajorAccCode == response.SubMajorAccCode &&
+                            h.MinorAccCode == response.MinorAccCode && h.SubMinorAccCode == response.SubMinorAccCode &&
+                            h.DetailAccCode == response.DetailAccCode && h.ObjectAccCode == response.ObjectAccCode)
+                .Select(h => new { h.AccountCodeId, h.CompleteCode, h.NotForUse, h.Origin })
+                .FirstOrDefaultAsync(ct);
+            response.AccountCodeId = code?.AccountCodeId;
+            response.CompleteCode = code?.CompleteCode;
+            response.NotForUse = code?.NotForUse;
+            response.Origin = code?.Origin;
+
             return response;
         }
     }

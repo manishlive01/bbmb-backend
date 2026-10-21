@@ -1,0 +1,57 @@
+using BBMB.BudgetService.Features.BudgetProcess.Proposals.Dtos;
+using BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities;
+using BBMB.BudgetService.Shared.ResponseDTOs;
+
+namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
+{
+    /// <summary>
+    /// Hooks a transition slice adds to the common move: a check run inside the action scope before anything is
+    /// written (the line rule set of Submit / Forward / Finalise), and work done after the movement row is
+    /// written (stamping returned observations with the movement id).
+    /// </summary>
+    public sealed class TransitionHooks
+    {
+        /// <summary>Returns a failed response to refuse the move (nothing is written), or null to proceed.</summary>
+        public Func<BudgetProposal, CancellationToken, Task<Response?>>? BeforeMove { get; init; }
+
+        /// <summary>Runs after the movement and the proposal update are saved, inside the same transaction.</summary>
+        public Func<BudgetProposal, ProposalMovement, CancellationToken, Task>? AfterMove { get; init; }
+
+        public static readonly TransitionHooks None = new();
+    }
+
+    /// <summary>The single path by which a proposal moves (design §6.2, §8.1; BUD-234, BUD-235).</summary>
+    public interface IProposalTransitionService
+    {
+        /// <summary>
+        /// True once T-16 exists (BudgetP1StateTransitionSeed). A true result is cached for the process lifetime
+        /// per database; false is not cached (design §11.4).
+        /// </summary>
+        Task<bool> IsStateModelAvailableAsync(CancellationToken ct = default);
+
+        /// <summary>
+        /// The actions the current actor could take on the proposal now (design §8.3 GetById
+        /// <c>availableActions</c>): T-16 rows from the proposal's state whose target resolves, filtered by the
+        /// holder rule and the actor's rights. Empty while T-16 is absent (§11.4), without an actor, for a
+        /// proposal not visible to the actor, and in a cycle that is not OPEN.
+        /// </summary>
+        Task<IReadOnlyList<string>> GetAvailableActionsAsync(long proposalId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Moves the proposal. Success is a <c>Response&lt;ProposalStateResponseDto&gt;</c>; a refusal by a
+        /// <see cref="TransitionHooks.BeforeMove"/> hook is returned unchanged (for example a
+        /// <c>Response&lt;RuleFailuresDto&gt;</c>, design §4.9); every other refusal is a plain catalogued failure.
+        /// Endpoints pass the result to <c>BudgetResults</c>, which serialises the runtime type.
+        /// </summary>
+        Task<Response> MoveAsync(
+            long proposalId, string action, string? remark, CancellationToken ct = default, TransitionHooks? hooks = null);
+
+        /// <summary>
+        /// Moves several proposals by the same action all-or-nothing (a category-level action such as FINALISE,
+        /// BUD-134): every proposal passes every check of <see cref="MoveAsync"/> first, and the first refusal is
+        /// returned with nothing written; then all the movements are written in one action scope. Success is a
+        /// <c>Response&lt;List&lt;ProposalStateResponseDto&gt;&gt;</c>.
+        /// </summary>
+        Task<Response> MoveAllAsync(IReadOnlyList<long> proposalIds, string action, string? remark, CancellationToken ct = default);
+    }
+}

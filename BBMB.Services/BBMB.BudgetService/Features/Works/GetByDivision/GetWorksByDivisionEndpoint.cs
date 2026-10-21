@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.Works.GetByDivision
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetWorksByDivision")
             .WithTags("Works")
             .Produces<PagedResponse<GetWorkListResponseDto>>(StatusCodes.Status200OK);

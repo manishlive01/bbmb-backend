@@ -20,6 +20,7 @@ namespace BBMB.BudgetService.Features.Budgets.GetById
                     return Results.NotFound(new { message = ex.Message });
                 }
             })
+            .RequireAuthorization("BudgetRight:Budget.View")
             .WithName("GetBudgetEntryById")
             .WithTags("Budgets")
             .WithSummary("Get a budget entry by ID")

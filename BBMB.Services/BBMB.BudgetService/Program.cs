@@ -2,6 +2,8 @@
 // USING STATEMENTS
 // =======================
 using BBMB.BudgetService.Authorization.Extension;
+using BBMB.BudgetService.Features.Estimates.GetById;
+using BBMB.BudgetService.Features.Estimates.Update;
 using BBMB.BudgetService.Infrastructure.DependencyInjection;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
@@ -73,9 +75,62 @@ TypeAdapterConfig.GlobalSettings.Scan(typeof(Program).Assembly);
 builder.Services.AddSingleton(TypeAdapterConfig.GlobalSettings);
 builder.Services.AddScoped<IMapper, ServiceMapper>(); 
 builder.Services.AddScoped<IFileStorageService,  FileStorageService>();
+// Malware scanner boundary (design §4.8, OI-12): ClamAV when configured, no-scan in Development only, else refuse.
+BBMB.BudgetService.Shared.Services.Attachments.AttachmentScannerRegistration.AddAttachmentScanner(
+    builder.Services, builder.Configuration, builder.Environment);
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IChargeResolver, ChargeResolver>();
+// Budget process: actor, action scope (DDD §7.1) and office scope (design §4.3, §4.4).
+builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetOffices.IBudgetOfficeScope,
+    BBMB.BudgetService.Shared.Services.BudgetOffices.BudgetOfficeScope>();
+builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetActors.IBudgetActorSource,
+    BBMB.BudgetService.Shared.Services.BudgetActors.HttpBudgetActorSource>();
+builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetActors.IBudgetActionScope,
+    BBMB.BudgetService.Shared.Services.BudgetActors.BudgetActionScope>();
+// External boundary (design §4.11): no gateway integrated, nothing is sent.
+builder.Services.AddSingleton<BBMB.BudgetService.Shared.Services.Notifications.IBudgetNotificationGateway,
+    BBMB.BudgetService.Shared.Services.Notifications.NoOpBudgetNotificationGateway>();
+builder.Services.AddSingleton<BBMB.BudgetService.Shared.Services.FinancialAccounting.IFinancialAccountingGateway,
+    BBMB.BudgetService.Shared.Services.FinancialAccounting.NotAvailableFinancialAccountingGateway>();
+// The single path by which a proposal moves (design §6.2).
+// T-17 value in force (design §5.3).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Settings.IBudgetSettingsReader,
+    BBMB.BudgetService.Features.BudgetProcess.Settings.BudgetSettingsReader>();
+// Demand line rule set (design §6.4).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules.DemandLineRuleInputsLoader>();
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules.IDemandLineRules,
+    BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules.DemandLineRules>();
+// Work-master rules (design §5.3 first-cycle guard, §11.3 reference rule).
+builder.Services.AddScoped<BBMB.BudgetService.Features.Works.Rules.WorkRules>();
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.IProposalTransitionService,
+    BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.ProposalTransitionService>();
+// T-19 delegation limits in force (design §5.3; BUD-055 reads it).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Settings.IDelegationLimitReader,
+    BBMB.BudgetService.Features.BudgetProcess.Settings.DelegationLimitReader>();
+// F-01 account-code rules (design §8.4, VR-01, BUD-308).
+builder.Services.AddScoped<BBMB.BudgetService.Features.HeadOfAccounts.Rules.AccountCodeRules>();
+// F-03 / F-04 application rules (design §8.4).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Rules.AdminApprovalRules>();
+// F-06 application rules: VR-02 under the DB-09 lock key, VR-11 via the FA gateway (design §8.4).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Rules.TechnicalSanctionRules>();
+// Attachment download: "caller may view an owning record" (design §8.2).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Attachments.Rules.AttachmentAccessRules>();
+// F-19 allocation: the plan computation shared by preview and allocate (design §8.6).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Allocations.Rules.AllocationRules>();
+// F-20 freeze: the three preconditions of a cycle freeze (design §8.6, DB-19).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Freezes.Rules.FreezeRules>();
+// F-29 estimate-wise allocation: target resolution and VR-12 (design §8.6, DB-23).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.EstimateAllocations.Rules.EstimateAllocationRules>();
+// F-30 unforeseen work: the status-model mover and the balance reads (design §6.3, §8.6).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Rules.UnforeseenRequestMover>();
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Reads.UnforeseenReads>();
+// F-30 unforeseen authorisation: VR-13 / VR-04 and the CE-of-charge check (design §8.6).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Rules.UnforeseenRules>();
+// F-21 re-appropriation: the surrender arithmetic (VR-08, M-18) (design §8.7).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Rules.ReappropriationRules>();
+// F-22 re-appropriation reads: the entry/register loaders (design §8.7).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Reads.ReappropriationReads>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
@@ -117,6 +172,9 @@ builder.Services.AddAuthentication("Bearer")
 // 🔐 CUSTOM PROJECT ROLE AUTHORIZATION
 // ======================================================
 builder.Services.AddProjectRoleAuthorization();
+// Rights matrix read at each evaluation through IOptionsMonitor (design §4.4, BUD-033).
+builder.Services.Configure<Auth.Authorization.Requirements.BudgetRightsOptions>(
+    builder.Configuration.GetSection(Auth.Authorization.Requirements.BudgetRightsOptions.SectionName));
 
 builder.Services.AddOpenApi(options =>
 {
@@ -301,7 +359,22 @@ app.UseExceptionHandler(appBuilder =>
             return;
         }
 
-        // Fallback
+        // Database rule failures (design §4.9, §10): catalogue message, no table/constraint name in the body.
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+            .CreateLogger("BBMB.BudgetService.ExceptionHandler");
+        var mapped = BBMB.BudgetService.Shared.Endpoints.BudgetExceptionMapper.TryMap(exception);
+        if (mapped is not null)
+        {
+            // A DB rule caught what a pre-check should have: Warning, with the constraint/trigger in the log only.
+            logger.LogWarning("Database rule refused the request: {MessageId} {Detail}",
+                mapped.Body.MessageId, mapped.LogDetail);
+            context.Response.StatusCode = mapped.StatusCode;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(mapped.Body);
+            return;
+        }
+        // Fallback (includes DB-28 'ACTOR': a handler wrote without opening the action scope).
+        logger.LogError(exception, "Unhandled exception");
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
         await context.Response.WriteAsJsonAsync(new
         {
@@ -314,6 +387,13 @@ app.UseExceptionHandler(appBuilder =>
 // ENDPOINT MAPPING
 // ===================================================================
 app.MapEndpoints();
+
+// Estimate read/update are static map-extension endpoints (not IEndpoint classes), so they are wired here
+// beside app.MapEndpoints(). Both carry their design §9.3 policy (GET -> Budget.View, PUT -> Legacy.BudgetEntry)
+// and are re-keyed to {workId:int} after the P4 work-code reset (P4-03). Without these two calls the routes
+// are unreachable even though their query/command/handler exist — a defect, not intended behaviour.
+app.MapGetEstimateByIdEndpoint();
+app.MapUpdateEstimateEndpoint();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

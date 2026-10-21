@@ -15,7 +15,7 @@ namespace BBMB.BudgetService.Features.DetailHeads.Entities
         public string DetailAccCode { get; set; } = string.Empty;
 
         [Required]
-        [MaxLength(100)]
+        [MaxLength(200)] // DDD T-01..T-05 varchar(200) (BudgetP2AccountCodesAndAssignment)
         [Column("detail_acc_desc")]
         public string DetailAccDesc { get; set; } = string.Empty;
 

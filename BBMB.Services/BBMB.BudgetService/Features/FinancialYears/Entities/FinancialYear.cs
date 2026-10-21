@@ -10,13 +10,15 @@ namespace BBMB.BudgetService.Features.FinancialYears.Entities
         [Column("fin_year_closing")]
         public int FinYearClosing { get; set; }
 
+        // DDD T-08: business dates are date (design §5.2, migration BudgetP1ReferenceStateAndAudit).
+        // CHECK start_date = 1 April of the preceding year; end_date = 31 March of fin_year_closing.
         [Required]
         [Column("start_date")]
-        public DateTime StartDate { get; set; }
+        public DateOnly StartDate { get; set; }
 
         [Required]
         [Column("end_date")]
-        public DateTime EndDate { get; set; }
+        public DateOnly EndDate { get; set; }
 
         [Column("closed")]
         public DateTime? Closed { get; set; }
