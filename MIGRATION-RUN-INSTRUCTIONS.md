@@ -49,6 +49,21 @@ Ye values connection string ke `Options=-c ...` parameter se bheji jaati hain (n
 
 ---
 
+## Kaunsi connection string? (ReadMe.md se)
+
+Project mein do connection strings hain — kahan chal rahe ho uske hisaab se chuno:
+
+| Environment | Connection string |
+|---|---|
+| **Local Development (office / NIC NET)** | `Host=10.43.18.13;Port=5432;Database=BBMB;Username=postgres;Password=postgres;Ssl Mode=Disable;` |
+| **Public Cloud** | **Aiven** string — `Host=bbmb-pankajjaincloud-4e30.j.aivencloud.com;Port=20575;...;Ssl Mode=Require;` (appsettings.json mein commented) |
+
+- NIC NET par ho → NIC string (neeche ki commands isi ko use karti hain).
+- Cloud par apply karna ho → Aiven string use karo, par `Options=-c bbmb_migration.actor_*`
+  wala hissa waise ka waisa rehna chahiye (actor gate har jagah same hai).
+
+---
+
 ## STEP 1 — Ek valid active actor dhoondho (DB par query)
 
 ```sql
