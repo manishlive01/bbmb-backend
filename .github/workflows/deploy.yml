@@ -1,3 +1,4 @@
+```yaml
 name: BBMB_stag_deploy
 
 on:
@@ -36,6 +37,8 @@ jobs:
 
       - name: Deploy Application
         run: |
+          set -e
+
           echo "Stopping application..."
           sudo systemctl stop bbmb-api.service
 
@@ -43,7 +46,7 @@ jobs:
           sudo rm -rf /var/www/bbmb-api/*
 
           echo "Copying new build..."
-          sudo cp -r ./publish/* /var/www/bbmb-api/
+          sudo cp -r ./publish/. /var/www/bbmb-api/
 
           echo "Setting ownership..."
           sudo chown -R nginx:nginx /var/www/bbmb-api/
@@ -52,4 +55,7 @@ jobs:
           sudo systemctl start bbmb-api.service
 
           echo "Checking service status..."
+          sudo systemctl is-active --quiet bbmb-api.service
           sudo systemctl status bbmb-api.service --no-pager
+```
+
