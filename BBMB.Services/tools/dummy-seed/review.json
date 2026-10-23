@@ -1,0 +1,14 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "Non-blocking (likely): psql \\quit takes no exit status. The STOP guards in seed.sql (\\quit 3 at hier_ok/heads_ok) and the cleanup.sql header (\\quit 1) exit 0, so a stop can look like success. Replace each with a statement that fails under ON_ERROR_STOP (SELECT 1/0 or a DO block that raises).",
+    "Non-blocking (confirmed): run_seed.py psql_env maps only disable/require. VerifyCA/VerifyFull and an absent SSL Mode become 'prefer', which allows plaintext. Pass verify-ca/verify-full through unchanged and default to require.",
+    "Non-blocking (confirmed): the 'verify' and 'file' modes are not enforced read-only on the shared DB. Set PGOPTIONS='-c default_transaction_read_only=on' for both. The cleanup.sql refusal is a basename match only.",
+    "Non-blocking (confirmed): cleanup.sql is guarded only by psql meta-commands. In a GUI client, the budget_table DELETE (no forbid trigger) would remove 12 unaudited rows. Wrap the DELETEs in a block comment or start the file with a raising DO block.",
+    "Non-blocking (confirmed): README does not state that fa_financial_years (2) and budget_table (12) have no audit trigger, so only logs/02_real_run.log proves they were seeded. Add one sentence and retain the log with the batch record.",
+    "Non-blocking (confirmed): README inaccuracies. Preflight is P2-P7, P10 and P11, not 'P2-P11' (P8 was done manually, P9 is moot). The cleanup.sql \\quit is at line 22, not line 1. The selection.psql to hard-coded dseed_slot deviation is not listed. The internal DB host IP is published unnecessarily.",
+    "Non-blocking (confirmed): the phase-0 actor pick relies on UNION ALL row order for C1-over-C2 precedence. It had no effect here (only one 'Budget' charge exists). Add ORDER BY pref.",
+    "Follow-up (likely): CE offices 20 and 21 got assumed wing 1 (Irrigation) but are likely Power. Confirm with the business and correct via PUT /api/budget-offices/{id}/wing. No corrective INSERT is required."
+  ],
+  "reviewDoc": "/Users/manishkumar/BBMB-1/BBMB.Services/tools/dummy-seed/review.md"
+}
