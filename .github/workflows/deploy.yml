@@ -1,3 +1,4 @@
+```yaml
 name: BBMB_stag_deploy
 
 on:
@@ -5,55 +6,120 @@ on:
     branches:
       - deploy_stag
 
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bbmb-staging-deployment
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
-    runs-on: [self-hosted, BBMB-STG-app]
+    name: Build and Deploy BBMB API
+    runs-on: [self-hosted, Linux, X64, BBMB-STG-app]
+    timeout-minutes: 60
 
     steps:
+      # Step 1: Checkout source code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Verify Runner
+      # Step 2: Verify runner and required tools
+      - name: Verify Runner Environment
         run: |
-          echo "Running on:"
-          hostname
-          echo "Current user:"
-          whoami
+          echo "Runner: $RUNNER_NAME"
+          echo "Workspace: $GITHUB_WORKSPACE"
+          echo "User: $(whoami)"
+          echo "Host: $(hostname)"
 
-      - name: Check .NET SDK
-        run: |
-          dotnet --version
-          dotnet --list-sdks
+          command -v dotnet
+          dotnet --info
 
+      # Step 3: Restore NuGet packages
       - name: Restore Dependencies
-        run: dotnet restore BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj
+        run: dotnet restore
 
+      # Step 4: Build application
       - name: Build Application
-        run: dotnet build BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj --no-restore --configuration Release
+        run: dotnet build --configuration Release --no-restore
 
+      # Step 5: Publish application
       - name: Publish Application
-        run: dotnet publish BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj --configuration Release --no-build --output ./publish
-
-      - name: Deploy Application
         run: |
-          set -e
+          dotnet publish \
+            --configuration Release \
+            --no-build \
+            --output "$GITHUB_WORKSPACE/publish"
 
-          echo "Stopping application..."
-          sudo systemctl stop bbmb-api.service
+      # Step 6: Verify published files
+      - name: Verify Publish Output
+        run: |
+          if [ ! -d "$GITHUB_WORKSPACE/publish" ]; then
+            echo "ERROR: Publish directory not found."
+            exit 1
+          fi
 
-          echo "Removing old deployment..."
-          sudo rm -rf /var/www/bbmb-api/*
+          if [ -z "$(ls -A "$GITHUB_WORKSPACE/publish")" ]; then
+            echo "ERROR: Publish directory is empty."
+            exit 1
+          fi
 
-          echo "Copying new build..."
-          sudo cp -r ./publish/. /var/www/bbmb-api/
+          ls -lah "$GITHUB_WORKSPACE/publish"
 
-          echo "Setting ownership..."
-          sudo chown -R nginx:nginx /var/www/bbmb-api/
+      # Step 7: Deploy application
+      - name: Deploy BBMB API
+        run: |
+          set -euo pipefail
 
-          echo "Starting application..."
-          sudo systemctl start bbmb-api.service
+          PUBLISH_DIR="$GITHUB_WORKSPACE/publish"
+          DEPLOY_DIR="/var/www/bbmb-api"
+          BACKUP_DIR="/var/www/bbmb-api-backups"
+          SERVICE_NAME="bbmb-api.service"
+          TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
+          BACKUP_PATH="$BACKUP_DIR/$TIMESTAMP"
 
-          echo "Checking service status..."
-          sudo systemctl is-active --quiet bbmb-api.service
-          sudo systemctl status bbmb-api.service --no-pager
-          sudo systemctl status bbmb-api.service --no-pager
+          echo "Checking deployment permissions..."
+
+          sudo -n true
+
+          sudo mkdir -p "$DEPLOY_DIR" "$BACKUP_DIR"
+
+          # Back up the existing deployment before making changes.
+          if sudo test -n "$(sudo find "$DEPLOY_DIR" -mindepth 1 -maxdepth 1 -print -quit)"; then
+            sudo mkdir -p "$BACKUP_PATH"
+            sudo cp -a "$DEPLOY_DIR/." "$BACKUP_PATH/"
+            echo "Backup created: $BACKUP_PATH"
+          else
+            echo "No existing deployment files found."
+          fi
+
+          # Stop the API service before deployment.
+          sudo systemctl stop "$SERVICE_NAME"
+
+          # Copy the published files to the deployment directory.
+          sudo find "$DEPLOY_DIR" -mindepth 1 -maxdepth 1 \
+            -exec rm -rf -- {} +
+
+          sudo cp -a "$PUBLISH_DIR/." "$DEPLOY_DIR/"
+
+          # Set ownership.
+          sudo chown -R nginx:nginx "$DEPLOY_DIR"
+
+          # Start the API service.
+          sudo systemctl start "$SERVICE_NAME"
+
+          # Verify service status.
+          sudo systemctl is-active --quiet "$SERVICE_NAME"
+
+          echo "Deployment completed successfully."
+          sudo systemctl status "$SERVICE_NAME" --no-pager
+
+      # Step 8: Show recent application service logs if deployment fails
+      - name: Show Service Logs on Failure
+        if: failure()
+        run: |
+          sudo journalctl -u bbmb-api.service \
+            -n 100 --no-pager || true
+```
