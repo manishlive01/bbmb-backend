@@ -5,8 +5,9 @@ using MediatR;
 namespace BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Search
 {
     /// <summary>
-    /// Design §8.8 (<c>GET /api/audit-trail</c>, F-27): a paged search of T-51, filtered by office, actor,
-    /// time window, table and record, scoped to the actor's visible offices. GET only.
+    /// Design §8.8 (<c>POST /api/audit-trail/list</c>, F-27): a paged search of T-51, filtered by office, actor,
+    /// time window, table, record and budget cycle (BUD-228), scoped to the actor's visible offices. A read only
+    /// (BUD-229). <see cref="CycleId"/> is additive: null = no cycle filter.
     /// </summary>
     public sealed record SearchAuditTrailQuery(
         long? OfficeId,
@@ -16,5 +17,6 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuditTrail.Search
         string? TableName,
         string? RecordKey,
         int Page,
-        int PageSize) : IRequest<Response<AuditSearchResultDto>>;
+        int PageSize,
+        long? CycleId = null) : IRequest<Response<AuditSearchResultDto>>;
 }

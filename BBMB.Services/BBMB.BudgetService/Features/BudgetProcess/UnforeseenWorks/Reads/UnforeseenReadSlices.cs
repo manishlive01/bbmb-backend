@@ -1,5 +1,7 @@
+using BBMB.BudgetService.Features.BudgetProcess.ReadRequests;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Shared.Endpoints;
+using BBMB.BudgetService.Shared.ResponseDTOs;
 using BBMB.BudgetService.Shared.Services.BudgetActors;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -94,14 +96,16 @@ namespace BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Reads
                 .RequireAuthorization("BudgetRight:Budget.View").WithName("GetUnforeseenList").WithTags("UnforeseenWorks")
                 .Produces<List<UnforeseenRequestDto>>(StatusCodes.Status200OK);
 
-            app.MapGet("/api/unforeseen-requests/{id:long}",
-                    async (long id, IMediator m, CancellationToken ct) =>
+            // Read via POST: unforeseenRequestId travels in the body, not the URL (security requirement).
+            app.MapPost("/api/unforeseen-requests/detail",
+                    async (UnforeseenDetailRequestDto body, IMediator m, CancellationToken ct) =>
                     {
-                        var dto = await m.Send(new GetUnforeseenByIdQuery(id), ct);
+                        var dto = await m.Send(new GetUnforeseenByIdQuery(body.UnforeseenRequestId), ct);
                         return dto is null ? Results.NotFound() : Results.Ok(dto);
                     })
                 .RequireAuthorization("BudgetRight:Budget.View").WithName("GetUnforeseenById").WithTags("UnforeseenWorks")
-                .Produces<UnforeseenRequestDto>(StatusCodes.Status200OK).Produces(StatusCodes.Status404NotFound);
+                .Produces<UnforeseenRequestDto>(StatusCodes.Status200OK).Produces(StatusCodes.Status404NotFound)
+                .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest);
         }
     }
 }
