@@ -29,7 +29,7 @@ namespace Auth.Authorization.Handlers
             var current = options.CurrentValue;
             var httpContext = httpContextAccessor.HttpContext;
 
-            var actingRole = ResolveActingRole(context, current.ProjectName, httpContext, out var reason);
+            var actingRole = ResolveActingRole(context, current, httpContext, out var reason);
             if (actingRole is null)
             {
                 logger.LogDebug("BudgetRight {RightKey} refused: {Reason}", requirement.RightKey, reason);
@@ -54,7 +54,7 @@ namespace Auth.Authorization.Handlers
         }
 
         private static string? ResolveActingRole(
-            AuthorizationHandlerContext context, string projectName, HttpContext? httpContext, out string reason)
+            AuthorizationHandlerContext context, BudgetRightsOptions current, HttpContext? httpContext, out string reason)
         {
             if (BudgetActingRole.Get(httpContext) is { } resolved)
             {
@@ -62,7 +62,12 @@ namespace Auth.Authorization.Handlers
                 return resolved;
             }
 
-            var held = ProjectClaimReader.RolesIn(context.User, projectName);
+            // Only roles configured as Budget roles (BudgetRights:RoleOfficeLevels) count. Other roles the
+            // portal places in the Budget project (e.g. ProjectAdmin) carry no Budget right, so they must not
+            // force an X-Budget-Role header on a user who holds exactly one real Budget role.
+            var held = ProjectClaimReader.RolesIn(context.User, current.ProjectName)
+                .Where(r => current.RoleOfficeLevels.Count == 0 || current.RoleOfficeLevels.ContainsKey(r))
+                .ToList();
             if (held.Count == 0)
             {
                 reason = "NO_BUDGET_ROLE";
