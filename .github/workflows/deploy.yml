@@ -7,101 +7,163 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: bbmb-staging-deployment
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
+    name: Build and Deploy BBMB API
     runs-on: [self-hosted, Linux, X64, BBMB-STG-app]
+    timeout-minutes: 30
+
+    env:
+      PROJECT_PATH: BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj
+      DEPLOY_DIR: /var/www/bbmb-api
+      SERVICE_NAME: bbmb-api.service
 
     steps:
-      # Step 1: Verify runner and target server
-      - name: Verify Runner
+      # 1. Verify correct server before proceeding
+      - name: Verify Deployment Server
         run: |
-          echo "Hostname:"
-          hostname
+          echo "Hostname: $(hostname)"
+          echo "User: $(whoami)"
 
-          echo "User:"
-          whoami
-
-          echo "API Service Status:"
-          systemctl status bbmb-api.service --no-pager || true
-
-          echo "Deployment Directory:"
-          ls -ld /var/www/bbmb-api || true
-
-      # Step 2: Checkout source code
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      # Step 3: Setup .NET SDK
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      # Step 4: Restore dependencies
-      - name: Restore Dependencies
-        run: |
-          dotnet restore BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj
-
-      # Step 5: Build application
-      - name: Build Application
-        run: |
-          dotnet build BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj \
-            --configuration Release \
-            --no-restore
-
-      # Step 6: Publish application
-      - name: Publish Application
-        run: |
-          dotnet publish BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj \
-            --configuration Release \
-            --no-build \
-            --output "${{ github.workspace }}/publish"
-
-      # Step 7: Verify published files
-      - name: Verify Published Files
-        run: |
-          test -f "${{ github.workspace }}/publish/BBMB.BudgetService.dll"
-          ls -lh "${{ github.workspace }}/publish"
-
-      # Step 8: Deploy application
-      - name: Deploy to BBMB Staging
-        run: |
-          set -e
-
-          echo "Checking target server..."
-          HOSTNAME=$(hostname)
-          echo "Current server: $HOSTNAME"
-
-          if [ "$HOSTNAME" != "BBMB-STG-app" ]; then
-            echo "ERROR: Deployment stopped. This is not BBMB-STG-app."
+          if [ "$(hostname)" != "BBMB-STG-app" ]; then
+            echo "ERROR: Wrong deployment server."
             exit 1
           fi
 
-          echo "Checking API service..."
-          systemctl is-active bbmb-api.service
+      # 2. Verify installed .NET SDK
+      - name: Verify .NET SDK
+        run: |
+          export DOTNET_ROOT=/usr/lib64/dotnet
+          export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
 
-          echo "Creating deployment backup..."
-          BACKUP_DIR="/var/www/bbmb-api-backup-$(date +%Y%m%d-%H%M%S)"
-          sudo mkdir -p "$BACKUP_DIR"
-          sudo cp -a /var/www/bbmb-api/. "$BACKUP_DIR/"
+          dotnet --list-sdks
+          dotnet --version
 
-          echo "Stopping API service..."
-          sudo systemctl stop bbmb-api.service
+          dotnet --version | grep -q '^10\.' || {
+            echo "ERROR: .NET 10 SDK is not available."
+            exit 1
+          }
 
-          echo "Copying published files..."
-          sudo cp -a "${{ github.workspace }}/publish/." /var/www/bbmb-api/
+      # 3. Checkout source
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: deploy_stag
+          submodules: false
+          clean: false
 
-          echo "Setting ownership..."
-          sudo chown -R nginx:nginx /var/www/bbmb-api
+      # 4. Check project exists
+      - name: Verify Project
+        run: |
+          if [ ! -f "$PROJECT_PATH" ]; then
+            echo "ERROR: Project file not found: $PROJECT_PATH"
+            exit 1
+          fi
 
-          echo "Starting API service..."
-          sudo systemctl start bbmb-api.service
+      # 5. Restore packages
+      - name: Restore
+        run: |
+          export DOTNET_ROOT=/usr/lib64/dotnet
+          export PATH="$DOTNET_ROOT:$PATH"
 
-          echo "Waiting for service startup..."
+          dotnet restore "$PROJECT_PATH"
+
+      # 6. Build project
+      - name: Build
+        run: |
+          export DOTNET_ROOT=/usr/lib64/dotnet
+          export PATH="$DOTNET_ROOT:$PATH"
+
+          dotnet build "$PROJECT_PATH" \
+            --configuration Release \
+            --no-restore
+
+      # 7. Publish application
+      - name: Publish
+        run: |
+          export DOTNET_ROOT=/usr/lib64/dotnet
+          export PATH="$DOTNET_ROOT:$PATH"
+
+          dotnet publish "$PROJECT_PATH" \
+            --configuration Release \
+            --no-build \
+            --output "$RUNNER_TEMP/bbmb-api-publish"
+
+      # 8. Verify publish output
+      - name: Verify Publish Output
+        run: |
+          if [ ! -f "$RUNNER_TEMP/bbmb-api-publish/BBMB.BudgetService.dll" ]; then
+            echo "ERROR: Published application DLL not found."
+            exit 1
+          fi
+
+          ls -lh "$RUNNER_TEMP/bbmb-api-publish"
+
+      # 9. Check deployment directory and service
+      - name: Verify Deployment Target
+        run: |
+          if [ "$(hostname)" != "BBMB-STG-app" ]; then
+            echo "ERROR: Wrong server. Deployment aborted."
+            exit 1
+          fi
+
+          if [ ! -d "$DEPLOY_DIR" ]; then
+            echo "ERROR: Deployment directory not found: $DEPLOY_DIR"
+            exit 1
+          fi
+
+          systemctl is-active "$SERVICE_NAME"
+
+      # 10. Backup existing application
+      - name: Backup Existing Application
+        run: |
+          BACKUP_DIR="/var/www/bbmb-api-backups"
+          TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
+          BACKUP_PATH="$BACKUP_DIR/bbmb-api-$TIMESTAMP.tar.gz"
+
+          mkdir -p "$BACKUP_DIR"
+
+          tar -czf "$BACKUP_PATH" \
+            -C "$DEPLOY_DIR" .
+
+          echo "Backup created: $BACKUP_PATH"
+
+      # 11. Deploy published files
+      - name: Deploy Application
+        run: |
+          set -euo pipefail
+
+          if [ "$(hostname)" != "BBMB-STG-app" ]; then
+            echo "ERROR: Wrong server. Deployment aborted."
+            exit 1
+          fi
+
+          PUBLISH_DIR="$RUNNER_TEMP/bbmb-api-publish"
+
+          systemctl stop "$SERVICE_NAME"
+
+          cp -a "$PUBLISH_DIR/." "$DEPLOY_DIR/"
+
+          chown -R nginx:nginx "$DEPLOY_DIR"
+
+          systemctl start "$SERVICE_NAME"
+
           sleep 5
 
-          echo "Checking API service status..."
-          sudo systemctl is-active --quiet bbmb-api.service
+          systemctl is-active --quiet "$SERVICE_NAME"
 
           echo "Deployment completed successfully."
-          sudo systemctl status bbmb-api.service --no-pager
+
+      # 12. Show service status
+      - name: Verify Application
+        if: always()
+        run: |
+          echo "Hostname: $(hostname)"
+          systemctl status "$SERVICE_NAME" --no-pager || true
