@@ -23,35 +23,44 @@ jobs:
     env:
       PROJECT_PATH: BBMB.Services/BBMB.BudgetService/BBMB.BudgetService.csproj
       DEPLOY_DIR: /var/www/bbmb-api
+      BACKUP_DIR: /var/www/bbmb-api-backups
       SERVICE_NAME: bbmb-api.service
+      DOTNET_ROOT: /usr/lib64/dotnet
 
     steps:
-      # 1. Verify correct server before proceeding
-      - name: Verify Deployment Server
+      - name: Verify Deployment Server and User
+        shell: bash
         run: |
+          set -euo pipefail
+
           echo "Hostname: $(hostname)"
-          echo "User: $(whoami)"
+          echo "Runner user: $(whoami)"
 
           if [ "$(hostname)" != "BBMB-STG-app" ]; then
             echo "ERROR: Wrong deployment server."
             exit 1
           fi
 
-      # 2. Verify installed .NET SDK
+          if [ "$(whoami)" != "bhakra" ]; then
+            echo "ERROR: Workflow must run as bhakra."
+            exit 1
+          fi
+
       - name: Verify .NET SDK
+        shell: bash
         run: |
-          export DOTNET_ROOT=/usr/lib64/dotnet
+          set -euo pipefail
+
           export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
 
           dotnet --list-sdks
           dotnet --version
 
           dotnet --version | grep -q '^10\.' || {
-            echo "ERROR: .NET 10 SDK is not available."
+            echo "ERROR: .NET 10 SDK is unavailable."
             exit 1
           }
 
-      # 3. Checkout source
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -59,84 +68,100 @@ jobs:
           submodules: false
           clean: false
 
-      # 4. Check project exists
       - name: Verify Project
+        shell: bash
         run: |
+          set -euo pipefail
+
           if [ ! -f "$PROJECT_PATH" ]; then
             echo "ERROR: Project file not found: $PROJECT_PATH"
             exit 1
           fi
 
-      # 5. Restore packages
       - name: Restore
+        shell: bash
         run: |
-          export DOTNET_ROOT=/usr/lib64/dotnet
-          export PATH="$DOTNET_ROOT:$PATH"
+          set -euo pipefail
 
+          export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
           dotnet restore "$PROJECT_PATH"
 
-      # 6. Build project
       - name: Build
+        shell: bash
         run: |
-          export DOTNET_ROOT=/usr/lib64/dotnet
-          export PATH="$DOTNET_ROOT:$PATH"
+          set -euo pipefail
+
+          export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
 
           dotnet build "$PROJECT_PATH" \
             --configuration Release \
             --no-restore
 
-      # 7. Publish application
       - name: Publish
+        shell: bash
         run: |
-          export DOTNET_ROOT=/usr/lib64/dotnet
-          export PATH="$DOTNET_ROOT:$PATH"
+          set -euo pipefail
+
+          export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
 
           dotnet publish "$PROJECT_PATH" \
             --configuration Release \
             --no-build \
             --output "$RUNNER_TEMP/bbmb-api-publish"
 
-      # 8. Verify publish output
       - name: Verify Publish Output
+        shell: bash
         run: |
-          if [ ! -f "$RUNNER_TEMP/bbmb-api-publish/BBMB.BudgetService.dll" ]; then
-            echo "ERROR: Published application DLL not found."
+          set -euo pipefail
+
+          PUBLISH_DIR="$RUNNER_TEMP/bbmb-api-publish"
+
+          if [ ! -f "$PUBLISH_DIR/BBMB.BudgetService.dll" ]; then
+            echo "ERROR: Published DLL not found."
             exit 1
           fi
 
-          ls -lh "$RUNNER_TEMP/bbmb-api-publish"
+          ls -lh "$PUBLISH_DIR"
 
-      # 9. Check deployment directory and service
-      - name: Verify Deployment Target
+      - name: Verify Deployment Target and Permissions
+        shell: bash
         run: |
+          set -euo pipefail
+
           if [ "$(hostname)" != "BBMB-STG-app" ]; then
-            echo "ERROR: Wrong server. Deployment aborted."
+            echo "ERROR: Wrong server."
             exit 1
           fi
 
-          if [ ! -d "$DEPLOY_DIR" ]; then
-            echo "ERROR: Deployment directory not found: $DEPLOY_DIR"
+          if [ "$(whoami)" != "bhakra" ]; then
+            echo "ERROR: Wrong runner user."
             exit 1
           fi
 
-          systemctl is-active "$SERVICE_NAME"
+          test -d "$DEPLOY_DIR"
+          test -d "$BACKUP_DIR"
+          test -w "$DEPLOY_DIR"
+          test -w "$BACKUP_DIR"
 
-      # 10. Backup existing application
+          sudo -n /usr/bin/systemctl is-active "$SERVICE_NAME"
+
       - name: Backup Existing Application
+        shell: bash
         run: |
-          BACKUP_DIR="/var/www/bbmb-api-backups"
+          set -euo pipefail
+
           TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
           BACKUP_PATH="$BACKUP_DIR/bbmb-api-$TIMESTAMP.tar.gz"
 
-          mkdir -p "$BACKUP_DIR"
+          tar -czf "$BACKUP_PATH" -C "$DEPLOY_DIR" .
 
-          tar -czf "$BACKUP_PATH" \
-            -C "$DEPLOY_DIR" .
+          test -s "$BACKUP_PATH"
 
           echo "Backup created: $BACKUP_PATH"
+          ls -lh "$BACKUP_PATH"
 
-      # 11. Deploy published files
       - name: Deploy Application
+        shell: bash
         run: |
           set -euo pipefail
 
@@ -145,25 +170,41 @@ jobs:
             exit 1
           fi
 
+          if [ "$(whoami)" != "bhakra" ]; then
+            echo "ERROR: Workflow must run as bhakra."
+            exit 1
+          fi
+
           PUBLISH_DIR="$RUNNER_TEMP/bbmb-api-publish"
 
-          systemctl stop "$SERVICE_NAME"
+          test -f "$PUBLISH_DIR/BBMB.BudgetService.dll"
+
+          sudo -n /usr/bin/systemctl stop "$SERVICE_NAME"
 
           cp -a "$PUBLISH_DIR/." "$DEPLOY_DIR/"
 
-          chown -R nginx:nginx "$DEPLOY_DIR"
+          sudo -n /usr/bin/chown -R bhakra:bhakra "$DEPLOY_DIR"
 
-          systemctl start "$SERVICE_NAME"
+          sudo -n /usr/bin/systemctl start "$SERVICE_NAME"
 
           sleep 5
 
-          systemctl is-active --quiet "$SERVICE_NAME"
+          sudo -n /usr/bin/systemctl is-active --quiet "$SERVICE_NAME"
+
+          RUNNING_USER="$(ps -eo user,args | awk '/[B]BMB.BudgetService.dll/ {print $1; exit}')"
+
+          if [ "$RUNNING_USER" != "bhakra" ]; then
+            echo "ERROR: API process is not running as bhakra."
+            sudo -n /usr/bin/systemctl status "$SERVICE_NAME" --no-pager || true
+            exit 1
+          fi
 
           echo "Deployment completed successfully."
 
-      # 12. Show service status
       - name: Verify Application
         if: always()
+        shell: bash
         run: |
           echo "Hostname: $(hostname)"
-          systemctl status "$SERVICE_NAME" --no-pager || true
+          echo "Runner user: $(whoami)"
+          sudo -n /usr/bin/systemctl status "$SERVICE_NAME" --no-pager || true
