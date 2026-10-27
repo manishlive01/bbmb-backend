@@ -59,4 +59,3 @@ jobs:
           echo "Checking service status..."
           sudo systemctl is-active --quiet bbmb-api.service
           sudo systemctl status bbmb-api.service --no-pager
-```
