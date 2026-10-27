@@ -1,3 +1,4 @@
+
 name: BBMB_stag_deploy
 
 on:
@@ -5,9 +6,11 @@ on:
     branches:
       - deploy_stag
 
+  workflow_dispatch:
+
 jobs:
   build-and-deploy:
-    runs-on: [self-hosted, BBMB-STG-app]
+    runs-on: [self-hosted, Linux, X64, BBMB-STG-app]
 
     steps:
       - name: Checkout Code
@@ -56,4 +59,4 @@ jobs:
           echo "Checking service status..."
           sudo systemctl is-active --quiet bbmb-api.service
           sudo systemctl status bbmb-api.service --no-pager
-          sudo systemctl status bbmb-api.service --no-pager
+```
