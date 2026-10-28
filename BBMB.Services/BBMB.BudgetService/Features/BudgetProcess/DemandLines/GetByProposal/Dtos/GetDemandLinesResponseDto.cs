@@ -37,6 +37,13 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetByProposal.Dt
         public decimal? RbeAmount { get; set; }
         public decimal? ObeNextAmount { get; set; }
         public string? JustificationText { get; set; }
+        /// <summary>
+        /// Column 13 supporting file and the CE's certificate / AM&amp;R approval. Returned so the client can send
+        /// them back on PUT …/demand-lines/{lineId}: that PUT replaces the line's values, and a null clears them.
+        /// </summary>
+        public long? JustificationAttachmentId { get; set; }
+        public long? CeCertificateAttachmentId { get; set; }
+        public long? CeAmrApprovalAttachmentId { get; set; }
         public decimal? OpeningObeCurrent { get; set; }
         public decimal? OpeningRbePrevious { get; set; }
         public decimal? ExpenditureToDate { get; set; }

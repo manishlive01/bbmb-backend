@@ -44,5 +44,22 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Reports
         /// <summary>The catalogued field, or null when the business name is not whitelisted (refused, BUD-220).</summary>
         public static QueryField? Resolve(string? name) =>
             name is not null && ByName.TryGetValue(name, out var f) ? f : null;
+
+        /// <summary>
+        /// BUD-221: whether the acting role may use the field, read from <c>BudgetRights:QueryFieldRoles</c>
+        /// (configuration, BUD-033). An empty map allows every field (OI-26 not yet configured); otherwise a
+        /// field not listed, or listed without the role, is refused.
+        /// </summary>
+        public static bool IsAllowed(QueryField field, string role, IReadOnlyDictionary<string, string[]> fieldRoles) =>
+            fieldRoles.Count == 0
+            || (fieldRoles.TryGetValue(field.Name, out var roles) && roles.Contains(role, StringComparer.OrdinalIgnoreCase));
+
+        /// <summary>The catalogue narrowed to the acting role (BUD-221).</summary>
+        public static IReadOnlyList<QueryField> ForRole(string role, IReadOnlyDictionary<string, string[]> fieldRoles) =>
+            Fields.Where(f => IsAllowed(f, role, fieldRoles)).ToList();
+
+        /// <summary>Resolve a business name the role may use; null when unknown or not allowed to the role (both M-22).</summary>
+        public static QueryField? ResolveForRole(string? name, string role, IReadOnlyDictionary<string, string[]> fieldRoles) =>
+            Resolve(name) is { } f && IsAllowed(f, role, fieldRoles) ? f : null;
     }
 }

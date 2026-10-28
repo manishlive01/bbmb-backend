@@ -258,7 +258,7 @@ public sealed class CreateAdminApprovalTests(BudgetDatabaseFixture fixture) : IA
     public void Routes_carry_F03_Enter_and_Budget_View()
     {
         EndpointCatalog.Find("POST", "/api/admin-approvals")!.Policies.Should().Equal("BudgetRight:F03.Enter");
-        EndpointCatalog.Find("GET", "/api/admin-approvals")!.Policies.Should().Equal("BudgetRight:Budget.View");
+        EndpointCatalog.Find("POST", "/api/admin-approvals/list")!.Policies.Should().Equal("BudgetRight:Budget.View");
         EndpointCatalog.Find("GET", "/api/admin-approvals/{id:long}")!.Policies.Should().Equal("BudgetRight:Budget.View");
     }
 }
