@@ -199,7 +199,7 @@ public sealed class TechnicalSanctionTests(BudgetDatabaseFixture fixture) : IAsy
     {
         EndpointCatalog.Find("POST", "/api/technical-sanctions")!.Policies.Should().Equal("BudgetRight:F06.Enter");
         EndpointCatalog.Find("POST", "/api/technical-sanctions/{id:long}/revisions")!.Policies.Should().Equal("BudgetRight:F06.Enter");
-        EndpointCatalog.Find("GET", "/api/technical-sanctions")!.Policies.Should().Equal("BudgetRight:Budget.View");
+        EndpointCatalog.Find("POST", "/api/technical-sanctions/list")!.Policies.Should().Equal("BudgetRight:Budget.View");
         EndpointCatalog.Find("GET", "/api/technical-sanctions/{id:long}")!.Policies.Should().Equal("BudgetRight:Budget.View");
     }
 }

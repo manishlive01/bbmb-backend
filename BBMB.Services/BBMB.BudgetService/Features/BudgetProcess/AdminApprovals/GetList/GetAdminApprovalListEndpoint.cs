@@ -5,22 +5,24 @@ using BBMB.BudgetService.Shared.Messages;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using BBMB.BudgetService.Shared.Services.BudgetActors;
 using BBMB.BudgetService.Shared.Services.BudgetOffices;
+using BBMB.BudgetService.Features.BudgetProcess.ReadRequests;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 namespace BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.GetList
 {
     public sealed class GetAdminApprovalListEndpoint : IEndpoint
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/admin-approvals",
-                    async (IMediator mediator, CancellationToken ct, [FromQuery] int? workId = null) =>
-                        BudgetResults.Ok(await mediator.Send(new GetAdminApprovalListQuery(workId), ct)))
+            // Read via POST: the work filter travels in the body, not the URL (security requirement).
+            app.MapPost("/api/admin-approvals/list",
+                    async (WorkFilterRequestDto? dto, IMediator mediator, CancellationToken ct) =>
+                        BudgetResults.Ok(await mediator.Send(new GetAdminApprovalListQuery(dto?.WorkId), ct)))
                 .RequireAuthorization("BudgetRight:Budget.View")
                 .WithName("GetAdminApprovals")
                 .WithTags("AdminApprovals")
                 .Produces<Response<List<AdminApprovalDto>>>(StatusCodes.Status200OK)
-                .Produces<Response>(StatusCodes.Status403Forbidden);
+                .Produces<Response>(StatusCodes.Status403Forbidden)
+                .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest);
         }
     }
 }

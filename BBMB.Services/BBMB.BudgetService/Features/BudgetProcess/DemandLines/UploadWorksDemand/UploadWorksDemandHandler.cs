@@ -117,31 +117,44 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.UploadWorksDeman
             if (parseFailures.Failures.Count > 0)
                 return BudgetResponses.RuleFailures(parseFailures); // nothing created, every bad row listed
 
-            // Evaluate all file lines together with the proposal's existing live lines, at moment Upload.
-            var existing = await context.DemandLines.AsNoTracking()
-                .Where(l => l.ProposalId == p.ProposalId && !l.IsDeleted).ToListAsync(ct);
-            var candidates = parsed.Select(x => x.Line).ToList();
-            var evaluated = await rules.EvaluateAsync(p, [.. existing, .. candidates], RuleMoment.Upload, actor.OfficeLevel, ct);
-            var fileSerials = parsed.Select(x => x.Line.SerialNo).ToHashSet();
-            var fileFailures = evaluated.Failures.Where(fl => fl.SerialNo is { } s && fileSerials.Contains(s)).ToList();
-            if (fileFailures.Count > 0)
-                return BudgetResponses.RuleFailures(new RuleFailuresDto { Failures = fileFailures });
-
-            // Clean: store the file as a scanned T-22 attachment, then write T-22 + T-34 + lines in one scope.
-            var attachment = await PrepareAttachmentAsync(request.File, buffer, now, ct);
-            if (attachment.Failure is { } attachFailure)
-                return attachFailure;
-            var row0 = attachment.Row!;
-            var storageName = row0.StorageKey.ToString();
+            // Everything from here runs in one UPLOAD scope so a rule failure rolls back cleanly (the file is
+            // stored only after the rules pass; a later exception removes it). The new works are persisted and the
+            // candidate lines carry their WorkId BEFORE the rules read them, exactly as AddDemandLineHandler does
+            // ("the work exists before the rules read it"): the §5.5-row-i check reads each work's resolved account
+            // code through the work row, so an unsaved work (WorkId null) would be read as a code mismatch and
+            // every valid new-work line wrongly refused with M-22 (BUD-100, §8.5).
+            string? storageName = null;
             try
             {
                 await using var tx = await scope.BeginAsync(ActionCode, ct: ct);
                 await DemandLineWrites.LockProposalAsync(context, p.ProposalId, ct);
 
-                context.BudgetAttachments.Add(row0);
                 foreach (var pr in parsed.Where(x => x.NewWork is not null))
                     context.Works.Add(pr.NewWork!);
-                await context.SaveChangesAsync(ct); // the attachment and the new works exist before the lines reference them
+                await context.SaveChangesAsync(ct); // the new works exist before the lines reference them and before the rules read them
+                foreach (var pr in parsed)
+                    pr.Line.WorkId = pr.NewWork?.Id ?? pr.ExistingWorkId;
+
+                // Evaluate all file lines together with the proposal's existing live lines, at moment Upload. A
+                // single failing row fails the whole file (all-or-nothing); the transaction is left uncommitted,
+                // so the works just inserted roll back and nothing persists (BUD-100, BUD-104).
+                var existing = await context.DemandLines.AsNoTracking()
+                    .Where(l => l.ProposalId == p.ProposalId && !l.IsDeleted).ToListAsync(ct);
+                var candidates = parsed.Select(x => x.Line).ToList();
+                var evaluated = await rules.EvaluateAsync(p, [.. existing, .. candidates], RuleMoment.Upload, actor.OfficeLevel, ct);
+                var fileSerials = parsed.Select(x => x.Line.SerialNo).ToHashSet();
+                var fileFailures = evaluated.Failures.Where(fl => fl.SerialNo is { } s && fileSerials.Contains(s)).ToList();
+                if (fileFailures.Count > 0)
+                    return BudgetResponses.RuleFailures(new RuleFailuresDto { Failures = fileFailures }); // tx disposed without commit: rollback
+
+                // Clean: store the file as a scanned T-22 attachment, then write T-22 + T-34 + lines in this scope.
+                var attachment = await PrepareAttachmentAsync(request.File, buffer, now, ct);
+                if (attachment.Failure is { } attachFailure)
+                    return attachFailure; // tx rolls back
+                var row0 = attachment.Row!;
+                storageName = row0.StorageKey.ToString();
+                context.BudgetAttachments.Add(row0);
+                await context.SaveChangesAsync(ct);
 
                 var nextSerial = (await context.DemandLines.AsNoTracking()
                     .Where(l => l.ProposalId == p.ProposalId).MaxAsync(l => (int?)l.SerialNo, ct) ?? 0) + 1;
@@ -156,7 +169,6 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.UploadWorksDeman
                 {
                     var line = pr.Line;
                     line.ProposalId = p.ProposalId;
-                    line.WorkId = pr.NewWork?.Id ?? pr.ExistingWorkId;
                     line.SerialNo = nextSerial++;
                     line.AddedOnReturn = false; // an upload is accepted only in S-01 (DB-11)
                     line.UploadBatchId = batch.UploadBatchId;
@@ -174,7 +186,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.UploadWorksDeman
             }
             catch
             {
-                storage.TryDelete(FileType.BudgetAttachment, storageName);
+                if (storageName is not null)
+                    storage.TryDelete(FileType.BudgetAttachment, storageName);
                 throw;
             }
         }
