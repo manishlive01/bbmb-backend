@@ -40,9 +40,11 @@ namespace BBMB.BudgetService.Features.Works.Update
                 .Where(o => o.OfficeId == actor.OfficeId && o.OfficeLevel == OfficeLevel.Division)
                 .Select(o => o.DivisionId)
                 .FirstOrDefaultAsync(ct);
+            // P4 (design §4.6): a work is addressed by its stable id, not by work_code (now string?/null until
+            // generated). The route becomes PUT /api/works/{id:int} (P4-03 renames the pattern).
             var work = actorDivisionId is null
                 ? null
-                : await _context.Works.FirstOrDefaultAsync(w => w.WorkCode == request.Code && w.DivisionId == actorDivisionId, ct);
+                : await _context.Works.FirstOrDefaultAsync(w => w.Id == request.Id && w.DivisionId == actorDivisionId, ct);
             if (work == null)
                 return BudgetResponses.Fail(BudgetMessages.NotFound);
 

@@ -10,7 +10,8 @@ namespace BBMB.BudgetService.Features.Budgets.GetList.Dtos
         public int CalendarYear { get; set; }
         public string AccountCode { get; set; } = string.Empty;
         public string? AccountDescription { get; set; }
-        public int? WorkCode { get; set; }
+        // P4 (design §4.6): work_code is varchar(12) and nullable (null until generated on allocation, BUD-232).
+        public string? WorkCode { get; set; }
         public string? WorkDesc { get; set; }
         public string BudgetDescription { get; set; } = string.Empty;
         public decimal? BudgetAmount { get; set; }

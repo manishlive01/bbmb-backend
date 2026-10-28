@@ -16,11 +16,14 @@ namespace BBMB.BudgetService.Features.Estimates.Create
         {
             _context = context;
 
+            // P4 compile fix (design §4.6): work_code is now string?. Estimate writes are refused M-19 after
+            // the reset (§11.3) and the slice is re-keyed to WorkId in P4-03; the existence check compares the
+            // string form of the code until then.
             RuleFor(x => x.dto.WorkCode)
                 .NotNull().WithMessage("Work code is required")
                 .GreaterThan(0).WithMessage("Work code must be valid")
                 .MustAsync(async (code, ct) =>
-                    await _context.Works.AnyAsync(w => w.WorkCode == code, ct))
+                    await _context.Works.AnyAsync(w => w.WorkCode == code.ToString(), ct))
                 .WithMessage("Work code does not exist");
 
             RuleFor(x => x.dto.EstimateCode)

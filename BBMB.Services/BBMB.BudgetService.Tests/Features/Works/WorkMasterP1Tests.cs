@@ -44,12 +44,13 @@ public sealed partial class WorkMasterP1Tests(BudgetDatabaseFixture fixture) : I
             .Handle(new CreateWorkCommand(dto), default);
     }
 
-    private async Task<Response> UpdateAsync(int workCode, UpdateWorkDto dto, FakeBudgetActorSource? actor = null)
+    // P4 (design §4.6): a work is addressed by its stable id (work_code is now string?/null until generated).
+    private async Task<Response> UpdateAsync(int workId, UpdateWorkDto dto, FakeBudgetActorSource? actor = null)
     {
         actor ??= _w.DivisionA;
         await using var ctx = _w.NewContext();
         return await new UpdateWorkHandler(ctx, actor, new BudgetActionScope(ctx, actor), new WorkRules(ctx))
-            .Handle(new UpdateWorkCommand(workCode, dto), default);
+            .Handle(new UpdateWorkCommand(workId, dto), default);
     }
 
     /// <summary>An update body that keeps every stored particular of a SpineWorld work except those set.</summary>
@@ -62,12 +63,6 @@ public sealed partial class WorkMasterP1Tests(BudgetDatabaseFixture fixture) : I
     {
         await using var ctx = _w.NewContext();
         return await ctx.Works.CountAsync(x => x.DivisionId == divisionId);
-    }
-
-    private async Task<int> WorkCodeAsync(int workId)
-    {
-        await using var ctx = _w.NewContext();
-        return await ctx.Works.Where(x => x.Id == workId).Select(x => x.WorkCode).SingleAsync();
     }
 
     private async Task ExecAsItCellAsync(string sql)
@@ -98,9 +93,12 @@ public sealed partial class WorkMasterP1Tests(BudgetDatabaseFixture fixture) : I
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             "SET session_replication_role = replica; " +
+            // P4 §4.6: a work_code now requires its origin/occasion/at companions (CHECK). A pre_ddd work
+            // predates codes, so it is seeded code-less; the test exercises pre_ddd clearing, not the code.
+            // The int argument is retained only to vary the seeded row's identity in the description.
             "INSERT INTO budget.work (work_code, division_id, work_desc, major_acc_code, sub_major_acc_code, minor_acc_code, " +
             "sub_minor_acc_code, detail_acc_code, object_acc_code, original_budget, revised_budget, proposed_budget, remarks, " +
-            $"user_code, pre_ddd) VALUES ({code}, {_w.HierarchyA.DivisionId}, 'Old work', '{s.Major}', '{s.SubMajor}', '{s.Minor}', " +
+            $"user_code, pre_ddd) VALUES (NULL, {_w.HierarchyA.DivisionId}, 'Old work {code}', '{s.Major}', '{s.SubMajor}', '{s.Minor}', " +
             $"'{s.SubMinor}', '{s.Detail}', '{s.Object}', '', '', '', '', 'T', true) RETURNING id", conn);
         var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
         await using var reset = new NpgsqlCommand("SET session_replication_role = origin", conn);

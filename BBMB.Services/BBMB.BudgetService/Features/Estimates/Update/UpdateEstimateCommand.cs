@@ -4,5 +4,6 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.Estimates.Update
 {
-    public record UpdateEstimateCommand(int WorkCode, string EstimateCode, UpdateEstimateDto Dto) : IRequest<Response<string>>;
+    // P4 (design §4.6): the estimate is addressed by its work id, not the old int work code.
+    public record UpdateEstimateCommand(int WorkId, string EstimateCode, UpdateEstimateDto Dto) : IRequest<Response<string>>;
 }

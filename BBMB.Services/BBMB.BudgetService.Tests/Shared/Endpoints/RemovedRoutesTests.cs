@@ -32,6 +32,30 @@ public sealed class RemovedRoutesTests
         { "POST", "/api/sub-minor-heads" },
         { "POST", "/api/detail-heads" },
         { "POST", "/api/object-classifications" },
+        // GET → POST (no ids in the URL): these reads now take their ids and filters in a JSON body;
+        // the POST replacements and their unchanged policies are asserted in PostReadRoutesTests.
+        { "GET", "/api/account-head-assignments" },
+        { "GET", "/api/admin-approvals" },
+        { "GET", "/api/budget-cycles/{cycleId:long}/allocations/preview" },
+        { "GET", "/api/budget-cycles/{cycleId:long}/consolidation" },
+        { "GET", "/api/budget-cycles/{cycleId:long}/distributions" },
+        { "GET", "/api/budget-proposals/{id:long}" },
+        { "GET", "/api/budget-proposals/{id:long}/amr-predecessor-options" },
+        { "GET", "/api/budget-proposals/{id:long}/assignable-heads" },
+        { "GET", "/api/budget-proposals/{id:long}/demand-lines" },
+        { "GET", "/api/budget-proposals/{id:long}/demand-lines/{lineId:long}/figure-history" },
+        { "GET", "/api/budget-proposals/{id:long}/movements" },
+        { "GET", "/api/budget-proposals/{id:long}/observations" },
+        { "GET", "/api/correction-flags" },
+        { "GET", "/api/reappropriations/{id:long}" },
+        { "GET", "/api/technical-sanctions" },
+        { "GET", "/api/unforeseen-requests/{id:long}" },
+        // Follow-up POST reads (#9, #15, #18): no GET with ids in the URL was ever added for them.
+        { "GET", "/api/budget-proposals/{id:long}/demand-lines/{lineId:long}" },
+        { "GET", "/api/reappropriations/{id:long}/sources" },
+        { "GET", "/api/work-codes/{workCode}/estimate-codes" },
+        // Audit-trail search: filters moved from the query string into POST /api/audit-trail/list.
+        { "GET", "/api/audit-trail" },
     };
 
     [Theory]
@@ -43,7 +67,9 @@ public sealed class RemovedRoutesTests
 
     [Theory]
     [InlineData("/api/head-of-accounts")]
-    [InlineData("/api/works/{code}")]
+    // P4-03 (design §4.6): the work read route is addressed by id (/api/works/{id:int}); the former
+    // /api/works/{code} form is gone with the int work code.
+    [InlineData("/api/works/{id:int}")]
     [InlineData("/api/Get-MajorHead-List")]
     [InlineData("/api/accounting-heads/sub-major/{code}")]
     [InlineData("/api/minor-heads/{code}")]

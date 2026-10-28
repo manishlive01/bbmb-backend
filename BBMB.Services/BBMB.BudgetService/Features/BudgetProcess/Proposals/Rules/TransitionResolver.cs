@@ -129,6 +129,32 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
                 case ProposalAction.Reopen when s == ProposalStateCode.S11:
                     return new ResolvedTransition(s, action, ProposalStateCode.S10, p.HolderOfficeId);
 
+                // T22 / T25: cycle-level placement before the BSC and the Full Board. The holder does not
+                // change (the proposal stays at its office; the cycle-level guards are in the slice handlers).
+                case ProposalAction.PlaceBsc when s == ProposalStateCode.S11:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S12, p.HolderOfficeId);
+
+                case ProposalAction.PlaceFb when s == ProposalStateCode.S13:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S14, p.HolderOfficeId);
+
+                // T24 (from S-12) / T27 (from S-14): refer a proposal back to the Secretariat (BUD-176, CON-005).
+                case ProposalAction.ReferBack when s is ProposalStateCode.S12 or ProposalStateCode.S14:
+                    return offices.SecretariatOfficeId is null
+                        ? null
+                        : new ResolvedTransition(s, action, ProposalStateCode.S08, offices.SecretariatOfficeId.Value);
+
+                // T23 / T26: the allocation steps, driven only by F-19 BSC / FULL_BOARD allocation. The holder
+                // does not change.
+                case ProposalAction.AllocateRbe when s == ProposalStateCode.S12:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S13, p.HolderOfficeId);
+
+                case ProposalAction.AllocateObe when s == ProposalStateCode.S14:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S15, p.HolderOfficeId);
+
+                // T28: freeze, driven only by F-20 (DB-19). The holder does not change.
+                case ProposalAction.Freeze when s == ProposalStateCode.S15:
+                    return new ResolvedTransition(s, action, ProposalStateCode.S16, p.HolderOfficeId);
+
                 default:
                     return null;
             }

@@ -226,9 +226,11 @@ public sealed class CreateAdminApprovalTests(BudgetDatabaseFixture fixture) : IA
             await c.OpenAsync();
             await using var cmd = new NpgsqlCommand(
                 "SET session_replication_role = replica; " +
+                // work_code is NULL: a pre-DDD work has no conformant code after the P4 reset, and the P4-01
+                // ck_work_code_at_pair CHECK requires work_code_at wherever a code is set (end-of-run fix).
                 "INSERT INTO budget.work (work_code, division_id, work_desc, user_code, pre_ddd, major_acc_code, sub_major_acc_code, " +
                 "minor_acc_code, sub_minor_acc_code, detail_acc_code, object_acc_code, original_budget, revised_budget, proposed_budget, remarks) " +
-                $"VALUES (599999, {_w.HierarchyA.DivisionId}, 'Old work', 'T', true, '{seg.Major}', '{seg.SubMajor}', '{seg.Minor}', " +
+                $"VALUES (NULL, {_w.HierarchyA.DivisionId}, 'Old work', 'T', true, '{seg.Major}', '{seg.SubMajor}', '{seg.Minor}', " +
                 $"'{seg.SubMinor}', '{seg.Detail}', '{seg.Object}', '', '', '', '') RETURNING id", c);
             workId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
         }
@@ -256,7 +258,7 @@ public sealed class CreateAdminApprovalTests(BudgetDatabaseFixture fixture) : IA
     public void Routes_carry_F03_Enter_and_Budget_View()
     {
         EndpointCatalog.Find("POST", "/api/admin-approvals")!.Policies.Should().Equal("BudgetRight:F03.Enter");
-        EndpointCatalog.Find("GET", "/api/admin-approvals")!.Policies.Should().Equal("BudgetRight:Budget.View");
+        EndpointCatalog.Find("POST", "/api/admin-approvals/list")!.Policies.Should().Equal("BudgetRight:Budget.View");
         EndpointCatalog.Find("GET", "/api/admin-approvals/{id:long}")!.Policies.Should().Equal("BudgetRight:Budget.View");
     }
 }

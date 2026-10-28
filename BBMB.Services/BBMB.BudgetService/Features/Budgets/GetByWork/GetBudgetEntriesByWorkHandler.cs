@@ -18,10 +18,11 @@ namespace BBMB.BudgetService.Features.Budgets.GetByWork
 
         public async Task<PagedResponse<GetBudgetEntryListResponseDto>> Handle(GetBudgetEntriesByWorkQuery request, CancellationToken ct)
         {
+            // P4 (design §4.6, §9.3 Budgets P4): entries of a work are addressed by the work's stable id.
             var query = _context.BudgetEntries
                 .Include(b => b.Division)
                 .Include(b => b.Work)
-                .Where(b => b.Work.WorkCode == request.WorkCode);
+                .Where(b => b.WorkId == request.WorkId);
 
             var totalCount = await query.CountAsync(ct);
 

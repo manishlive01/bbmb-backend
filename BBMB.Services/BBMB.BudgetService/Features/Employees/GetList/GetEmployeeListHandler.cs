@@ -60,30 +60,40 @@ namespace BBMB.BudgetService.Features.Employees.GetList
             var baseUrl = _fileSettings.FileServerUrl;
 
             var items = await query
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new GetEmployeeListResponseDto
-                {
-                    EmployeeId = x.Id,
-                    EmployeeCode = x.EmployeeCode,
-                    NameEnglish = x.NameEnglish,
+     .Skip((pageNumber - 1) * pageSize)
+     .Take(pageSize)
+     .Select(x => new GetEmployeeListResponseDto
+     {
+         EmployeeId = x.Id,
+         EmployeeCode = x.EmployeeCode,
+         NameEnglish = x.NameEnglish,
 
-                    GenderId = x.GenderId,
-                    GenderName = x.Genders.GenderName,
+         GenderId = x.GenderId,
+         GenderName = x.Genders != null
+             ? x.Genders.GenderName
+             : null,
 
-                    PhoneNumber = x.PhoneNumber,
-                    Email = x.Email,
+         PhoneNumber = x.PhoneNumber,
+         Email = x.Email,
 
-                    DesignationId = x.EmploymentDetail.DesignationId,
-                    DesignationName = x.EmploymentDetail.Designations.DesignationName,
+         DesignationId = x.EmploymentDetail != null
+             ? x.EmploymentDetail.DesignationId
+             : null,
 
-                    DateOfJoining = x.EmploymentDetail.DateOfJoining,
+         DesignationName = x.EmploymentDetail != null &&
+                           x.EmploymentDetail.Designations != null
+             ? x.EmploymentDetail.Designations.DesignationName
+             : null,
 
-                    PhotoUrl = x.PhotoDocument != null
-                        ? $"{baseUrl}{x.PhotoDocument.PhotoUrl}"
-                        : ""
-                })
-                .ToListAsync(ct);
+         DateOfJoining = x.EmploymentDetail != null
+             ? x.EmploymentDetail.DateOfJoining
+             : null,
+
+         PhotoUrl = x.PhotoDocument != null
+             ? $"{baseUrl}{x.PhotoDocument.PhotoUrl}"
+             : ""
+     })
+     .ToListAsync(ct);
 
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 

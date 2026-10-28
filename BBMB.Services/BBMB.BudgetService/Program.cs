@@ -2,6 +2,8 @@
 // USING STATEMENTS
 // =======================
 using BBMB.BudgetService.Authorization.Extension;
+using BBMB.BudgetService.Features.Estimates.GetById;
+using BBMB.BudgetService.Features.Estimates.Update;
 using BBMB.BudgetService.Infrastructure.DependencyInjection;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
@@ -114,6 +116,21 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AdminApprov
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Rules.TechnicalSanctionRules>();
 // Attachment download: "caller may view an owning record" (design §8.2).
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Attachments.Rules.AttachmentAccessRules>();
+// F-19 allocation: the plan computation shared by preview and allocate (design §8.6).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Allocations.Rules.AllocationRules>();
+// F-20 freeze: the three preconditions of a cycle freeze (design §8.6, DB-19).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Freezes.Rules.FreezeRules>();
+// F-29 estimate-wise allocation: target resolution and VR-12 (design §8.6, DB-23).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.EstimateAllocations.Rules.EstimateAllocationRules>();
+// F-30 unforeseen work: the status-model mover and the balance reads (design §6.3, §8.6).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Rules.UnforeseenRequestMover>();
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Reads.UnforeseenReads>();
+// F-30 unforeseen authorisation: VR-13 / VR-04 and the CE-of-charge check (design §8.6).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.UnforeseenWorks.Rules.UnforeseenRules>();
+// F-21 re-appropriation: the surrender arithmetic (VR-08, M-18) (design §8.7).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Rules.ReappropriationRules>();
+// F-22 re-appropriation reads: the entry/register loaders (design §8.7).
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Reappropriations.Reads.ReappropriationReads>();
 // ===================================================================
 // SWAGGER / OPENAPI
 // ===================================================================
@@ -138,13 +155,69 @@ builder.Services.AddAuthentication("Bearer")
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
- 
+
+
+    //options.Events = new JwtBearerEvents
+    //{
+    //    OnAuthenticationFailed = context =>
+    //    {
+    //        Console.WriteLine("AUTH FAILED: " + context.Exception.Message);
+    //        return Task.CompletedTask;
+    //    }
+    //};
 
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine("AUTH FAILED: " + context.Exception.Message);
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+
+            logger.LogError(
+                context.Exception,
+                "JWT authentication failed for {Path}",
+                context.Request.Path);
+
+            return Task.CompletedTask;
+        },
+
+        OnTokenValidated = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+
+            logger.LogInformation(
+                "JWT validated. Subject: {Subject}; Issuer: {Issuer}",
+                context.Principal?.FindFirst("sub")?.Value,
+                context.SecurityToken.Issuer);
+
+            return Task.CompletedTask;
+        },
+
+        OnChallenge = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+
+            logger.LogWarning(
+                "JWT challenge for {Path}. Error: {Error}; Description: {Description}",
+                context.Request.Path,
+                context.Error,
+                context.ErrorDescription);
+
+            return Task.CompletedTask;
+        },
+
+        OnForbidden = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+
+            logger.LogWarning(
+                "Authorization forbidden for {Path}. Authenticated: {Authenticated}",
+                context.Request.Path,
+                context.HttpContext.User.Identity?.IsAuthenticated);
+
             return Task.CompletedTask;
         }
     };
@@ -370,6 +443,13 @@ app.UseExceptionHandler(appBuilder =>
 // ENDPOINT MAPPING
 // ===================================================================
 app.MapEndpoints();
+
+// Estimate read/update are static map-extension endpoints (not IEndpoint classes), so they are wired here
+// beside app.MapEndpoints(). Both carry their design §9.3 policy (GET -> Budget.View, PUT -> Legacy.BudgetEntry)
+// and are re-keyed to {workId:int} after the P4 work-code reset (P4-03). Without these two calls the routes
+// are unreachable even though their query/command/handler exist — a defect, not intended behaviour.
+app.MapGetEstimateByIdEndpoint();
+app.MapUpdateEstimateEndpoint();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

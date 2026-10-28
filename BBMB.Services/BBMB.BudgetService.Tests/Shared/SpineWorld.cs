@@ -103,19 +103,36 @@ public sealed class SpineWorld
 
         async Task<int> NewWork(FakeBudgetActorSource actor, int divisionId, int code)
         {
-            await using var wctx = BudgetDatabaseFixture.NewBudgetContext(cs);
-            await using var wtx = await new BudgetActionScope(wctx, actor).BeginAsync("WORKS_ENTER");
-            var w = new Work
-            {
-                WorkCode = code, DivisionId = divisionId, WorkDesc = $"Work {code}", UserCode = "T",
-                MajorAccCode = seg.Major, SubMajorAccCode = seg.SubMajor, MinorAccCode = seg.Minor,
-                SubMinorAccCode = seg.SubMinor, DetailAccCode = seg.Detail, ObjectAccCode = seg.Object,
-                WorkClass = "AA", EnteredVia = "LEGACY_OPENING",
-            };
-            wctx.Works.Add(w);
-            await wctx.SaveChangesAsync();
-            await wtx.CommitAsync();
-            return w.Id;
+            // Insert via raw SQL (not EF) so only the columns that exist at the migrateTo target are written:
+            // the Work entity carries the P4 work-code columns, which are absent at an early target such as
+            // BudgetP1FiguresAndRecommendations (end-of-run fix for S114). work_code is null at entry (P4 §4.6);
+            // the [A] actor columns are trigger-filled.
+            await using var conn = new NpgsqlConnection(cs);
+            await conn.OpenAsync();
+            await using var tx = await conn.BeginTransactionAsync();
+            await DbActor.SetAsync(conn, tx, actor.Actor!.EmployeeId, actor.Actor.ChargeId, actor.Actor.OfficeId,
+                role: actor.Actor.RoleCode, action: "WORKS_ENTER", name: actor.Actor.ActorName);
+            // The work_code column differs by migrate-to target: before P4 it is int NOT NULL (so an integer
+            // code is given); from P4 (BudgetP4WorkCodeConformance) it is a nullable varchar with pairing CHECKs
+            // (so it must be NULL at entry, P4 §4.6). Detect the P4 shape by the presence of work_code_origin.
+            bool postP4;
+            await using (var probe = new NpgsqlCommand(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='budget' " +
+                "AND table_name='work' AND column_name='work_code_origin')", conn, tx))
+                postP4 = (bool)(await probe.ExecuteScalarAsync())!;
+            var workCodeValue = postP4 ? "NULL" : code.ToString(System.Globalization.CultureInfo.InvariantCulture);
+#pragma warning disable EF1002
+            await using var cmd = new NpgsqlCommand(
+                "INSERT INTO budget.work (work_code, division_id, work_desc, user_code, work_class, entered_via, pre_ddd, " +
+                "major_acc_code, sub_major_acc_code, minor_acc_code, sub_minor_acc_code, detail_acc_code, object_acc_code, " +
+                "original_budget, revised_budget, proposed_budget, remarks) " +
+                $"VALUES ({workCodeValue}, {divisionId}, 'Work {code}', 'T', 'AA', 'LEGACY_OPENING', false, " +
+                $"'{seg.Major}', '{seg.SubMajor}', '{seg.Minor}', '{seg.SubMinor}', '{seg.Detail}', '{seg.Object}', " +
+                "'', '', '', '') RETURNING id", conn, tx);
+#pragma warning restore EF1002
+            var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+            await tx.CommitAsync();
+            return id;
         }
         var workA = await NewWork(divisionA, a.DivisionId, 500001);
         var workB = await NewWork(divisionB, b.DivisionId, 500002);

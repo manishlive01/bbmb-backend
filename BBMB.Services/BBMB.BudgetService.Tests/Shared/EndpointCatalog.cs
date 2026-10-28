@@ -1,3 +1,5 @@
+using BBMB.BudgetService.Features.Estimates.GetById;
+using BBMB.BudgetService.Features.Estimates.Update;
 using BBMB.BudgetService.Infrastructure.DependencyInjection;
 using BBMB.BudgetService.Shared.Endpoints.EndpointExtensions;
 using BBMB.BudgetService.Shared.Services;
@@ -58,6 +60,10 @@ public static class EndpointCatalog
 
         var app = builder.Build();
         app.MapEndpoints();
+        // Mirror Program.cs: the two estimate static map-extension endpoints are wired explicitly, not via
+        // app.MapEndpoints() (they are not IEndpoint classes).
+        app.MapGetEstimateByIdEndpoint();
+        app.MapUpdateEstimateEndpoint();
 
         return ((IEndpointRouteBuilder)app).DataSources
             .SelectMany(ds => ds.Endpoints)

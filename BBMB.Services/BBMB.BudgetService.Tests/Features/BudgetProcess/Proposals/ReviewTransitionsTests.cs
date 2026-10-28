@@ -212,7 +212,7 @@ public sealed class ReviewTransitionsTests(BudgetDatabaseFixture fixture) : IAsy
         var s = _w.Segments;
         var w = new BBMB.BudgetService.Features.Works.Entities.Work
         {
-            WorkCode = 600001, DivisionId = _w.HierarchyA.DivisionId, WorkDesc = "Second work", UserCode = "T",
+            WorkCode = null, DivisionId = _w.HierarchyA.DivisionId, WorkDesc = "Second work", UserCode = "T", // P4 §4.6: code-less at entry
             MajorAccCode = s.Major, SubMajorAccCode = s.SubMajor, MinorAccCode = s.Minor, SubMinorAccCode = s.SubMinor,
             DetailAccCode = s.Detail, ObjectAccCode = s.Object, WorkClass = "AA", EnteredVia = "LEGACY_OPENING",
         };

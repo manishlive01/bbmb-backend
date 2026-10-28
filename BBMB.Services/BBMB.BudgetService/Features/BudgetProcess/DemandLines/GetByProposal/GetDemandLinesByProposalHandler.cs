@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BBMB.BudgetService.Features.BudgetProcess.DemandLines.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetByProposal.Dtos;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals;
 using BBMB.BudgetService.Features.Works.Entities;
@@ -20,6 +21,22 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetByProposal
         : IRequestHandler<GetDemandLinesByProposalQuery, Response<GetDemandLinesResponseDto>>
     {
         private sealed record LevelFigureJson(long level_office_id, string figure, decimal? value);
+        /// <summary>One V-04 row as the list returns it; shared with the single-line read (demand-lines/detail).</summary>
+        public static DemandLineRowDto ToRow(DemandLineDisplayRow r) => new()
+        {
+            DemandLineId = r.DemandLineId, SerialNo = r.SerialNo, LineType = r.LineType, WorkId = r.WorkId,
+            WorkDesc = r.WorkDesc, WorkClass = r.WorkClass, PrecedingAmrWorkId = r.PrecedingAmrWorkId,
+            AccountCodeId = r.AccountCodeId, CompleteCode = r.CompleteCode, HeadDesc = r.HeadDesc,
+            UnforeseenName = r.UnforeseenName, RbeAmount = r.RbeAmount, ObeNextAmount = r.ObeNextAmount,
+            JustificationText = r.JustificationText, JustificationAttachmentId = r.JustificationAttachmentId,
+            CeCertificateAttachmentId = r.CeCertificateAttachmentId, CeAmrApprovalAttachmentId = r.CeAmrApprovalAttachmentId,
+            OpeningObeCurrent = r.OpeningObeCurrent,
+            OpeningRbePrevious = r.OpeningRbePrevious, ExpenditureToDate = r.ExpenditureToDate,
+            ExpenditurePreviousYear = r.ExpenditurePreviousYear, PctCheckNotApplied = r.PctCheckNotApplied,
+            FloorCheckUnchecked = r.FloorCheckUnchecked, AddedOnReturn = r.AddedOnReturn, IsDeleted = r.IsDeleted,
+            LevelFigures = (JsonSerializer.Deserialize<List<LevelFigureJson>>(r.LevelFigures) ?? [])
+                .Select(f => new LevelFigureDto(f.level_office_id, f.figure, f.value)).ToList(),
+        };
 
         public async Task<Response<GetDemandLinesResponseDto>> Handle(GetDemandLinesByProposalQuery request, CancellationToken ct)
         {
@@ -54,19 +71,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetByProposal
                 {
                     ProposalId = p.ProposalId, Category = p.Category,
                     Headings = DemandLineHeadings.For(p.Category, cycle.CurrentFinYear, cycle.NextFinYear),
-                    Lines = rows.Select(r => new DemandLineRowDto
-                    {
-                        DemandLineId = r.DemandLineId, SerialNo = r.SerialNo, LineType = r.LineType, WorkId = r.WorkId,
-                        WorkDesc = r.WorkDesc, WorkClass = r.WorkClass, PrecedingAmrWorkId = r.PrecedingAmrWorkId,
-                        AccountCodeId = r.AccountCodeId, CompleteCode = r.CompleteCode, HeadDesc = r.HeadDesc,
-                        UnforeseenName = r.UnforeseenName, RbeAmount = r.RbeAmount, ObeNextAmount = r.ObeNextAmount,
-                        JustificationText = r.JustificationText, OpeningObeCurrent = r.OpeningObeCurrent,
-                        OpeningRbePrevious = r.OpeningRbePrevious, ExpenditureToDate = r.ExpenditureToDate,
-                        ExpenditurePreviousYear = r.ExpenditurePreviousYear, PctCheckNotApplied = r.PctCheckNotApplied,
-                        FloorCheckUnchecked = r.FloorCheckUnchecked, AddedOnReturn = r.AddedOnReturn, IsDeleted = r.IsDeleted,
-                        LevelFigures = (JsonSerializer.Deserialize<List<LevelFigureJson>>(r.LevelFigures) ?? [])
-                            .Select(f => new LevelFigureDto(f.level_office_id, f.figure, f.value)).ToList(),
-                    }).ToList(),
+                    Lines = rows.Select(ToRow).ToList(),
                     Pagination = new PaginationMetadata
                     {
                         TotalCount = total, PageNumber = pageNumber, PageSize = pageSize, TotalPages = pages,

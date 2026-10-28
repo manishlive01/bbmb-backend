@@ -8,14 +8,12 @@ namespace BBMB.BudgetService.Features.Estimates.Delete
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapDelete("/api/estimates/{workCode}/{estimateCode}", async (int workCode, string estimateCode, IMediator mediator) =>
+            app.MapDelete("/api/estimates/{workId:int}/{estimateCode}", async (int workId, string estimateCode, IMediator mediator) =>
             {
-                var command = new DeleteEstimateCommand(workCode, estimateCode);
+                var command = new DeleteEstimateCommand(workId, estimateCode);
                 var response = await mediator.Send(command);
 
-                return response.IsSucced
-                    ? Results.NoContent()
-                    : Results.NotFound(response);
+                return BudgetResults.From(response, _ => Results.NoContent());
             })
             .RequireAuthorization("BudgetRight:Legacy.BudgetEntry")
             .WithName("DeleteEstimate")

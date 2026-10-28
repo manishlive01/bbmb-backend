@@ -62,6 +62,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<Region> Regions { get; set; }
         public DbSet<UnitMaster> Units { get; set; }
         public DbSet<Work> Works { get; set; }
+        public DbSet<WorkCodeSerial> WorkCodeSerials { get; set; }
         public DbSet<CEManagement> CEManagements { get; set; }
         public DbSet<CRManagement> CRManagements { get; set; }
         public DbSet<CRSection> CRSections { get; set; }
@@ -86,15 +87,22 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
             modelBuilder.Entity<Estimate>().Property(e => e.EstimateAmt).HasColumnType(RupeesColumnType);
             modelBuilder.Entity<Work>().Property(e => e.EstimatedCost).HasColumnType(RupeesColumnType);
 
-            // Configure composite key for Estimate
+            // Estimate re-keyed after the P4 reset (design §4.6 step 2): key and FK move from work_code to work_id,
+            // the FK pointing at work.id (RESTRICT). work_code is kept as a plain int column, no key and no FK.
             modelBuilder.Entity<Estimate>()
-                .HasKey(e => new { e.WorkCode, e.EstimateCode });
+                .HasKey(e => new { e.WorkId, e.EstimateCode });
 
             modelBuilder.Entity<Estimate>()
                 .HasOne(e => e.Work)
                 .WithMany()
-                .HasForeignKey(e => e.WorkCode)
+                .HasForeignKey(e => e.WorkId)
+                .HasPrincipalKey(w => w.Id)
                 .OnDelete(DeleteBehavior.Restrict);
+
+#pragma warning disable CS0618 // work_code is intentionally retained (design §4.6 step 2, OI-46)
+            modelBuilder.Entity<Estimate>()
+                .Property(e => e.WorkCode);
+#pragma warning restore CS0618
              
             // =====================================================
             // SubMajorHead Configuration
@@ -313,9 +321,10 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
             {
                 entity.HasKey(e => e.Id);
 
-                // ✅ business key
-                entity.HasAlternateKey(e => e.WorkCode);
-                entity.HasIndex(e => e.WorkCode).IsUnique();
+                // work_code is varchar(12), nullable, after the P4 reset (design §4.6). The alternate key and the
+                // plain unique index are dropped by BudgetP4WorkCodeConformance and replaced by a partial unique
+                // index on work_code WHERE work_code IS NOT NULL, created in the migration SQL (step 4).
+                entity.Property(e => e.WorkCode).HasColumnType("character varying(12)");
 
                 // ✅ FK → Division
                 entity.HasOne(w => w.Division)
@@ -329,6 +338,13 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                       .HasForeignKey(w => w.DesignationCode)
                       .HasPrincipalKey(d => d.DesignationCode)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // T-24 work_code_serial (design §4.6 step 5): composite PK (division_code, fin_year). The 1-999 CHECKs
+            // on division_code and last_serial and the FK to the financial-year master are added in the migration SQL.
+            modelBuilder.Entity<WorkCodeSerial>(entity =>
+            {
+                entity.HasKey(e => new { e.DivisionCode, e.FinYear });
             });
 
             // Budget-process tables (design §2.1: partial class BudgetContext.BudgetProcess.cs).

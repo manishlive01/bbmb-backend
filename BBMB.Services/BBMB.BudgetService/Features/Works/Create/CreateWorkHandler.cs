@@ -61,31 +61,15 @@ namespace BBMB.BudgetService.Features.Works.Create
                     };
             }
 
-            // ================= AUTO GENERATE WORK CODE (removed in P4, design §4.6) =================
-            var lastWorkCode = await _context.Works
-                .Where(w => w.DivisionId == divisionId)
-                .OrderByDescending(w => w.WorkCode)
-                .Select(w => w.WorkCode)
-                .FirstOrDefaultAsync(ct);
-            int nextNumber = 1;
-            var lastWorkCodeStr = lastWorkCode.ToString();
-            var divisionStr = divisionId.ToString();
-            if (!string.IsNullOrEmpty(lastWorkCodeStr) &&
-                lastWorkCodeStr.StartsWith(divisionStr) &&
-                lastWorkCodeStr.Length > divisionStr.Length)
-            {
-                var numericPart = lastWorkCodeStr.Substring(divisionStr.Length);
-                if (int.TryParse(numericPart, out int lastNumber))
-                {
-                    nextNumber = lastNumber + 1;
-                }
-            }
-            var newWorkCode = $"{divisionId}{nextNumber.ToString("D5")}";
-            request.dto.WorkCode = newWorkCode;
+            // ================= WORK CODE =================
+            // DV-19 (design §4.6): a work is created with NO code. A code is generated only on the four
+            // occasions (BUD-232) by budget.fn_generate_work_code, or keyed as a legacy code (F-28). The old
+            // entry-time generator is removed; CreateWorkDto no longer carries a work code.
 
             // ================= CREATE WORK =================
             var work = request.dto.Adapt<Work>();
             WorkRules.ApplySegments(work, code);
+            work.WorkCode = null;
             // Set server-side after Adapt, never from the request body (design §9.3, §11.3): a work keyed on
             // the work master screen is a continuing work keyed in the first cycle (DDD T-23, L-08).
             work.EnteredVia = WorkEnteredVia.LegacyOpening;
@@ -97,7 +81,7 @@ namespace BBMB.BudgetService.Features.Works.Create
             return new Response
             {
                 IsSucced = true,
-                Message = $"Work created successfully with WorkCode {newWorkCode}"
+                Message = "Work created successfully"
             };
         }
     }

@@ -67,6 +67,20 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules
                     into hj
                 from h in hj.DefaultIfEmpty()
                 select new { w.Id, w.PreDdd, AccountCodeId = (long?)h.AccountCodeId, w.WorkClass, w.PrecedingAmrWorkId }).ToListAsync(ct);
+            // P4 (BUD-275, BUD-276): the column-14 figure of an AM&R line is the latest budget allotted to the
+            // AM&R work it continues, which from P4 is the available amount on that work's operative provision
+            // (V-02). Read it per predecessor work so the completeness and VR-05 checks have a col-14 figure.
+            var precedingWorkIds = works.Where(w => w.PrecedingAmrWorkId is not null)
+                .Select(w => w.PrecedingAmrWorkId!.Value).Distinct().ToList();
+            var precedingProvision = precedingWorkIds.Count == 0
+                ? new Dictionary<int, decimal>()
+                : (await context.ProvisionBalances.AsNoTracking()
+                        .Where(v => v.IsOperative && v.HolderType == "WORK" && v.WorkId != null &&
+                                    precedingWorkIds.Contains(v.WorkId.Value))
+                        .Select(v => new { WorkId = v.WorkId!.Value, v.Available })
+                        .ToListAsync(ct))
+                    .GroupBy(v => v.WorkId).ToDictionary(g => g.Key, g => g.Max(v => v.Available));
+
             // VR-03 / VR-04: the approval of each work and the amount of its current version.
             var approvals = (await context.AdminApprovals.AsNoTracking()
                     .Where(a => workIds.Contains(a.WorkId))
@@ -130,7 +144,9 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules
                     WorkHasApproval = l.WorkId is { } aw && approvals.ContainsKey(aw),
                     AaAmount = l.WorkId is { } bw && approvals.TryGetValue(bw, out var amount) ? amount : null,
                     PrecedingAmrWorkId = w?.PrecedingAmrWorkId,
-                    AmrApprovedBudget = null, // the latest approved budget comes from T-41 provisions (P4); BUD-276 "neither" until then
+                    // P4 (BUD-276): the col-14 work's latest budget allotted = the available on its operative
+                    // provision (V-02); null when the predecessor has no provision yet (BUD-276 "neither" branch).
+                    AmrApprovedBudget = w?.PrecedingAmrWorkId is { } pid && precedingProvision.TryGetValue(pid, out var pb) ? pb : null,
                     HeadAssigned = l.LineType != DemandLineType.Head || l.AccountCodeId is null || assigned.Contains(l.AccountCodeId.Value),
                     CeCertificateAttachmentId = l.CeCertificateAttachmentId,
                     CeAmrApprovalAttachmentId = l.CeAmrApprovalAttachmentId,

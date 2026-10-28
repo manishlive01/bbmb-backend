@@ -36,16 +36,16 @@ namespace BBMB.BudgetService.Features.Budgets.Update
                     Message = $"Division with code '{request.dto.DivisionId}' not found"
                 };
 
-            // Validate work code if provided
-            if (!string.IsNullOrEmpty(request.dto.WorkCode.ToString()))
+            // Validate the referenced work by its id (design §4.6): the DTO carries WorkId, every work code
+            // being null after the reset.
+            if (request.dto.WorkId is { } workId)
             {
-                var workExists = await _context.Works
-                    .AnyAsync(w => w.WorkCode == request.dto.WorkCode, ct);
+                var workExists = await _context.Works.AnyAsync(w => w.Id == workId, ct);
                 if (!workExists)
                     return new Response
                     {
                         IsSucced = false,
-                        Message = $"Work with code '{request.dto.WorkCode}' not found"
+                        Message = $"Work with id '{workId}' not found"
                     };
             }
 
@@ -58,7 +58,6 @@ namespace BBMB.BudgetService.Features.Budgets.Update
                     IsSucced = false,
                     Message = $"Major head with code '{request.dto.MajorAccCode}' not found"
                 };
-            var getWorkId=await _context.Works.AsNoTracking().Where(w=>w.WorkCode==request.dto.WorkCode).Select(w=>w.Id).FirstOrDefaultAsync(ct);
              // Update fields
             //budgetEntry.DivisionCode = request.dto.DivisionCode;
             budgetEntry.DivSectionId = request.dto.DivSectionId;
@@ -70,7 +69,7 @@ namespace BBMB.BudgetService.Features.Budgets.Update
             budgetEntry.SubMinorAccCode = request.dto.SubMinorAccCode;
             budgetEntry.DetailAccCode = request.dto.DetailAccCode;
             budgetEntry.ObjectAccCode = request.dto.ObjectAccCode;
-            budgetEntry.WorkId = getWorkId;
+            budgetEntry.WorkId = request.dto.WorkId;
             budgetEntry.BudgetDescription = request.dto.BudgetDescription;
             budgetEntry.BudgetAmount = request.dto.BudgetAmount;
             budgetEntry.RevisedAmount = request.dto.RevisedAmount;

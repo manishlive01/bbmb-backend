@@ -1,42 +1,16 @@
-using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
+using BBMB.BudgetService.Shared.Messages;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.Estimates.Delete
 {
     public class DeleteEstimateHandler : IRequestHandler<DeleteEstimateCommand, Response>
     {
-        private readonly BudgetContext _context;
-
-        public DeleteEstimateHandler(BudgetContext context)
+        public Task<Response> Handle(DeleteEstimateCommand request, CancellationToken ct)
         {
-            _context = context;
-        }
-
-        public async Task<Response> Handle(DeleteEstimateCommand request, CancellationToken ct)
-        {
-            var estimate = await _context.Estimates
-                .FirstOrDefaultAsync(e => e.WorkCode == request.WorkCode && 
-                                         e.EstimateCode == request.EstimateCode, ct);
-
-            if (estimate == null)
-            {
-                return new Response
-                {
-                    IsSucced = false,
-                    Message = $"Estimate with work code '{request.WorkCode}' and estimate code '{request.EstimateCode}' not found"
-                };
-            }
-
-            _context.Estimates.Remove(estimate);
-            await _context.SaveChangesAsync(ct);
-
-            return new Response
-            {
-                IsSucced = true,
-                Message = "Estimate deleted successfully"
-            };
+            // P4 (design §4.6, §9.3 Estimates P4): the legacy estimate delete route refuses after the reset (M-19).
+            // T-23/T-07 carry no DELETE path for estimate records once the work process owns them (DB-13).
+            return Task.FromResult(BudgetResponses.Fail(BudgetMessages.M19));
         }
     }
 }

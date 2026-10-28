@@ -22,6 +22,9 @@ public sealed class MigrationActorTests(BudgetDatabaseFixture fixture)
         ("BudgetP1ReferenceStateAndAudit", ["office", "state", "setting"]),
         ("BudgetP1ProposalSpineMasters", ["budget_head_master", "work"]),
         ("BudgetP1StateTransitionSeed", ["state_transition"]),
+        // P4-01 copies work_code -> work_code_prev and resets work_code, under its own migration actor; only
+        // `work` carries the audit trigger (estimate is legacy, outside T-01..T-51, DV-19).
+        ("BudgetP4WorkCodeConformance", ["work"]),
     ];
 
     private static async Task<string?> ScalarAsync(string cs, string sql)

@@ -4,5 +4,5 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.Works.Update
 {
-    public sealed record UpdateWorkCommand(int Code, UpdateWorkDto dto) : IRequest<Response>;
+    public sealed record UpdateWorkCommand(int Id, UpdateWorkDto dto) : IRequest<Response>;
 }

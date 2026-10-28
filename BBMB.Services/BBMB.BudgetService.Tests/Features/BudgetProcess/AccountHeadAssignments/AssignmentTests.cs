@@ -181,7 +181,7 @@ public sealed class AssignmentTests(BudgetDatabaseFixture fixture) : IAsyncLifet
     {
         EndpointCatalog.Find("POST", "/api/account-head-assignments")!.Policies.Should().Equal("BudgetRight:F17.Assign");
         EndpointCatalog.Find("POST", "/api/account-head-assignments/{id:long}/remove")!.Policies.Should().Equal("BudgetRight:F17.Assign");
-        EndpointCatalog.Find("GET", "/api/account-head-assignments")!.Policies.Should().Equal("BudgetRight:Budget.View");
-        EndpointCatalog.Find("GET", "/api/budget-proposals/{id:long}/assignable-heads")!.Policies.Should().Equal("BudgetRight:Budget.View");
+        EndpointCatalog.Find("POST", "/api/account-head-assignments/list")!.Policies.Should().Equal("BudgetRight:Budget.View");
+        EndpointCatalog.Find("POST", "/api/budget-proposals/assignable-heads")!.Policies.Should().Equal("BudgetRight:Budget.View");
     }
 }

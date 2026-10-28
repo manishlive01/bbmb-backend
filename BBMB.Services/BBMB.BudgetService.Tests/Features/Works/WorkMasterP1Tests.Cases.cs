@@ -85,15 +85,14 @@ public sealed partial class WorkMasterP1Tests
     [Fact]
     public async Task BUD031_Works_Update_of_another_Division_work_is_NOT_FOUND()
     {
-        var codeB = await WorkCodeAsync(_w.WorkBId);
-        (await UpdateAsync(codeB, SameAs("Renamed"))).MessageId.Should().Be("NOT_FOUND");
+        (await UpdateAsync(_w.WorkBId, SameAs("Renamed"))).MessageId.Should().Be("NOT_FOUND");
     }
 
     [Fact]
     public async Task S113_Works_RenameInNonFirstCycleSucceeds()
     {
         await MoveToNonFirstCycleAsync();
-        var r = await UpdateAsync(await WorkCodeAsync(_w.WorkAId), SameAs("Renamed work"));
+        var r = await UpdateAsync(_w.WorkAId, SameAs("Renamed work"));
         r.IsSucced.Should().BeTrue(r.Message);
 
         await using var ctx = _w.NewContext();
@@ -108,15 +107,14 @@ public sealed partial class WorkMasterP1Tests
     public async Task S113_Works_ReclassifyReferencedByDemandLineRefusedM19()
     {
         await AddDemandLineAsync(_w.WorkAId);
-        var code = await WorkCodeAsync(_w.WorkAId);
 
         var reclass = SameAs("Work 500001");
         reclass.WorkClass = "AMR";
-        (await UpdateAsync(code, reclass)).MessageId.Should().Be("M-19");
+        (await UpdateAsync(_w.WorkAId, reclass)).MessageId.Should().Be("M-19");
 
         var rehead = SameAs("Work 500001");
         rehead.AccountCodeId = 987654; // refused by the reference rule before the code lookup (design §5.2)
-        (await UpdateAsync(code, rehead)).MessageId.Should().Be("M-19");
+        (await UpdateAsync(_w.WorkAId, rehead)).MessageId.Should().Be("M-19");
 
         await using var ctx = _w.NewContext();
         var work = await ctx.Works.AsNoTracking().SingleAsync(x => x.Id == _w.WorkAId);
@@ -146,7 +144,7 @@ public sealed partial class WorkMasterP1Tests
         }
         var reclass = SameAs("Work 500001");
         reclass.WorkClass = "AMR";
-        (await UpdateAsync(await WorkCodeAsync(_w.WorkAId), reclass)).MessageId.Should().Be("M-19");
+        (await UpdateAsync(_w.WorkAId, reclass)).MessageId.Should().Be("M-19");
     }
 
     [Fact]
@@ -154,7 +152,7 @@ public sealed partial class WorkMasterP1Tests
     {
         var reclass = SameAs("Work 500001");
         reclass.WorkClass = "AMR";
-        (await UpdateAsync(await WorkCodeAsync(_w.WorkAId), reclass)).IsSucced.Should().BeTrue();
+        (await UpdateAsync(_w.WorkAId, reclass)).IsSucced.Should().BeTrue();
         await using var ctx = _w.NewContext();
         (await ctx.Works.AsNoTracking().SingleAsync(x => x.Id == _w.WorkAId)).WorkClass.Should().Be("AMR");
     }
@@ -165,7 +163,7 @@ public sealed partial class WorkMasterP1Tests
         var id = await InsertPreDddWorkAsync(590001);
         var dto = SameAs("Old work");
         dto.WorkClass = "AA";
-        var r = await UpdateAsync(590001, dto);
+        var r = await UpdateAsync(id, dto);
         r.IsSucced.Should().BeTrue(r.Message);
 
         await using var ctx = _w.NewContext();
@@ -183,7 +181,7 @@ public sealed partial class WorkMasterP1Tests
         await MoveToNonFirstCycleAsync();
         var dto = SameAs("Old work");
         dto.WorkClass = "AA";
-        (await UpdateAsync(590002, dto)).MessageId.Should().Be("M-19");
+        (await UpdateAsync(id, dto)).MessageId.Should().Be("M-19");
 
         await using var ctx = _w.NewContext();
         (await ctx.Works.AsNoTracking().SingleAsync(x => x.Id == id)).PreDdd.Should().BeTrue();

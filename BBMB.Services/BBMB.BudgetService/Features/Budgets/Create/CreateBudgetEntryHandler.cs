@@ -30,17 +30,17 @@ namespace BBMB.BudgetService.Features.Budgets.Create
                 return BudgetResponses.Fail(BudgetMessages.M05);
             }
 
-            // Validate work code if provided
-            if (!string.IsNullOrWhiteSpace(request.dto.WorkCode.ToString()))
+            // Validate the referenced work by its id (design §4.6): the DTO carries WorkId, every work code
+            // being null after the reset.
+            if (request.dto.WorkId is { } workId)
             {
-                var workExists = await _context.Works
-                    .AnyAsync(w => w.WorkCode == request.dto.WorkCode, ct);
+                var workExists = await _context.Works.AnyAsync(w => w.Id == workId, ct);
                 if (!workExists)
                 {
                     return new Response
                     {
                         IsSucced = false,
-                        Message = $"Work with code '{request.dto.WorkCode}' not found"
+                        Message = $"Work with id '{workId}' not found"
                     };
                 }
             }

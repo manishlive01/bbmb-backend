@@ -10,13 +10,13 @@ namespace BBMB.BudgetService.Features.Budgets.GetByWork
     {
         public void Map(IEndpointRouteBuilder app)
         {
-            app.MapGet("/api/budgets/by-work/{workCode}", async (
-                int workCode,
+            app.MapGet("/api/budgets/by-work/{workId:int}", async (
+                int workId,
                 [FromQuery] int pageNumber,
                 [FromQuery] int pageSize,
                 IMediator mediator) =>
             {
-                var query = new GetBudgetEntriesByWorkQuery(workCode, pageNumber, pageSize);
+                var query = new GetBudgetEntriesByWorkQuery(workId, pageNumber, pageSize);
                 var result = await mediator.Send(query);
                 return Results.Ok(result);
             })

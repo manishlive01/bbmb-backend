@@ -1,4 +1,5 @@
 using System.Text;
+using Auth.Authorization.Requirements;
 using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Reports.RunQuery.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
@@ -8,6 +9,7 @@ using BBMB.BudgetService.Shared.Services.BudgetActors;
 using BBMB.BudgetService.Shared.Services.BudgetOffices;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace BBMB.BudgetService.Features.BudgetProcess.Reports.RunQuery
@@ -15,13 +17,15 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Reports.RunQuery
     /// <summary>
     /// Design §8.8 (F-26, BUD-220 to BUD-224). The query runs over <c>budget.v_report_demand</c> only. Every
     /// field — grouped, measured or filtered — is resolved through <see cref="QueryFieldCatalogue"/>; an unknown
-    /// business name is refused (M-22) and no client string ever becomes a column or table name. Every filter
+    /// business name, or one the acting role may not use (BUD-221, BudgetRights:QueryFieldRoles), is refused (M-22) and no client string ever becomes a column or table name. Every filter
     /// value is bound as an Npgsql parameter, so a value containing SQL text is a value, never code. Rows are
     /// scoped to the actor's visible offices (Finance and Secretariat see all) through a bound office-id array.
     /// Any financial year, including a closed one, is queryable (BUD-222). The result is ordered by the grouped
     /// columns so an identical query returns an identical order (BUD-224).
     /// </summary>
-    public sealed class RunQueryHandler(BudgetContext context, IBudgetActorSource actorSource, IBudgetOfficeScope officeScope)
+    public sealed class RunQueryHandler(
+        BudgetContext context, IBudgetActorSource actorSource, IBudgetOfficeScope officeScope,
+        IOptionsMonitor<BudgetRightsOptions> rights)
         : IRequestHandler<RunQueryCommand, Response<RunQueryResultDto>>
     {
         public async Task<Response<RunQueryResultDto>> Handle(RunQueryCommand request, CancellationToken ct)
@@ -30,12 +34,15 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Reports.RunQuery
             if (actor is null)
                 return BudgetResponses.Fail<RunQueryResultDto>(BudgetMessages.M20);
             var dto = request.Dto;
+            // BUD-221: a field the acting role may not use is refused exactly like an unknown one (M-22).
+            var fieldRoles = rights.CurrentValue.QueryFieldRoles;
+            var role = actor.RoleCode;
 
             // Resolve group-by dimensions and measures through the whitelist; an unknown field is refused.
             var groupBy = new List<QueryField>();
             foreach (var name in dto.GroupBy)
             {
-                var f = QueryFieldCatalogue.Resolve(name);
+                var f = QueryFieldCatalogue.ResolveForRole(name, role, fieldRoles);
                 if (f is null || f.Kind != QueryFieldKind.Dimension)
                     return BudgetResponses.Fail<RunQueryResultDto>(BudgetMessages.M22);
                 groupBy.Add(f);
@@ -43,15 +50,19 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Reports.RunQuery
             var measures = new List<QueryField>();
             foreach (var name in dto.Fields)
             {
-                var f = QueryFieldCatalogue.Resolve(name);
+                var f = QueryFieldCatalogue.ResolveForRole(name, role, fieldRoles);
                 if (f is null || f.Kind != QueryFieldKind.Measure)
                     return BudgetResponses.Fail<RunQueryResultDto>(BudgetMessages.M22);
                 measures.Add(f);
             }
             if (measures.Count == 0)
             {
-                measures.Add(QueryFieldCatalogue.Resolve("demandedRbe")!);
-                measures.Add(QueryFieldCatalogue.Resolve("demandedObeNext")!);
+                // The default measures, only those the role may use; none left → refused (M-22).
+                foreach (var name in new[] { "demandedRbe", "demandedObeNext" })
+                    if (QueryFieldCatalogue.ResolveForRole(name, role, fieldRoles) is { } m)
+                        measures.Add(m);
+                if (measures.Count == 0)
+                    return BudgetResponses.Fail<RunQueryResultDto>(BudgetMessages.M22);
             }
 
             var parameters = new List<NpgsqlParameter>();
@@ -72,7 +83,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Reports.RunQuery
             for (var i = 0; i < dto.Filters.Count; i++)
             {
                 var filter = dto.Filters[i];
-                var f = QueryFieldCatalogue.Resolve(filter.Field);
+                var f = QueryFieldCatalogue.ResolveForRole(filter.Field, role, fieldRoles);
                 if (f is null || f.Kind != QueryFieldKind.Dimension)
                     return BudgetResponses.Fail<RunQueryResultDto>(BudgetMessages.M22);
                 var op = filter.Op?.Trim().ToLowerInvariant() switch { "ne" => "<>", "eq" or null or "" => "=", _ => null };
