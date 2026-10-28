@@ -1,124 +1,210 @@
-﻿using BBMB.BudgetService.Features.Employees.Entities;
+﻿
+using BBMB.BudgetService.Features.Employees.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
 using BBMB.BudgetService.Shared.Enums;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using BBMB.BudgetService.Shared.Services;
-using BBMB.BudgetService.Shared.Settings;
-using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
-namespace BBMB.BudgetService.Features.Employees.Create
+namespace BBMB.BudgetService.Features.Employees.Create;
+
+public class CreateEmployeeHandler
+    : IRequestHandler<CreateEmployeeCommand, Response>
 {
+    private readonly EmployeeContext _context;
+    private readonly IFileStorageService _fileStorage;
+    private readonly ILogger<CreateEmployeeHandler> _logger;
 
-    public class CreateEmployeeHandler : IRequestHandler<CreateEmployeeCommand, Response>
+    public CreateEmployeeHandler(
+        EmployeeContext context,
+        IFileStorageService fileStorage,
+        ILogger<CreateEmployeeHandler> logger)
     {
-        private readonly EmployeeContext _context;
-        private readonly IFileStorageService _fileStorage;
-        public CreateEmployeeHandler(
-    EmployeeContext context,
-    IFileStorageService fileStorage)
+        _context = context;
+        _fileStorage = fileStorage;
+        _logger = logger;
+    }
+
+    public async Task<Response> Handle(
+        CreateEmployeeCommand request,
+        CancellationToken ct)
+    {
+        var dto = request.dto;
+
+        if (dto?.PersonalInfo == null || dto.Employment == null)
         {
-            _context = context;
-            _fileStorage = fileStorage;
+            return new Response
+            {
+                IsSucced = false,
+                Message = "Personal information and employment details are required."
+            };
         }
 
-        public async Task<Response> Handle(CreateEmployeeCommand request, CancellationToken ct)
-        {
-            var dto = request.dto;
+        var personal = dto.PersonalInfo;
+        var employment = dto.Employment;
 
-            // Check duplicate email
+        if (string.IsNullOrWhiteSpace(personal.NameEnglish) ||
+            string.IsNullOrWhiteSpace(personal.Email) ||
+            string.IsNullOrWhiteSpace(personal.PhoneNumber) ||
+            string.IsNullOrWhiteSpace(personal.Address))
+        {
+            return new Response
+            {
+                IsSucced = false,
+                Message = "Name, email, phone number and address are required."
+            };
+        }
+
+        if (dto.FamilyMembers == null)
+        {
+            return new Response
+            {
+                IsSucced = false,
+                Message = "Family members must be a valid list."
+            };
+        }
+
+        try
+        {
+            var email = personal.Email.Trim();
+
             var exists = await _context.Employees
-                .AnyAsync(x => x.Email == dto.PersonalInfo.Email, ct);
+                .AnyAsync(x => x.Email == email, ct);
 
             if (exists)
             {
                 return new Response
                 {
                     IsSucced = false,
-                    Message = "Employee already exists with this email"
+                    Message = "Employee already exists with this email."
                 };
             }
 
-            var employee = dto.Adapt<Employee>();
-            employee.Id = Guid.NewGuid();
-            employee.DateOfBirth = DateTime.SpecifyKind(
-    dto.PersonalInfo.DateOfBirth,
-    DateTimeKind.Utc);
-            employee.EmployeeCode = dto.PersonalInfo.EmployeeCode;
-            // Employment
+            var employeeId = Guid.NewGuid();
+
+            // Explicit mapping: do not depend on nested Mapster mapping.
+            var employee = new Employee
+            {
+                Id = employeeId,
+                UserId = personal.UserId,
+                EmployeeCode = personal.EmployeeCode,
+                TitleId = personal.TitleId,
+                NameEnglish = personal.NameEnglish.Trim(),
+                NameHindi = personal.NameHindi,
+                GenderId = personal.GenderId,
+                DateOfBirth = DateTime.SpecifyKind(
+                    personal.DateOfBirth, DateTimeKind.Utc),
+                PhoneNumber = personal.PhoneNumber.Trim(),
+                Email = email,
+                Address = personal.Address.Trim()
+            };
+
             employee.EmploymentDetail = new EmploymentDetail
             {
                 Id = Guid.NewGuid(),
-                EmployeeId = employee.Id,
-
-                SourceOfRecruitmentId = dto.Employment.SourceOfRecruitmentId,
-                DesignationId = dto.Employment.DesignationId,
-                Position = dto.Employment.Position,
-                AppointmentTypeId = dto.Employment.AppointmentTypeId,
-                AppointmentDate = DateTime.SpecifyKind(dto.Employment.AppointmentDate, DateTimeKind.Utc),
-                DateOfJoining = DateTime.SpecifyKind(dto.Employment.DateOfJoining, DateTimeKind.Utc),
-                RetirementDate = dto.Employment.RetirementDate == null
-          ? null
-          : DateTime.SpecifyKind(dto.Employment.RetirementDate.Value, DateTimeKind.Utc)
+                EmployeeId = employeeId,
+                SourceOfRecruitmentId = employment.SourceOfRecruitmentId,
+                DesignationId = employment.DesignationId,
+                Position = employment.Position,
+                AppointmentTypeId = employment.AppointmentTypeId,
+                AppointmentDate = DateTime.SpecifyKind(
+                    employment.AppointmentDate, DateTimeKind.Utc),
+                DateOfJoining = DateTime.SpecifyKind(
+                    employment.DateOfJoining, DateTimeKind.Utc),
+                RetirementDate = employment.RetirementDate.HasValue
+                    ? DateTime.SpecifyKind(
+                        employment.RetirementDate.Value,
+                        DateTimeKind.Utc)
+                    : null
             };
 
-            // Photo
-            string employeePhotoPath = "";
+            // Upload files before saving database records.
+            // If the database save fails, uploaded files may need cleanup.
+            string? employeePhotoPath = null;
 
-            if (dto.PhotoDocs.Photo != null)
+            var photo = dto.PhotoDocs?.Photo;
+
+            if (photo is { Length: > 0 })
             {
                 employeePhotoPath = await _fileStorage.SaveFileAsync(
-         dto.PhotoDocs.Photo,
-         FileType.Employee,
-         null,
-         ct);
+                    photo,
+                    FileType.Employee,
+                    null,
+                    ct);
             }
 
+            // Preserve the current schema's required photo-document relationship.
             employee.PhotoDocument = new PhotoDocument
             {
                 Id = Guid.NewGuid(),
-                EmployeeId = employee.Id,
-                PhotoUrl = employeePhotoPath
+                EmployeeId = employeeId,
+                PhotoUrl = employeePhotoPath ?? string.Empty
             };
-            // Family Members
+
             employee.FamilyMembers = new List<FamilyMember>();
 
-            foreach (var f in dto.FamilyMembers)
+            foreach (var family in dto.FamilyMembers)
             {
-                string? photoPath = null;
+                string? familyPhotoPath = null;
 
-                if (f.Photo != null)
-                    photoPath = await _fileStorage.SaveFileAsync(
-           f.Photo,
-           FileType.Family,
-           employee.Id.ToString(),
-           ct);
+                if (family.Photo is { Length: > 0 })
+                {
+                    familyPhotoPath = await _fileStorage.SaveFileAsync(
+                        family.Photo,
+                        FileType.Family,
+                        employeeId.ToString(),
+                        ct);
+                }
 
                 employee.FamilyMembers.Add(new FamilyMember
                 {
                     Id = Guid.NewGuid(),
-                    EmployeeId = employee.Id,
-                    Name = f.Name,
-                    FamilyRelationId = f.FamilyRelationId,
-                    PhoneNumber = f.PhoneNumber,
-                    Address = f.Address,
-                    IsEmployee = f.IsEmployee,
-                    PhotoUrl = photoPath
+                    EmployeeId = employeeId,
+                    Name = family.Name,
+                    FamilyRelationId = family.FamilyRelationId,
+                    PhoneNumber = family.PhoneNumber,
+                    Address = family.Address,
+                    IsEmployee = family.IsEmployee,
+                    PhotoUrl = familyPhotoPath
                 });
             }
 
-            await _context.Employees.AddAsync(employee);
-
+            await _context.Employees.AddAsync(employee, ct);
             await _context.SaveChangesAsync(ct);
 
             return new Response
             {
                 IsSucced = true,
-                Message = "Employee created successfully"
+                Message = "Employee created successfully."
             };
         }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Database insert failed while creating employee. EmployeeCode: {EmployeeCode}",
+                personal.EmployeeCode);
 
+            // Do not expose SQL, schema details or exception text to clients.
+            return new Response
+            {
+                IsSucced = false,
+                Message = "Employee could not be saved. Check required fields, master records and database constraints."
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Unexpected error while creating employee. EmployeeCode: {EmployeeCode}",
+                personal.EmployeeCode);
+
+            return new Response
+            {
+                IsSucced = false,
+                Message = "An unexpected error occurred while creating the employee."
+            };
+        }
     }
 }
