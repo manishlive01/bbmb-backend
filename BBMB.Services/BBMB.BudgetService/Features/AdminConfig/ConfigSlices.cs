@@ -165,7 +165,7 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 return BudgetResponses.Fail<IReadOnlyList<ListRightsItemDto>>(BudgetMessages.M20);
             var rights = await context.BudgetRights.AsNoTracking().OrderBy(r => r.RightKey).ToListAsync(ct);
             var pairs = await (
-                from rr in context.BudgetRoleRights.AsNoTracking()
+                from rr in context.BudgetRoleRights.AsNoTracking().Where(x => x.IsActive)
                 join role in context.BudgetRoles.AsNoTracking() on rr.RoleId equals role.Id
                 select new { rr.RightId, role.RoleName }).ToListAsync(ct);
             var byRight = pairs.GroupBy(p => p.RightId).ToDictionary(g => g.Key, g => g.Select(x => x.RoleName).OrderBy(n => n).ToList());
@@ -193,18 +193,21 @@ namespace BBMB.BudgetService.Features.AdminConfig
             if (role is null || right is null)
                 return BudgetResponses.Fail(BudgetMessages.M05);
 
+            // Revoke is a soft deactivation (is_active = false), not a physical DELETE: the config tables are
+            // append-only and carry a BEFORE DELETE forbid trigger, and a DELETE would also lose the revoke
+            // from the audit trail. The snapshot reads active rows only. A re-grant reactivates the row.
             var existing = await context.BudgetRoleRights
                 .FirstOrDefaultAsync(x => x.RoleId == role.Id && x.RightId == right.Id, ct);
-            if (dto.Grant && existing is not null)
+            if (dto.Grant && existing is { IsActive: true })
                 return new Response { IsSucced = true, Message = "Right already granted" };
-            if (!dto.Grant && existing is null)
+            if (!dto.Grant && existing is not { IsActive: true })
                 return new Response { IsSucced = true, Message = "Right already absent" };
 
             await using var tx = await scope.BeginAsync(ActionCode, ct: ct);
-            if (dto.Grant)
+            if (existing is null)
                 context.BudgetRoleRights.Add(new BudgetRoleRight { RoleId = role.Id, RightId = right.Id });
             else
-                context.BudgetRoleRights.Remove(existing!);
+                existing.IsActive = dto.Grant;
             await context.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
             config.Invalidate();
@@ -236,7 +239,7 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 return BudgetResponses.Fail<IReadOnlyList<ListQueryFieldsItemDto>>(BudgetMessages.M20);
             var fields = await context.BudgetQueryFields.AsNoTracking().OrderBy(f => f.FieldName).ToListAsync(ct);
             var pairs = await (
-                from rq in context.BudgetRoleQueryFields.AsNoTracking()
+                from rq in context.BudgetRoleQueryFields.AsNoTracking().Where(x => x.IsActive)
                 join role in context.BudgetRoles.AsNoTracking() on rq.RoleId equals role.Id
                 select new { rq.QueryFieldId, role.RoleName }).ToListAsync(ct);
             var byField = pairs.GroupBy(p => p.QueryFieldId).ToDictionary(g => g.Key, g => g.Select(x => x.RoleName).OrderBy(n => n).ToList());
@@ -263,18 +266,21 @@ namespace BBMB.BudgetService.Features.AdminConfig
             if (role is null || field is null)
                 return BudgetResponses.Fail(BudgetMessages.M05);
 
+            // Revoke is a soft deactivation (is_active = false), not a physical DELETE — same reasoning as the
+            // right grant/revoke above: the table is append-only with a DELETE-forbid trigger, and the
+            // snapshot reads active rows only. A re-grant reactivates the row.
             var existing = await context.BudgetRoleQueryFields
                 .FirstOrDefaultAsync(x => x.RoleId == role.Id && x.QueryFieldId == field.Id, ct);
-            if (dto.Grant && existing is not null)
+            if (dto.Grant && existing is { IsActive: true })
                 return new Response { IsSucced = true, Message = "Field already granted" };
-            if (!dto.Grant && existing is null)
+            if (!dto.Grant && existing is not { IsActive: true })
                 return new Response { IsSucced = true, Message = "Field already absent" };
 
             await using var tx = await scope.BeginAsync(ActionCode, ct: ct);
-            if (dto.Grant)
+            if (existing is null)
                 context.BudgetRoleQueryFields.Add(new BudgetRoleQueryField { RoleId = role.Id, QueryFieldId = field.Id });
             else
-                context.BudgetRoleQueryFields.Remove(existing!);
+                existing.IsActive = dto.Grant;
             await context.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
             config.Invalidate();

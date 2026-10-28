@@ -1074,6 +1074,12 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("created_charge_id");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
                     b.Property<long>("QueryFieldId")
                         .HasColumnType("bigint")
                         .HasColumnName("query_field_id");
@@ -1137,6 +1143,12 @@ namespace BBMB.BudgetService.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("uuid")
                         .HasColumnName("created_charge_id");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
 
                     b.Property<long>("RightId")
                         .HasColumnType("bigint")

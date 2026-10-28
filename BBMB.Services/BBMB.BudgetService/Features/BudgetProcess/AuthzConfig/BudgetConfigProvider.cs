@@ -60,8 +60,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
             var roles = await context.BudgetRoles.AsNoTracking().Where(r => r.IsActive).ToListAsync(ct);
             var rights = await context.BudgetRights.AsNoTracking().Where(r => r.IsActive).ToListAsync(ct);
             var queryFields = await context.BudgetQueryFields.AsNoTracking().Where(q => q.IsActive).ToListAsync(ct);
-            var roleRights = await context.BudgetRoleRights.AsNoTracking().ToListAsync(ct);
-            var roleQueryFields = await context.BudgetRoleQueryFields.AsNoTracking().ToListAsync(ct);
+            var roleRights = await context.BudgetRoleRights.AsNoTracking().Where(rr => rr.IsActive).ToListAsync(ct);
+            var roleQueryFields = await context.BudgetRoleQueryFields.AsNoTracking().Where(rq => rq.IsActive).ToListAsync(ct);
             var assignments = await context.BudgetAdminRoleAssignments.AsNoTracking()
                 .Where(a => a.Status != AdminAssignmentStatus.Revoked)
                 .ToListAsync(ct);

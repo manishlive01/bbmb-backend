@@ -21,6 +21,14 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities
         [Column("right_id")]
         public long RightId { get; set; }
 
+        /// <summary>
+        /// Soft-delete flag for the grant. Revoking a right deactivates the row (an audited UPDATE) rather
+        /// than deleting it — the config tables are append-only and carry a DELETE-forbid trigger, and the
+        /// snapshot reads active rows only (requirement 1).
+        /// </summary>
+        [Column("is_active")]
+        public bool IsActive { get; set; } = true;
+
         [ForeignKey(nameof(RoleId))]
         public BudgetRole? Role { get; set; }
 

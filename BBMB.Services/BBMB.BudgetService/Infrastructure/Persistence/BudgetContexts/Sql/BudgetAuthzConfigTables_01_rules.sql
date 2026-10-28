@@ -25,6 +25,12 @@ ALTER TABLE budget.budget_admin_role_assignment
     ADD CONSTRAINT ck_admin_approved_has_doc
     CHECK (status <> 'APPROVED'
            OR (document_ref IS NOT NULL AND approved_by IS NOT NULL AND uploaded_by IS NOT NULL));
+-- Segregation of duties: the approver must not be the uploader. Enforced in ApproveAssignmentHandler for a
+-- friendly message AND owned here so a direct DB write or a future approval path cannot approve a
+-- self-uploaded assignment (design §1: the DB owns the admin invariants).
+ALTER TABLE budget.budget_admin_role_assignment
+    ADD CONSTRAINT ck_admin_approver_not_uploader
+    CHECK (approved_by IS NULL OR approved_by <> uploaded_by);
 ALTER TABLE budget.budget_admin_role_assignment
     ADD CONSTRAINT fk_admin_uploaded_by FOREIGN KEY (uploaded_by)
         REFERENCES employee.employee (id) ON DELETE RESTRICT;
