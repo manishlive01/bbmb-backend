@@ -1,5 +1,6 @@
 using BBMB.BudgetService.Features.BudgetProcess.AccountHeadAssignments.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Entities;
+using BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Allocations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.EstimateAllocations.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Freezes.Entities;
@@ -87,6 +88,14 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
         public DbSet<Reappropriation> Reappropriations { get; set; }
         public DbSet<ReappropriationSource> ReappropriationSources { get; set; }
         public DbSet<ReappropriationRegisterRow> ReappropriationRegister { get; set; }
+        // Authz config (requirements 1-5): the appsettings BudgetProcess / BudgetRights values moved to tables.
+        public DbSet<BudgetProjectSettings> BudgetProjectSettings { get; set; }
+        public DbSet<BudgetRole> BudgetRoles { get; set; }
+        public DbSet<BudgetRight> BudgetRights { get; set; }
+        public DbSet<BudgetRoleRight> BudgetRoleRights { get; set; }
+        public DbSet<BudgetQueryField> BudgetQueryFields { get; set; }
+        public DbSet<BudgetRoleQueryField> BudgetRoleQueryFields { get; set; }
+        public DbSet<BudgetAdminRoleAssignment> BudgetAdminRoleAssignments { get; set; }
 
         /// <summary>Partial UK names whose 23505 maps to a catalogue message (design §4.9).</summary>
         /// <summary>T-21 partial UK (office, account code) where removed_at is null.</summary>
@@ -644,6 +653,79 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
             {
                 e.Property(x => x.SettingId).UseIdentityAlwaysColumn();
                 e.HasIndex(x => new { x.SettingKey, x.EffectiveFrom }).IsUnique();
+                ConfigureActorColumns(e);
+            });
+
+            ConfigureAuthzConfig(modelBuilder);
+        }
+
+        /// <summary>
+        /// Requirement 1 authz-config tables. Keys, FKs and the plain unique indexes are configured here; the
+        /// partial UKs, the CHECKs and the actor/audit/forbid triggers are hand SQL in the migration
+        /// (design §1, §7; same split as every other budget table).
+        /// </summary>
+        private static void ConfigureAuthzConfig(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<BudgetProjectSettings>(e =>
+            {
+                e.Property(x => x.Id).UseIdentityAlwaysColumn();
+                e.Property(x => x.IsActive).HasDefaultValue(true);
+                // ux_project_settings_active (partial, WHERE is_active) is created in the migration SQL.
+                ConfigureActorColumns(e);
+            });
+
+            modelBuilder.Entity<BudgetRole>(e =>
+            {
+                e.Property(x => x.Id).UseIdentityAlwaysColumn();
+                e.Property(x => x.IsAdmin).HasDefaultValue(false);
+                e.Property(x => x.IsActive).HasDefaultValue(true);
+                e.HasIndex(x => x.RoleName).IsUnique().HasDatabaseName("ux_budget_role_name");
+                ConfigureActorColumns(e);
+            });
+
+            modelBuilder.Entity<BudgetRight>(e =>
+            {
+                e.Property(x => x.Id).UseIdentityAlwaysColumn();
+                e.Property(x => x.IsActive).HasDefaultValue(true);
+                e.HasIndex(x => x.RightKey).IsUnique().HasDatabaseName("ux_budget_right_key");
+                ConfigureActorColumns(e);
+            });
+
+            modelBuilder.Entity<BudgetRoleRight>(e =>
+            {
+                e.Property(x => x.Id).UseIdentityAlwaysColumn();
+                e.Property(x => x.IsActive).HasDefaultValue(true);
+                e.HasIndex(x => new { x.RoleId, x.RightId }).IsUnique().HasDatabaseName("ux_role_right");
+                e.HasOne(x => x.Role).WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(x => x.Right).WithMany().HasForeignKey(x => x.RightId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            modelBuilder.Entity<BudgetQueryField>(e =>
+            {
+                e.Property(x => x.Id).UseIdentityAlwaysColumn();
+                e.Property(x => x.IsActive).HasDefaultValue(true);
+                e.HasIndex(x => x.FieldName).IsUnique().HasDatabaseName("ux_query_field_name");
+                ConfigureActorColumns(e);
+            });
+
+            modelBuilder.Entity<BudgetRoleQueryField>(e =>
+            {
+                e.Property(x => x.Id).UseIdentityAlwaysColumn();
+                e.Property(x => x.IsActive).HasDefaultValue(true);
+                e.HasIndex(x => new { x.RoleId, x.QueryFieldId }).IsUnique().HasDatabaseName("ux_role_query_field");
+                e.HasOne(x => x.Role).WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(x => x.QueryField).WithMany().HasForeignKey(x => x.QueryFieldId).OnDelete(DeleteBehavior.Restrict);
+                ConfigureActorColumns(e);
+            });
+
+            modelBuilder.Entity<BudgetAdminRoleAssignment>(e =>
+            {
+                e.Property(x => x.Id).UseIdentityAlwaysColumn();
+                e.Property(x => x.Status).HasDefaultValue(AdminAssignmentStatus.Pending);
+                e.HasOne(x => x.Role).WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Restrict);
+                // ux_admin_role_active (partial, WHERE status <> 'REVOKED'), ck_admin_status and
+                // ck_admin_approved_has_doc, and the employee FKs on uploaded_by/approved_by, are migration SQL.
                 ConfigureActorColumns(e);
             });
         }

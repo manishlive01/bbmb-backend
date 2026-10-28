@@ -55,6 +55,15 @@ public static class EndpointCatalog
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
         builder.Services.AddScoped<IFileStorageService, FileStorageService>();
         builder.Services.AddHttpContextAccessor();
+        // Authz config (requirements 1-5): the cache, provider, role source and office scope that
+        // ChargeResolver and the config/admin endpoints bind from (mirrors Program.cs).
+        builder.Services.AddSingleton<BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetConfigCache>();
+        builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.IBudgetConfigProvider,
+            BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetConfigProvider>();
+        builder.Services.AddScoped<BBMB.BudgetService.Authorization.RoleSource.IBudgetRoleSource,
+            BBMB.BudgetService.Authorization.RoleSource.TokenClaimsRoleSource>();
+        builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetOffices.IBudgetOfficeScope,
+            BBMB.BudgetService.Shared.Services.BudgetOffices.BudgetOfficeScope>();
         builder.Services.AddScoped<IChargeResolver, ChargeResolver>();
         builder.Services.AddAuthorization();
 

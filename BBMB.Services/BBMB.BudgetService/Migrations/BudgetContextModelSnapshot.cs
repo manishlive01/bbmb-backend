@@ -666,6 +666,530 @@ namespace BBMB.BudgetService.Migrations
                     b.ToTable("audit_log", "budget");
                 });
 
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetAdminRoleAssignment", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("approved_at");
+
+                    b.Property<Guid?>("ApprovedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("approved_by");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<string>("DocumentRef")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("document_ref");
+
+                    b.Property<string>("RevokeReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("revoke_reason");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<Guid?>("RevokedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("revoked_by");
+
+                    b.Property<long>("RoleId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("role_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("PENDING")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<DateTimeOffset?>("UploadedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("uploaded_at");
+
+                    b.Property<Guid?>("UploadedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uploaded_by");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("budget_admin_role_assignment", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetProjectSettings", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<int>("EditLeaseMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("edit_lease_minutes");
+
+                    b.Property<string>("EmployeeChargeProjectCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("employee_charge_project_code");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<Guid?>("SsoProjectId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sso_project_id");
+
+                    b.Property<string>("SsoProjectName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("sso_project_name");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("budget_project_settings", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetQueryField", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<string>("FieldName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("field_name");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FieldName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_query_field_name");
+
+                    b.ToTable("budget_query_field", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRight", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("RightKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("right_key");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RightKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_budget_right_key");
+
+                    b.ToTable("budget_right", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRole", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsAdmin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_admin");
+
+                    b.Property<string>("OfficeLevel")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("office_level");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("role_name");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_budget_role_name");
+
+                    b.ToTable("budget_role", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRoleQueryField", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<long>("QueryFieldId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("query_field_id");
+
+                    b.Property<long>("RoleId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("role_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QueryFieldId");
+
+                    b.HasIndex("RoleId", "QueryFieldId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_role_query_field");
+
+                    b.ToTable("budget_role_query_field", "budget");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRoleRight", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_charge_id");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<long>("RightId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("right_id");
+
+                    b.Property<long>("RoleId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("role_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UpdatedChargeId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_charge_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RightId");
+
+                    b.HasIndex("RoleId", "RightId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_role_right");
+
+                    b.ToTable("budget_role_right", "budget");
+                });
+
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Calendars.Entities.BudgetCalendarEntry", b =>
                 {
                     b.Property<long>("CycleId")
@@ -5157,6 +5681,55 @@ namespace BBMB.BudgetService.Migrations
                         .HasForeignKey("ActorOfficeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetAdminRoleAssignment", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRole", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRoleQueryField", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetQueryField", "QueryField")
+                        .WithMany()
+                        .HasForeignKey("QueryFieldId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRole", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("QueryField");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRoleRight", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRight", "Right")
+                        .WithMany()
+                        .HasForeignKey("RightId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRole", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Right");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.Calendars.Entities.BudgetCalendarEntry", b =>
