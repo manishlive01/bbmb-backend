@@ -155,13 +155,69 @@ builder.Services.AddAuthentication("Bearer")
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
- 
+
+
+    //options.Events = new JwtBearerEvents
+    //{
+    //    OnAuthenticationFailed = context =>
+    //    {
+    //        Console.WriteLine("AUTH FAILED: " + context.Exception.Message);
+    //        return Task.CompletedTask;
+    //    }
+    //};
 
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine("AUTH FAILED: " + context.Exception.Message);
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+
+            logger.LogError(
+                context.Exception,
+                "JWT authentication failed for {Path}",
+                context.Request.Path);
+
+            return Task.CompletedTask;
+        },
+
+        OnTokenValidated = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+
+            logger.LogInformation(
+                "JWT validated. Subject: {Subject}; Issuer: {Issuer}",
+                context.Principal?.FindFirst("sub")?.Value,
+                context.SecurityToken.Issuer);
+
+            return Task.CompletedTask;
+        },
+
+        OnChallenge = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+
+            logger.LogWarning(
+                "JWT challenge for {Path}. Error: {Error}; Description: {Description}",
+                context.Request.Path,
+                context.Error,
+                context.ErrorDescription);
+
+            return Task.CompletedTask;
+        },
+
+        OnForbidden = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILogger<Program>>();
+
+            logger.LogWarning(
+                "Authorization forbidden for {Path}. Authenticated: {Authenticated}",
+                context.Request.Path,
+                context.HttpContext.User.Identity?.IsAuthenticated);
+
             return Task.CompletedTask;
         }
     };

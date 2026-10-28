@@ -42,7 +42,8 @@ namespace Auth.Authorization.Handlers
                 return Task.CompletedTask;
             }
 
-            if (roles.Contains(actingRole, StringComparer.OrdinalIgnoreCase))
+            if (current.AdminRoles.Contains(actingRole, StringComparer.OrdinalIgnoreCase) ||
+                roles.Contains(actingRole, StringComparer.OrdinalIgnoreCase))
             {
                 context.Succeed(requirement);
             }
@@ -62,11 +63,13 @@ namespace Auth.Authorization.Handlers
                 return resolved;
             }
 
-            // Only roles configured as Budget roles (BudgetRights:RoleOfficeLevels) count. Other roles the
-            // portal places in the Budget project (e.g. ProjectAdmin) carry no Budget right, so they must not
-            // force an X-Budget-Role header on a user who holds exactly one real Budget role.
+            // Only configured Budget roles and explicit administrators count. Other project roles do not.
+            var configuredRoles = current.RoleOfficeLevels.Keys
+                .Concat(current.AdminRoles)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var held = ProjectClaimReader.RolesIn(context.User, current.ProjectName)
-                .Where(r => current.RoleOfficeLevels.Count == 0 || current.RoleOfficeLevels.ContainsKey(r))
+                .Where(r => configuredRoles.Count == 0 || configuredRoles.Contains(r))
                 .ToList();
             if (held.Count == 0)
             {

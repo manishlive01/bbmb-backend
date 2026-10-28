@@ -12,6 +12,9 @@ namespace Auth.Authorization.Requirements
         /// <summary>The project name carried in the <c>projects</c> claim for this module.</summary>
         public string ProjectName { get; set; } = "Budget";
 
+        /// <summary>Budget-project roles allowed to administer every configured Budget right.</summary>
+        public string[] AdminRoles { get; set; } = [];
+
         public Dictionary<string, string[]> Rights { get; set; } = new(StringComparer.Ordinal);
 
         /// <summary>
