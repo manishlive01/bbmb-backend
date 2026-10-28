@@ -1,13 +1,15 @@
 using System.Security.Claims;
+using Auth.Authorization.Handlers;
+using BBMB.BudgetService.Features.BudgetProcess.AuthzConfig;
 using BBMB.BudgetService.Features.EmployeeCharges.Entities;
 using BBMB.BudgetService.Features.Employees.Entities;
 using BBMB.BudgetService.Shared.ServiceDTOs;
+using BBMB.BudgetService.Shared.Services.BudgetOffices;
 using BBMB.BudgetService.Shared.Services.EmployeeChargeServices;
 using BBMB.BudgetService.Tests.Shared;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace BBMB.BudgetService.Tests.Shared.Services;
 
@@ -67,10 +69,29 @@ public sealed class ChargeResolverTests(BudgetDatabaseFixture fixture)
             User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", userId.ToString())], "Bearer")),
         };
         if (chargeHeader is not null) http.Request.Headers[BudgetChargeResult.HeaderName] = chargeHeader;
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { [ChargeResolver.ProjectCodeKey] = projectCode })
-            .Build();
-        return new ChargeResolver(new HttpContextAccessor { HttpContext = http }, fixture.NewEmployeeContext(), config);
+        // The new resolver (requirement 5) reads the project code from the DB-backed config and the acting
+        // role from HttpContext.Items, then filters candidates by the role's office level. These tests cover
+        // the project-code and ambiguity selection only, so an acting role is set and a pass-through office
+        // scope is supplied so the office-level filter does not change the outcome under test.
+        http.Items[BudgetActingRole.ItemKey] = "DDO";
+        var config = new FakeConfigProvider(projectCode);
+        var officeScope = new PassThroughOfficeScope();
+        return new ChargeResolver(new HttpContextAccessor { HttpContext = http }, fixture.NewEmployeeContext(), config, officeScope);
+    }
+
+    private sealed class FakeConfigProvider(string? projectCode) : IBudgetConfigProvider
+    {
+        public Task<BudgetConfigSnapshot> GetAsync(CancellationToken ct = default) =>
+            Task.FromResult(new BudgetConfigSnapshot { ProjectCode = projectCode ?? string.Empty });
+        public void Invalidate() { }
+    }
+
+    private sealed class PassThroughOfficeScope : IBudgetOfficeScope
+    {
+        public Task<ActorOffice?> ResolveActorOfficeAsync(UserChargeContext charge, string role, CancellationToken ct = default) =>
+            Task.FromResult<ActorOffice?>(new ActorOffice(1, "DIVISION"));
+        public Task<IReadOnlySet<long>> GetVisibleOfficeIdsAsync(long officeId, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlySet<long>>(new HashSet<long>());
     }
 
     [Fact]

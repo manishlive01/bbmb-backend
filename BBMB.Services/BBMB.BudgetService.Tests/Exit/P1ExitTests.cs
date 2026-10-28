@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Auth.Authorization.Handlers;
+using BBMB.BudgetService.Features.BudgetProcess.AuthzConfig;
 using BBMB.BudgetService.Features.BudgetProcess.DemandLines.Add;
 using BBMB.BudgetService.Features.BudgetProcess.DemandLines.Add.Dtos;
 using BBMB.BudgetService.Features.BudgetProcess.DemandLines.Dtos;
@@ -129,14 +130,14 @@ public sealed class P1ExitTests(BudgetDatabaseFixture fixture) : IAsyncLifetime
             if (chargeHeader is not null) http.Request.Headers[BudgetChargeResult.HeaderName] = chargeHeader;
             return new HttpContextAccessor { HttpContext = http };
         }
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { [ChargeResolver.ProjectCodeKey] = "BU" }).Build();
+        var config = new ExitConfigProvider("BU");
         async Task<Response> AddAs(string? header)
         {
             var http = Http(header);
             await using var ctx = _w.NewContext();
             var empCtx = BudgetDatabaseFixture.NewEmployeeContext(_w.ConnectionString);
-            var source = new HttpBudgetActorSource(http, new ChargeResolver(http, empCtx, config), TestServices.OfficeScope(ctx), empCtx,
+            var officeScope = TestServices.OfficeScope(ctx);
+            var source = new HttpBudgetActorSource(http, new ChargeResolver(http, empCtx, config, officeScope), officeScope, empCtx,
                 NullLogger<HttpBudgetActorSource>.Instance);
             return await AddAsync(source, new AddDemandLineDto { LineType = "WORK", WorkId = _w.WorkAId, RbeAmount = 1 }, http: http);
         }
@@ -335,5 +336,13 @@ public sealed class P1ExitTests(BudgetDatabaseFixture fixture) : IAsyncLifetime
             var granted = roles.Where(role => right is not null && Holds(role, right)).ToArray();
             granted.Should().BeEquivalentTo(expected.GetValueOrDefault((state, category)) ?? [], $"{state} {category}");
         }
+    }
+
+    /// <summary>Minimal config provider supplying the Budget project code to the new ChargeResolver (requirement 5).</summary>
+    private sealed class ExitConfigProvider(string projectCode) : IBudgetConfigProvider
+    {
+        public Task<BudgetConfigSnapshot> GetAsync(CancellationToken ct = default) =>
+            Task.FromResult(new BudgetConfigSnapshot { ProjectCode = projectCode });
+        public void Invalidate() { }
     }
 }

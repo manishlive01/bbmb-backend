@@ -49,6 +49,12 @@ public sealed class PostReadRoutesTests
         { "/api/unforeseen-authorisations/detail", "BudgetRight:Budget.View" },
         { "/api/unforeseen-provisions/list", "BudgetRight:Budget.View" },
         { "/api/audit-trail/list", "BudgetRight:Budget.View" },
+        // Authz-config POST reads (requirements 1, 4): gated by the new Settings.Admin right.
+        { "/api/budget-admin/assignments/list", "BudgetRight:Settings.Admin" },
+        { "/api/budget-config/settings/list", "BudgetRight:Settings.Admin" },
+        { "/api/budget-config/roles/list", "BudgetRight:Settings.Admin" },
+        { "/api/budget-config/rights/list", "BudgetRight:Settings.Admin" },
+        { "/api/budget-config/query-fields/list", "BudgetRight:Settings.Admin" },
     };
     [Theory]
     [MemberData(nameof(PostReads))]
