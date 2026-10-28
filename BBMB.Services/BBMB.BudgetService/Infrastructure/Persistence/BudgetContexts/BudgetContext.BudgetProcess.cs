@@ -694,6 +694,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
             modelBuilder.Entity<BudgetRoleRight>(e =>
             {
                 e.Property(x => x.Id).UseIdentityAlwaysColumn();
+                e.Property(x => x.IsActive).HasDefaultValue(true);
                 e.HasIndex(x => new { x.RoleId, x.RightId }).IsUnique().HasDatabaseName("ux_role_right");
                 e.HasOne(x => x.Role).WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Restrict);
                 e.HasOne(x => x.Right).WithMany().HasForeignKey(x => x.RightId).OnDelete(DeleteBehavior.Restrict);
@@ -711,6 +712,7 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
             modelBuilder.Entity<BudgetRoleQueryField>(e =>
             {
                 e.Property(x => x.Id).UseIdentityAlwaysColumn();
+                e.Property(x => x.IsActive).HasDefaultValue(true);
                 e.HasIndex(x => new { x.RoleId, x.QueryFieldId }).IsUnique().HasDatabaseName("ux_role_query_field");
                 e.HasOne(x => x.Role).WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Restrict);
                 e.HasOne(x => x.QueryField).WithMany().HasForeignKey(x => x.QueryFieldId).OnDelete(DeleteBehavior.Restrict);
