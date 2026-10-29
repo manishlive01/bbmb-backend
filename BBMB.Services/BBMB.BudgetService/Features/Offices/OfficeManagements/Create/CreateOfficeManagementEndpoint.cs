@@ -2,7 +2,7 @@
 using BBMB.BudgetService.Shared.Endpoints;
 using MediatR;
 
-namespace BBMB.BudgetService.Features.OfficeManagements.Create
+namespace BBMB.BudgetService.Features.Offices.OfficeManagements.Create
 {
     public class CreateOfficeManagementEndpoint : IEndpoint
     {

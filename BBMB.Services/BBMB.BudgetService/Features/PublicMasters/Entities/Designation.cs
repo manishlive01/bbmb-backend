@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BBMB.BudgetService.Features.PublicMasters.Designations.Entities
+namespace BBMB.BudgetService.Features.PublicMasters.Entities
 {
     [Table("designation_master")]
     public class Designation

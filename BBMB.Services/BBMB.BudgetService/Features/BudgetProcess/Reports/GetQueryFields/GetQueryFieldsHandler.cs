@@ -1,4 +1,4 @@
-using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Authorization.Requirements;
 using BBMB.BudgetService.Features.BudgetProcess.Reports.GetQueryFields.Dtos;
 using BBMB.BudgetService.Shared.Messages;
 using BBMB.BudgetService.Shared.ResponseDTOs;

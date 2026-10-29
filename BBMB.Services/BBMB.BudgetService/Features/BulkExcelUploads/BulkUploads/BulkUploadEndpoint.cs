@@ -3,7 +3,7 @@ using BBMB.BudgetService.Shared.ResponseDTOs;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace BBMB.BudgetService.Features.BulkUploads
+namespace BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads
 {
     public class BulkUploadEndpoint : IEndpoint
     {

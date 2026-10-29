@@ -38,12 +38,32 @@ namespace BBMB.BudgetService.Authorization.Dtos
 
         /// <summary>Distinct role names the user holds in <paramref name="projectName"/>.</summary>
         public static IReadOnlyList<string> RolesIn(ClaimsPrincipal? user, string projectName) =>
-            Read(user)
-                .Where(p => string.Equals(p.ProjectName, projectName, StringComparison.OrdinalIgnoreCase))
+            RolesInProject(user, null, projectName);
+
+        /// <summary>
+        /// Distinct role names the user holds in the Budget project, matched by <paramref name="projectId"/>
+        /// first (the correct identity — names collide, <c>Budget</c> vs <c>Budget-Staging</c>), falling back
+        /// to <paramref name="projectName"/> when the id is absent (design §3, OQ-2). Roles under any other
+        /// project are never returned.
+        /// </summary>
+        public static IReadOnlyList<string> RolesInProject(ClaimsPrincipal? user, Guid? projectId, string? projectName)
+        {
+            var projects = Read(user);
+
+            IEnumerable<ProjectRoleTokenDto> matched;
+            if (projectId is { } id && id != Guid.Empty && projects.Any(p => p.ProjectId == id))
+                matched = projects.Where(p => p.ProjectId == id);
+            else if (!string.IsNullOrWhiteSpace(projectName))
+                matched = projects.Where(p => string.Equals(p.ProjectName, projectName, StringComparison.OrdinalIgnoreCase));
+            else
+                return [];
+
+            return matched
                 .SelectMany(p => p.Roles)
                 .Select(r => r.RoleName)
                 .Where(r => !string.IsNullOrWhiteSpace(r))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
+        }
     }
 }

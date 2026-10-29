@@ -2,6 +2,7 @@
 // USING STATEMENTS
 // =======================
 using BBMB.BudgetService.Authorization.Extension;
+using BBMB.BudgetService.Authorization.Requirements;
 using BBMB.BudgetService.Features.Estimates.GetById;
 using BBMB.BudgetService.Features.Estimates.Update;
 using BBMB.BudgetService.Infrastructure.DependencyInjection;
@@ -81,6 +82,13 @@ BBMB.BudgetService.Shared.Services.Attachments.AttachmentScannerRegistration.Add
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IChargeResolver, ChargeResolver>();
+// DB-backed authz config (requirements 1-5): the singleton cache (30 s TTL + version stamp), the scoped
+// provider that rebuilds the snapshot from the seven tables, and the role source abstraction (token today).
+builder.Services.AddSingleton<BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetConfigCache>();
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.IBudgetConfigProvider,
+    BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetConfigProvider>();
+builder.Services.AddScoped<BBMB.BudgetService.Authorization.RoleSource.IBudgetRoleSource,
+    BBMB.BudgetService.Authorization.RoleSource.TokenClaimsRoleSource>();
 // Budget process: actor, action scope (DDD §7.1) and office scope (design §4.3, §4.4).
 builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetOffices.IBudgetOfficeScope,
     BBMB.BudgetService.Shared.Services.BudgetOffices.BudgetOfficeScope>();
@@ -228,9 +236,13 @@ builder.Services.AddAuthentication("Bearer")
 // 🔐 CUSTOM PROJECT ROLE AUTHORIZATION
 // ======================================================
 builder.Services.AddProjectRoleAuthorization();
-// Rights matrix read at each evaluation through IOptionsMonitor (design §4.4, BUD-033).
-builder.Services.Configure<Auth.Authorization.Requirements.BudgetRightsOptions>(
-    builder.Configuration.GetSection(Auth.Authorization.Requirements.BudgetRightsOptions.SectionName));
+// Rights matrix now read from the database through a DB-backed IOptionsMonitor<BudgetRightsOptions> adapter
+// (requirement 1, design §2): BudgetRightHandler and BudgetOfficeScope keep reading options.CurrentValue
+// unchanged, but the source is the seven authz-config tables, so an authorized change applies without a
+// restart (within the cache TTL). The appsettings BudgetRights section is retained only as the migration's
+// seed source and for BudgetEndpointPolicyTests' key-set assertion; it is no longer bound at runtime.
+builder.Services.AddSingleton<Microsoft.Extensions.Options.IOptionsMonitor<BudgetRightsOptions>,
+    BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetConfigOptionsMonitor>();
 
 builder.Services.AddOpenApi(options =>
 {

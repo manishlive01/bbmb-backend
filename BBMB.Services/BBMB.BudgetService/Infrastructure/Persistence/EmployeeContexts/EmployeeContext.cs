@@ -1,11 +1,6 @@
 ﻿using BBMB.BudgetService.Features.EmployeeCharges.Entities;
 using BBMB.BudgetService.Features.Employees.Entities;
-using BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities;
-using BBMB.BudgetService.Features.PublicMasters.Designations.Entities;
 using BBMB.BudgetService.Features.PublicMasters.Entities;
-using BBMB.BudgetService.Features.PublicMasters.Genders.Entities;
-using BBMB.BudgetService.Features.PublicMasters.SourceOfRecruitments.Entities;
-using BBMB.BudgetService.Features.PublicMasters.Titles.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts

@@ -1,4 +1,4 @@
-﻿using BBMB.BudgetService.Features.EmployeeCharges.GetByUser.Dtos;
+﻿using BBMB.BudgetService.Features.EmployeeCharges.GetList.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
 using BBMB.BudgetService.Shared.Settings;

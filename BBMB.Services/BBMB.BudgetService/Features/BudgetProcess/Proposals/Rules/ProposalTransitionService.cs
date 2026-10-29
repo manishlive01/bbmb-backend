@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Authorization.Requirements;
 using BBMB.BudgetService.Features.BudgetProcess.Calendars.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Cycles.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Offices;

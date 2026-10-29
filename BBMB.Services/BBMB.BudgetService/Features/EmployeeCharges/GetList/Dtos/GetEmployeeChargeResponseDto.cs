@@ -1,4 +1,4 @@
-﻿namespace BBMB.BudgetService.Features.EmployeeCharges.GetByUser.Dtos
+﻿namespace BBMB.BudgetService.Features.EmployeeCharges.GetList.Dtos
 {
     public class GetEmployeeChargeResponseDto
     {

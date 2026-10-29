@@ -2,7 +2,6 @@
 using BBMB.BudgetService.Features.AccountingHeads.MinorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMajorHeads.Entities;
 using BBMB.BudgetService.Features.AccountingHeads.SubMinor.Entities;
-using BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads;
 using BBMB.BudgetService.Features.DetailHeads.Entities;
 using BBMB.BudgetService.Features.HeadOfAccounts.Entities;
 using BBMB.BudgetService.Features.HierarchyManagement.CEManagements.Entities;
@@ -18,7 +17,6 @@ using BBMB.BudgetService.Features.Projects.Entities;
 using BBMB.BudgetService.Features.Regions.Entities;
 using BBMB.BudgetService.Features.Units.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
-using Auth.Authorization.Requirements;
 using BBMB.BudgetService.Shared.Messages;
 using BBMB.BudgetService.Shared.Services.BudgetActors;
 using BBMB.BudgetService.Shared.ResponseDTOs;
@@ -27,8 +25,9 @@ using Npgsql;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
+using BBMB.BudgetService.Authorization.Requirements;
 
-namespace BBMB.BudgetService.Features.BulkUploads
+namespace BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads
 {
     public class BulkUploadHandler : IRequestHandler<BulkUploadCommand, Response>
     {

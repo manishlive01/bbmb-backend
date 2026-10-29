@@ -3,7 +3,7 @@ using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace BBMB.BudgetService.Features.PublicMasters.Titles.GetList
+namespace BBMB.BudgetService.Features.PublicMasters.Titles
 {
     public class GetTitleListHandler
         : IRequestHandler<GetTitleListCommand, List<GetTitleListResponseDto>>

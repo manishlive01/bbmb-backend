@@ -1,4 +1,4 @@
-using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Authorization.Requirements;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Dtos;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
-namespace Auth.Authorization.Requirements
+namespace BBMB.BudgetService.Authorization.Requirements
 {
     public class ProjectRoleRequirement : IAuthorizationRequirement
     {

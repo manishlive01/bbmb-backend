@@ -1,7 +1,8 @@
 using System.Security.Claims;
 using System.Text.Json;
-using Auth.Authorization.Handlers;
 using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Authorization.Handlers;
+using BBMB.BudgetService.Authorization.Requirements;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

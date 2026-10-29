@@ -1,10 +1,5 @@
 ﻿using BBMB.BudgetService.Features.EmployeeCharges.Entities;
-using BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities;
-using BBMB.BudgetService.Features.PublicMasters.Designations.Entities;
 using BBMB.BudgetService.Features.PublicMasters.Entities;
-using BBMB.BudgetService.Features.PublicMasters.Genders.Entities;
-using BBMB.BudgetService.Features.PublicMasters.SourceOfRecruitments.Entities;
-using BBMB.BudgetService.Features.PublicMasters.Titles.Entities;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

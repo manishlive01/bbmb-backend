@@ -1,4 +1,4 @@
-using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Authorization.Requirements;
 using BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetUploadTemplate.Dtos;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;

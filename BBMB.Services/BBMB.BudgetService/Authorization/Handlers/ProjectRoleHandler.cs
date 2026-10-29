@@ -1,9 +1,9 @@
-﻿using Auth.Authorization.Requirements;
-using BBMB.BudgetService.Authorization.Dtos;
+﻿using BBMB.BudgetService.Authorization.Dtos;
+using BBMB.BudgetService.Authorization.Requirements;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
 
-namespace Auth.Authorization.Handlers
+namespace BBMB.BudgetService.Authorization.Handlers
 {
     public class ProjectRoleHandler
         : AuthorizationHandler<ProjectRoleRequirement>
