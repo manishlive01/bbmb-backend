@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Http;
 
-namespace Auth.Authorization.Handlers
+namespace BBMB.BudgetService.Authorization.Handlers
 {
     /// <summary>
     /// Wraps the default authorization result handler to turn a forbidden decision that failed <b>specifically

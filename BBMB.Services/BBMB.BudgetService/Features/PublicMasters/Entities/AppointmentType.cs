@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BBMB.BudgetService.Features.PublicMasters.AppointmentTypes.Entities
+namespace BBMB.BudgetService.Features.PublicMasters.Entities
 {
     [Table("appointment_type_master")]
     public class AppointmentType

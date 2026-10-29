@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BBMB.BudgetService.Features.PublicMasters.Genders.Entities
+namespace BBMB.BudgetService.Features.PublicMasters.Entities
 {
     [Table("gender_master")]
     public class Gender

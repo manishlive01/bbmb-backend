@@ -1,7 +1,6 @@
-﻿using BBMB.BudgetService.Features.OfficeManagements.Create;
-using FluentValidation;
+﻿using FluentValidation;
 
-namespace BBMB.BudgetService.Features.OfficeManagements.Create
+namespace BBMB.BudgetService.Features.Offices.OfficeManagements.Create
 {
     public class CreateOfficeManagementValidator : AbstractValidator<CreateOfficeManagementCommand>
     {

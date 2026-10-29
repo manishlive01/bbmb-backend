@@ -1,4 +1,4 @@
-namespace Auth.Authorization.Handlers
+namespace BBMB.BudgetService.Authorization.Handlers
 {
     /// <summary>
     /// The acting role resolved by <see cref="BudgetRightHandler"/> for the current request (design §4.4).

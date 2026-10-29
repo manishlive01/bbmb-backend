@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using Auth.Authorization.Handlers;
+using BBMB.BudgetService.Authorization.Handlers;
 using BBMB.BudgetService.Features.BudgetProcess.AuthzConfig;
 using BBMB.BudgetService.Features.EmployeeCharges.Entities;
 using BBMB.BudgetService.Features.Employees.Entities;

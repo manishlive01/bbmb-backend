@@ -1,5 +1,5 @@
-﻿using Auth.Authorization.Handlers;
-using Auth.Authorization.PolicyProvider;
+﻿using BBMB.BudgetService.Authorization.Handlers;
+using BBMB.BudgetService.Authorization.PolicyProvider;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 

@@ -1,10 +1,10 @@
-using Auth.Authorization.Requirements;
 using BBMB.BudgetService.Authorization.Dtos;
+using BBMB.BudgetService.Authorization.Requirements;
 using BBMB.BudgetService.Authorization.RoleSource;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
-namespace Auth.Authorization.Handlers
+namespace BBMB.BudgetService.Authorization.Handlers
 {
     /// <summary>
     /// Evaluates <see cref="BudgetRightRequirement"/> against the <b>acting role only</b> (design §4.4):

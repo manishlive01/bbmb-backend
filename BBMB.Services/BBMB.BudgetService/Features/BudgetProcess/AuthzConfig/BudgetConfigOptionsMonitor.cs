@@ -1,4 +1,4 @@
-using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Authorization.Requirements;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 

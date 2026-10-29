@@ -1,5 +1,6 @@
-using Auth.Authorization.PolicyProvider;
 using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Authorization.PolicyProvider;
+using BBMB.BudgetService.Authorization.Requirements;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;

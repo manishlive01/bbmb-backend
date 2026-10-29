@@ -2,6 +2,7 @@
 // USING STATEMENTS
 // =======================
 using BBMB.BudgetService.Authorization.Extension;
+using BBMB.BudgetService.Authorization.Requirements;
 using BBMB.BudgetService.Features.Estimates.GetById;
 using BBMB.BudgetService.Features.Estimates.Update;
 using BBMB.BudgetService.Infrastructure.DependencyInjection;
@@ -240,7 +241,7 @@ builder.Services.AddProjectRoleAuthorization();
 // unchanged, but the source is the seven authz-config tables, so an authorized change applies without a
 // restart (within the cache TTL). The appsettings BudgetRights section is retained only as the migration's
 // seed source and for BudgetEndpointPolicyTests' key-set assertion; it is no longer bound at runtime.
-builder.Services.AddSingleton<Microsoft.Extensions.Options.IOptionsMonitor<Auth.Authorization.Requirements.BudgetRightsOptions>,
+builder.Services.AddSingleton<Microsoft.Extensions.Options.IOptionsMonitor<BudgetRightsOptions>,
     BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetConfigOptionsMonitor>();
 
 builder.Services.AddOpenApi(options =>

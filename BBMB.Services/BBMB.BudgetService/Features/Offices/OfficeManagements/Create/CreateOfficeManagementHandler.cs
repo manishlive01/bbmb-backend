@@ -5,7 +5,7 @@ using Mapster;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace BBMB.BudgetService.Features.OfficeManagements.Create
+namespace BBMB.BudgetService.Features.Offices.OfficeManagements.Create
 {
     public class CreateOfficeManagementHandler
         : IRequestHandler<CreateOfficeManagementCommand, Response>

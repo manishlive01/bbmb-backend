@@ -1,4 +1,4 @@
-﻿using BBMB.BudgetService.Features.EmployeeCharges.GetByUser.Dtos;
+﻿using BBMB.BudgetService.Features.EmployeeCharges.GetList.Dtos;
 using MediatR;
 
 namespace BBMB.BudgetService.Features.EmployeeCharges.GetList

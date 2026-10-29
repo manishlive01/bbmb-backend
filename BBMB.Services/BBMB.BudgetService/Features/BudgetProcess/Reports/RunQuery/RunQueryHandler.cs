@@ -1,5 +1,5 @@
 using System.Text;
-using Auth.Authorization.Requirements;
+using BBMB.BudgetService.Authorization.Requirements;
 using BBMB.BudgetService.Features.BudgetProcess.Offices.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Reports.RunQuery.Dtos;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;

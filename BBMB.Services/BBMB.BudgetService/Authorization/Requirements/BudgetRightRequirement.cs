@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace Auth.Authorization.Requirements
+namespace BBMB.BudgetService.Authorization.Requirements
 {
     /// <summary>
     /// Policy <c>BudgetRight:&lt;key&gt;</c> (design §4.4). Carries the right key only; the roles holding the

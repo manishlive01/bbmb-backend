@@ -1,4 +1,4 @@
-﻿using Auth.Authorization.Handlers;
+﻿using BBMB.BudgetService.Authorization.Handlers;
 using BBMB.BudgetService.Features.BudgetProcess.AuthzConfig;
 using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
 using BBMB.BudgetService.Shared.ServiceDTOs;

@@ -1,4 +1,4 @@
-namespace Auth.Authorization.Requirements
+namespace BBMB.BudgetService.Authorization.Requirements
 {
     /// <summary>
     /// Configuration section <c>BudgetRights</c>: right key → roles holding it (design §4.4, SRS §10). This is

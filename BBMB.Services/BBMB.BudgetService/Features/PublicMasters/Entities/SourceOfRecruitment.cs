@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace BBMB.BudgetService.Features.PublicMasters.SourceOfRecruitments.Entities
+namespace BBMB.BudgetService.Features.PublicMasters.Entities
 {
     [Table("source_of_recruitment_master")]
     public class SourceOfRecruitment

@@ -1,8 +1,8 @@
-﻿using Auth.Authorization.Requirements;
+﻿using BBMB.BudgetService.Authorization.Requirements;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
-namespace Auth.Authorization.PolicyProvider
+namespace BBMB.BudgetService.Authorization.PolicyProvider
 {
     public class ProjectRolePolicyProvider
         : DefaultAuthorizationPolicyProvider

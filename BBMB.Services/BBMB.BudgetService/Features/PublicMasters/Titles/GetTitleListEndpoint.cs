@@ -2,7 +2,7 @@
 using BBMB.BudgetService.Shared.Endpoints;
 using MediatR;
 
-namespace BBMB.BudgetService.Features.PublicMasters.Titles.GetList
+namespace BBMB.BudgetService.Features.PublicMasters.Titles
 {
     public class GetTitleListEndpoint : IEndpoint
     {
