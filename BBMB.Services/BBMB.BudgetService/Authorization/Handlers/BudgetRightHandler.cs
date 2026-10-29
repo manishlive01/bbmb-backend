@@ -64,18 +64,20 @@ namespace BBMB.BudgetService.Authorization.Handlers
             // only, matched by the stored ProjectId/ProjectName. It is scoped, so reach it from the request
             // services (the handler is a singleton).
             IReadOnlyList<string> budgetRoles;
-            if (httpContext?.RequestServices.GetService(typeof(IBudgetRoleSource)) is IBudgetRoleSource roleSource)
+            if (httpContext?.RequestServices?.GetService(typeof(IBudgetRoleSource)) is IBudgetRoleSource roleSource)
                 budgetRoles = await roleSource.GetBudgetRolesAsync(context.User, httpContext.RequestAborted);
             else
                 budgetRoles = ProjectClaimReader.RolesIn(context.User, current.ProjectName);
 
-            // Only configured Budget roles and explicit administrators count.
+            // Only configured Budget roles and explicit administrators count (D2). RoleOfficeLevels holds the
+            // configured roles only, so a synchronised-but-unconfigured, inactive or SSO-inactive role is never an
+            // acting-role candidate. An empty configuration admits no role (fail closed).
             var configuredRoles = current.RoleOfficeLevels.Keys
                 .Concat(current.AdminRoles)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var held = budgetRoles
-                .Where(r => configuredRoles.Count == 0 || configuredRoles.Contains(r))
+                .Where(configuredRoles.Contains)
                 .ToList();
             if (held.Count == 0)
                 return (null, "NO_BUDGET_ROLE");

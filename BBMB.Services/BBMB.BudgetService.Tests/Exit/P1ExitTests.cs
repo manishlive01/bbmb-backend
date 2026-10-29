@@ -12,7 +12,6 @@ using BBMB.BudgetService.Features.BudgetProcess.Proposals.Dtos;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules;
 using BBMB.BudgetService.Features.BulkExcelUploads.BulkUploads;
-using BBMB.BudgetService.Features.BulkUploads;
 using BBMB.BudgetService.Features.EmployeeCharges.Entities;
 using BBMB.BudgetService.Features.Works.Rules;
 using BBMB.BudgetService.Shared.Messages;

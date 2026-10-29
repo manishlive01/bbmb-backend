@@ -19,7 +19,7 @@ namespace BBMB.BudgetService.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("budget")
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1008,17 +1008,29 @@ namespace BBMB.BudgetService.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_admin");
 
-                    b.Property<string>("OfficeLevel")
-                        .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("character varying(12)")
-                        .HasColumnName("office_level");
+                    b.Property<DateTimeOffset?>("LastSyncedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_synced_at");
+
+                    b.Property<int?>("OfficeLevelId")
+                        .HasColumnType("integer")
+                        .HasColumnName("office_level_id");
 
                     b.Property<string>("RoleName")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("role_name");
+
+                    b.Property<bool>("SsoIsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("sso_is_active");
+
+                    b.Property<Guid?>("SsoRoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sso_role_id");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .ValueGeneratedOnAddOrUpdate()
@@ -1043,9 +1055,16 @@ namespace BBMB.BudgetService.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("OfficeLevelId")
+                        .HasDatabaseName("ix_budget_role_office_level_id");
+
                     b.HasIndex("RoleName")
                         .IsUnique()
                         .HasDatabaseName("ux_budget_role_name");
+
+                    b.HasIndex("SsoRoleId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_budget_role_sso_role_id");
 
                     b.ToTable("budget_role", "budget");
                 });
@@ -5692,6 +5711,17 @@ namespace BBMB.BudgetService.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRole", b =>
+                {
+                    b.HasOne("BBMB.BudgetService.Features.HierarchyManagement.LevelManagement.Entites.Levels", "OfficeLevel")
+                        .WithMany()
+                        .HasForeignKey("OfficeLevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_budget_role_office_level");
+
+                    b.Navigation("OfficeLevel");
                 });
 
             modelBuilder.Entity("BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities.BudgetRoleQueryField", b =>

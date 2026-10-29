@@ -89,6 +89,15 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
     BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetConfigProvider>();
 builder.Services.AddScoped<BBMB.BudgetService.Authorization.RoleSource.IBudgetRoleSource,
     BBMB.BudgetService.Authorization.RoleSource.TokenClaimsRoleSource>();
+// Auth SSO role catalogue for the on-demand role sync (D3): typed HttpClient, base address SSO:Authority.
+builder.Services.AddHttpClient<BBMB.BudgetService.Authorization.RoleSource.ISsoRoleClient,
+    BBMB.BudgetService.Authorization.RoleSource.HttpSsoRoleClient>(client =>
+{
+    var authority = builder.Configuration["SSO:Authority"];
+    if (!string.IsNullOrWhiteSpace(authority))
+        client.BaseAddress = new Uri(authority.EndsWith('/') ? authority : authority + "/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 // Budget process: actor, action scope (DDD §7.1) and office scope (design §4.3, §4.4).
 builder.Services.AddScoped<BBMB.BudgetService.Shared.Services.BudgetOffices.IBudgetOfficeScope,
     BBMB.BudgetService.Shared.Services.BudgetOffices.BudgetOfficeScope>();
@@ -111,6 +120,9 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.DemandLines
     BBMB.BudgetService.Features.BudgetProcess.DemandLines.Rules.DemandLineRules>();
 // Work-master rules (design §5.3 first-cycle guard, §11.3 reference rule).
 builder.Services.AddScoped<BBMB.BudgetService.Features.Works.Rules.WorkRules>();
+// Its two cohesive collaborators: the right check (authorization + current user) and the after-commit notifier.
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.ProposalRightCheck>();
+builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.ProposalMovementNotifier>();
 builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.IProposalTransitionService,
     BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules.ProposalTransitionService>();
 // T-19 delegation limits in force (design §5.3; BUD-055 reads it).

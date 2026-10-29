@@ -49,7 +49,7 @@ public static class TestServices
 
     public static ProposalTransitionService Transitions(
         BudgetContext ctx, IBudgetActorSource actor, FakeAuthorizationService? authorization = null) =>
-        new(ctx, actor, new BudgetActionScope(ctx, actor), OfficeScope(ctx), authorization ?? AllowAll(),
-            new HttpContextAccessor { HttpContext = new DefaultHttpContext() }, new NoOpBudgetNotificationGateway(),
-            NullLogger<ProposalTransitionService>.Instance);
+        new(ctx, actor, new BudgetActionScope(ctx, actor), OfficeScope(ctx),
+            new ProposalRightCheck(authorization ?? AllowAll(), new HttpContextAccessor { HttpContext = new DefaultHttpContext() }),
+            new ProposalMovementNotifier(new NoOpBudgetNotificationGateway(), NullLogger<ProposalMovementNotifier>.Instance));
 }

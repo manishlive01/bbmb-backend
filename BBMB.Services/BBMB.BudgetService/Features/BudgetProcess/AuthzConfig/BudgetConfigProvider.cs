@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
     /// DB-backed <see cref="IBudgetConfigProvider"/> (design §2). On read, if the cache is fresh it is served;
     /// otherwise a cheap version stamp (<c>budget.fn_config_version()</c>) is read first — unchanged ⇒ the TTL
     /// window is extended without a rebuild; changed (or nothing cached) ⇒ the snapshot is rebuilt from the
-    /// seven tables and stored. Fails closed: no active settings row ⇒ <see cref="BudgetConfigSnapshot.Empty"/>
+    /// seven tables (plus the <c>levels</c> master each role's office level references) and stored. Fails closed: no active settings row ⇒ <see cref="BudgetConfigSnapshot.Empty"/>
     /// (logged once per load); a DB error bubbles to the global handler, no stale snapshot is served past TTL.
     /// </summary>
     public sealed class BudgetConfigProvider(
@@ -45,7 +45,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
             return rows.Count > 0 ? rows[0] : 0;
         }
 
-        private async Task<BudgetConfigSnapshot> BuildSnapshotAsync(CancellationToken ct)
+        /// <summary>Builds the snapshot from the tables, bypassing the cache and the version stamp (also used by tests).</summary>
+        public async Task<BudgetConfigSnapshot> BuildSnapshotAsync(CancellationToken ct = default)
         {
             var settings = await context.BudgetProjectSettings.AsNoTracking()
                 .Where(s => s.IsActive)
@@ -57,7 +58,19 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
                 return BudgetConfigSnapshot.Empty;
             }
 
-            var roles = await context.BudgetRoles.AsNoTracking().Where(r => r.IsActive).ToListAsync(ct);
+            // Active and SSO-active roles with their levels master row. The level's name is mapped to the Budget
+            // office level code in BudgetRoleLevel only (the single resolution point, D1).
+            var candidates = await context.BudgetRoles.AsNoTracking()
+                .Where(r => r.IsActive && r.SsoIsActive)
+                .Select(r => new
+                {
+                    r.Id,
+                    r.RoleName,
+                    r.IsAdmin,
+                    LevelName = r.OfficeLevel != null ? r.OfficeLevel.Name : null,
+                    LevelActive = r.OfficeLevel != null && r.OfficeLevel.Status,
+                })
+                .ToListAsync(ct);
             var rights = await context.BudgetRights.AsNoTracking().Where(r => r.IsActive).ToListAsync(ct);
             var queryFields = await context.BudgetQueryFields.AsNoTracking().Where(q => q.IsActive).ToListAsync(ct);
             var roleRights = await context.BudgetRoleRights.AsNoTracking().Where(rr => rr.IsActive).ToListAsync(ct);
@@ -66,13 +79,33 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
                 .Where(a => a.Status != AdminAssignmentStatus.Revoked)
                 .ToListAsync(ct);
 
-            var roleById = roles.ToDictionary(r => r.Id);
             var rightById = rights.ToDictionary(r => r.Id);
             var fieldById = queryFields.ToDictionary(q => q.Id);
+            var rolesWithRight = roleRights.Where(rr => rightById.ContainsKey(rr.RightId)).Select(rr => rr.RoleId).ToHashSet();
+
+            // D2: only a configured role (its level resolves to a Budget office level and it holds at least one
+            // active right) enters the snapshot. An unconfigured role therefore gets no right, no office, no query
+            // field, no admin status and no acting-role candidacy.
+            var roles = candidates
+                .Select(r => new
+                {
+                    r.Id,
+                    r.RoleName,
+                    r.IsAdmin,
+                    Level = BudgetRoleLevel.ToOfficeLevelCode(r.LevelName, r.LevelActive),
+                })
+                .Where(r => BudgetRoleLevel.IsAuthorisable(isActive: true, ssoIsActive: true, r.Level, rolesWithRight.Contains(r.Id)))
+                .ToList();
+            if (roles.Count < candidates.Count)
+                logger.LogInformation(
+                    "{Count} active Budget role(s) are unconfigured and denied (no Budget office level or no active right).",
+                    candidates.Count - roles.Count);
+
+            var roleById = roles.ToDictionary(r => r.Id);
 
             var roleOfficeLevels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var r in roles)
-                roleOfficeLevels[r.RoleName] = r.OfficeLevel;
+                roleOfficeLevels[r.RoleName] = r.Level!;
 
             // Right key -> role names holding it.
             var rightsMap = new Dictionary<string, List<string>>(StringComparer.Ordinal);

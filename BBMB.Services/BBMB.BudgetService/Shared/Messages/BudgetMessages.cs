@@ -54,6 +54,18 @@ namespace BBMB.BudgetService.Shared.Messages
 
         /// <summary>Stored attachment digest mismatch (design §4.8, §10). Interim id (OI-13).</summary>
         public const string Integrity = "INTEGRITY";
+        /// <summary>Role configuration names an unknown/inactive level, right or query field (400). Interim id (OI-13).</summary>
+        public const string ConfigInvalid = "CONFIG_INVALID";
+        /// <summary>The selected levels row is not one of the Budget office levels (400). Interim id (OI-13).</summary>
+        public const string ConfigLevelNotBudget = "CONFIG_LEVEL_NOT_BUDGET";
+        /// <summary>The role is inactive in Budget or in Auth SSO and cannot be configured. Interim id (OI-13).</summary>
+        public const string RoleInactive = "ROLE_INACTIVE";
+        /// <summary>The change would leave the caller's own acting role unable to administer. Interim id (OI-13).</summary>
+        public const string ConfigSelfLockout = "CONFIG_SELF_LOCKOUT";
+        /// <summary>The Budget project's Auth SSO project id is not set. Interim id (OI-13).</summary>
+        public const string SsoProjectUnset = "SSO_PROJECT_UNSET";
+        /// <summary>Auth SSO could not be read, or returned no roles; nothing was changed (502). Interim id (OI-13).</summary>
+        public const string SsoSyncFailed = "SSO_SYNC_FAILED";
 
         private static readonly IReadOnlyDictionary<string, string> Catalogue = new Dictionary<string, string>
         {
@@ -98,6 +110,12 @@ namespace BBMB.BudgetService.Shared.Messages
             [NotFound] = "The record requested does not exist or is not visible to your office.",
             [Adv122] = "The figure has been altered without a justification. Record a justification, or select Continue without justification.",
             [Integrity] = "The stored file does not match the digest recorded when it was uploaded and has not been served.",
+            [ConfigInvalid] = "The office level, right or query field selected does not exist or is not active.",
+            [ConfigLevelNotBudget] = "The office level selected is not one of the Budget office levels (DIVISION, CIRCLE, CE, SECRETARIAT, FINANCE, IT_CELL).",
+            [RoleInactive] = "The role is inactive in Budget or in Auth SSO and cannot be configured.",
+            [ConfigSelfLockout] = "This change would remove your own acting role's administration right. Make it from another administrator role.",
+            [SsoProjectUnset] = "The Auth SSO project id of the Budget project is not set in the project settings.",
+            [SsoSyncFailed] = "The roles could not be read from Auth SSO, or Auth SSO returned no roles. Nothing was changed.",
         };
 
         /// <summary>

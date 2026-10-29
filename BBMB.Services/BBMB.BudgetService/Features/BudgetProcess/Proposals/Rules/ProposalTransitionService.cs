@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using BBMB.BudgetService.Authorization.Requirements;
 using BBMB.BudgetService.Features.BudgetProcess.Calendars.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Cycles.Entities;
 using BBMB.BudgetService.Features.BudgetProcess.Offices;
@@ -11,8 +10,6 @@ using BBMB.BudgetService.Shared.Messages;
 using BBMB.BudgetService.Shared.ResponseDTOs;
 using BBMB.BudgetService.Shared.Services.BudgetActors;
 using BBMB.BudgetService.Shared.Services.BudgetOffices;
-using BBMB.BudgetService.Shared.Services.Notifications;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
@@ -23,16 +20,21 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
     /// cycle not frozen/closed (M-17) → target resolved and present in T-16 (M-19) → the transition's right
     /// (M-20) → remark where T-16 requires it (M-12) → hooks → one T-33 row + the T-29 update in one action
     /// scope; the lease is cleared; notification after commit.
+    /// <para>
+    /// Dependencies: persistence (<see cref="BudgetContext"/>), who acts (<see cref="IBudgetActorSource"/>), the
+    /// audited write scope (<see cref="IBudgetActionScope"/>), what the actor sees (<see cref="IBudgetOfficeScope"/>),
+    /// whether the actor holds a right (<see cref="ProposalRightCheck"/>, formerly IAuthorizationService +
+    /// IHttpContextAccessor) and the after-commit notification (<see cref="ProposalMovementNotifier"/>, formerly
+    /// IBudgetNotificationGateway + ILogger). Behaviour is unchanged by the grouping.
+    /// </para>
     /// </summary>
     public sealed class ProposalTransitionService(
         BudgetContext context,
         IBudgetActorSource actorSource,
         IBudgetActionScope scope,
         IBudgetOfficeScope officeScope,
-        IAuthorizationService authorization,
-        IHttpContextAccessor httpContextAccessor,
-        IBudgetNotificationGateway notifications,
-        ILogger<ProposalTransitionService> logger,
+        ProposalRightCheck rights,
+        ProposalMovementNotifier notifier,
         TimeProvider? clock = null) : IProposalTransitionService
     {
         private static readonly TimeZoneInfo IndiaStandardTime = TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
@@ -87,7 +89,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
                 await tx.CommitAsync(ct);
             }
 
-            await NotifyAsync(proposal.ProposalId, movement.MovementId, ct);
+            await notifier.NotifyAsync(proposal.ProposalId, movement.MovementId, ct);
             var state = await StateOfAsync(proposal.ProposalId, ct);
             await AddCalendarWarningAsync(state, proposal.CycleId, actor.OfficeLevel, ct);
             return new Response<ProposalStateResponseDto>
@@ -145,7 +147,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
             }
 
             foreach (var m in movements)
-                await NotifyAsync(m.ProposalId, m.MovementId, ct);
+                await notifier.NotifyAsync(m.ProposalId, m.MovementId, ct);
             var states = new List<ProposalStateResponseDto>();
             foreach (var (proposal, _) in batch)
                 states.Add(await StateOfAsync(proposal.ProposalId, ct));
@@ -188,8 +190,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
                 return Fail(BudgetMessages.M19);
 
             var right = TransitionResolver.RightFor(action, proposal.StateCode, proposal.Category);
-            var user = httpContextAccessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal();
-            if (!(await authorization.AuthorizeAsync(user, null, BudgetRightRequirement.Policy(right))).Succeeded)
+            if (!await rights.HoldsAsync(right))
                 return Fail(BudgetMessages.M20);
 
             if (transition.RemarkRequired && string.IsNullOrWhiteSpace(remark))
@@ -225,19 +226,6 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
             return movement;
         }
 
-        private async Task NotifyAsync(long proposalId, long movementId, CancellationToken ct)
-        {
-            try
-            {
-                await notifications.NotifyMovementAsync(proposalId, movementId, ct);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Movement notification failed for proposal {ProposalId}, movement {MovementId}",
-                    proposalId, movementId);
-            }
-        }
-
         public async Task<IReadOnlyList<string>> GetAvailableActionsAsync(long proposalId, CancellationToken ct = default)
         {
             if (!await IsStateModelAvailableAsync(ct))
@@ -258,7 +246,6 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
 
             var transitions = await context.StateTransitions.AsNoTracking()
                 .Where(t => t.FromState == proposal.StateCode).ToListAsync(ct);
-            var user = httpContextAccessor.HttpContext?.User ?? new System.Security.Claims.ClaimsPrincipal();
             var available = new List<string>();
             foreach (var action in transitions.Select(t => t.ActionCode).Distinct().OrderBy(a => a, StringComparer.Ordinal))
             {
@@ -268,7 +255,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.Proposals.Rules
                 if (resolved is null || !transitions.Any(t => t.ActionCode == resolved.ActionCode && t.ToState == resolved.ToState))
                     continue;
                 var right = TransitionResolver.RightFor(action, proposal.StateCode, proposal.Category);
-                if ((await authorization.AuthorizeAsync(user, null, BudgetRightRequirement.Policy(right))).Succeeded)
+                if (await rights.HoldsAsync(right))
                     available.Add(action);
             }
             return available;

@@ -55,6 +55,13 @@ public sealed class PostReadRoutesTests
         { "/api/budget-config/roles/list", "BudgetRight:Settings.Admin" },
         { "/api/budget-config/rights/list", "BudgetRight:Settings.Admin" },
         { "/api/budget-config/query-fields/list", "BudgetRight:Settings.Admin" },
+        // Dynamic role management: catalogue reads, the SSO role sync and the replace-set configure (no data in URLs).
+        { "/api/budget-config/levels/list", "BudgetRight:Settings.Admin" },
+        { "/api/budget-config/rights/catalog", "BudgetRight:Settings.Admin" },
+        { "/api/budget-config/query-fields/catalog", "BudgetRight:Settings.Admin" },
+        { "/api/budget-config/roles/sync", "BudgetRight:Settings.Admin" },
+        { "/api/budget-config/roles/configure", "BudgetRight:Settings.Admin" },
+        { "/api/budget-config/roles/upsert", "BudgetRight:Settings.Admin" },
     };
     [Theory]
     [MemberData(nameof(PostReads))]

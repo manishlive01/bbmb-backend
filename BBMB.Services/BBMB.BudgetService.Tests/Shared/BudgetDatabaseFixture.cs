@@ -1,7 +1,6 @@
 using BBMB.BudgetService.Features.EmployeeCharges.Entities;
 using BBMB.BudgetService.Features.Employees.Entities;
-using BBMB.BudgetService.Features.PublicMasters.Genders.Entities;
-using BBMB.BudgetService.Features.PublicMasters.Titles.Entities;
+using BBMB.BudgetService.Features.PublicMasters.Entities;
 using BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts;
 using BBMB.BudgetService.Infrastructure.Persistence.EmployeeContexts;
 using Microsoft.EntityFrameworkCore;

@@ -680,6 +680,13 @@ namespace BBMB.BudgetService.Infrastructure.Persistence.BudgetContexts
                 e.Property(x => x.IsAdmin).HasDefaultValue(false);
                 e.Property(x => x.IsActive).HasDefaultValue(true);
                 e.HasIndex(x => x.RoleName).IsUnique().HasDatabaseName("ux_budget_role_name");
+                // Role sync (D3): one Budget role per Auth SSO role; NULL allowed for legacy seeded rows.
+                e.Property(x => x.SsoIsActive).HasDefaultValue(true);
+                e.HasIndex(x => x.SsoRoleId).IsUnique().HasDatabaseName("ux_budget_role_sso_role_id");
+                // Office level (D1): FK to the existing levels master, RESTRICT; NULL = unconfigured (denied).
+                e.HasOne(x => x.OfficeLevel).WithMany().HasForeignKey(x => x.OfficeLevelId)
+                    .OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_budget_role_office_level");
+                e.HasIndex(x => x.OfficeLevelId).HasDatabaseName("ix_budget_role_office_level_id");
                 ConfigureActorColumns(e);
             });
 

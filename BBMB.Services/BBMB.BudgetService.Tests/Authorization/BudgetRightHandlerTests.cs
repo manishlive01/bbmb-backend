@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text.Json;
-using Auth.Authorization.Requirements;
 using BBMB.BudgetService.Authorization.Handlers;
 using BBMB.BudgetService.Authorization.Requirements;
 using FluentAssertions;
@@ -21,9 +20,12 @@ public sealed class BudgetRightHandlerTests
         public IDisposable? OnChange(Action<BudgetRightsOptions, string?> listener) => null;
     }
 
+    // Every role that holds a right is configured (has an office level), as the DB snapshot guarantees (D2).
     private static BudgetRightsOptions Rights(params (string Key, string[] Roles)[] rights) => new()
     {
         Rights = rights.ToDictionary(r => r.Key, r => r.Roles),
+        RoleOfficeLevels = rights.SelectMany(r => r.Roles).Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(r => r, _ => "DIVISION", StringComparer.OrdinalIgnoreCase),
     };
 
     private static readonly BudgetRightsOptions Default = Rights(
