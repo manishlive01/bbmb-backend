@@ -137,7 +137,7 @@ public sealed class P1ExitTests(BudgetDatabaseFixture fixture) : IAsyncLifetime
             await using var ctx = _w.NewContext();
             var empCtx = BudgetDatabaseFixture.NewEmployeeContext(_w.ConnectionString);
             var officeScope = TestServices.OfficeScope(ctx);
-            var source = new HttpBudgetActorSource(http, new ChargeResolver(http, empCtx, config, officeScope), officeScope, empCtx,
+            var source = new HttpBudgetActorSource(http, new ChargeResolver(http, empCtx, config, officeScope), officeScope, config, empCtx,
                 NullLogger<HttpBudgetActorSource>.Instance);
             return await AddAsync(source, new AddDemandLineDto { LineType = "WORK", WorkId = _w.WorkAId, RbeAmount = 1 }, http: http);
         }
