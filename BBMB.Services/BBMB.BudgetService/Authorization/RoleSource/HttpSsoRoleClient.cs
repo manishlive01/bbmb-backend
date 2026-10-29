@@ -10,9 +10,11 @@ namespace BBMB.BudgetService.Authorization.RoleSource
     /// <b>Response shape (assumption, not confirmed against the Auth SSO source):</b> an array of
     /// <c>{roleId, roleName, isActive}</c>, either at the root or under <c>data</c> / <c>roles</c> / <c>result</c>
     /// (any casing). Property names are matched case-insensitively, so camelCase and PascalCase both parse;
-    /// <c>id</c>/<c>name</c> are accepted as aliases, and a missing <c>isActive</c> is read as active. A row
-    /// without a GUID role id or a name is skipped. Any non-2xx status or an unparseable body is a failure, so
-    /// the sync changes nothing.
+    /// <c>id</c>/<c>name</c> are accepted as aliases. The active flag (<c>isActive</c>, alias <c>active</c>) must be
+    /// a JSON boolean, <c>"true"</c>/<c>"false"</c>, or <c>0</c>/<c>1</c>; a role with the flag missing or in any
+    /// other form makes the whole body unrecognised (fail closed: never read as active). A row without a GUID
+    /// role id or a name is skipped. Any non-2xx status or an unparseable body is a failure, so the sync changes
+    /// nothing.
     /// </para>
     /// </summary>
     public sealed class HttpSsoRoleClient(HttpClient http, ILogger<HttpSsoRoleClient> logger) : ISsoRoleClient
@@ -62,7 +64,10 @@ namespace BBMB.BudgetService.Authorization.RoleSource
                 var name = Get(item, "roleName") ?? Get(item, "name");
                 if (!Guid.TryParse(idText, out var id) || string.IsNullOrWhiteSpace(name))
                     continue;
-                var active = GetBool(item, "isActive") ?? GetBool(item, "active") ?? true;
+                // Fail closed: a role whose active flag is missing or unreadable is never assumed active. The
+                // whole body is refused, so the sync changes nothing rather than storing a guess.
+                if ((GetBool(item, "isActive") ?? GetBool(item, "active")) is not { } active)
+                    return null;
                 roles.Add(new SsoRole(id, name.Trim(), active));
             }
             return roles;
@@ -115,6 +120,7 @@ namespace BBMB.BudgetService.Authorization.RoleSource
                 JsonValueKind.True => true,
                 JsonValueKind.False => false,
                 JsonValueKind.String when bool.TryParse(v.GetString(), out var b) => b,
+                JsonValueKind.Number when v.TryGetInt32(out var n) && n is 0 or 1 => n == 1,
                 _ => null,
             };
         }

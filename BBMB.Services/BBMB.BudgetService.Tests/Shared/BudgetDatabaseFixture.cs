@@ -30,6 +30,8 @@ public sealed class BudgetDatabaseFixture : IAsyncLifetime
         "p1_ddd_deviations",
         "work_code_reset",
         "p5_ddd_deviations",
+        // budget.levels is empty in a fresh database, so the seeded admin roles cannot be mapped to a level.
+        "role_level_unmapped_admin",
     ];
 
     private PostgreSqlContainer _container = default!;

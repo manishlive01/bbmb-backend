@@ -9,6 +9,13 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
     /// the same rule: the level's name, trimmed, compared case-insensitively with the code. No other mapping
     /// (no aliasing such as "Chief Engineer" → CE) is applied; a level that does not match is "not a Budget
     /// office level" and a role on it stays unconfigured.
+    /// <para>
+    /// <b>Known limitation (review finding 8):</b> the level name is the authorisation key. Renaming a
+    /// <c>levels</c> row (this service has no edit endpoint for it, but another system may) de-authorises every
+    /// role on that level, and <c>budget.fn_config_version()</c> does not see the rename because <c>levels</c> has
+    /// no audit trigger and is not part of it, so the cached snapshot keeps the old result until another config
+    /// write or a restart. Removing this needs a code column on <c>levels</c> or an explicit mapping table.
+    /// </para>
     /// </summary>
     public static class BudgetRoleLevel
     {

@@ -40,7 +40,8 @@ public sealed class BudgetRoleSyncTests : InMemoryTestBase
     private sealed class CountingConfig : IBudgetConfigProvider
     {
         public int Invalidations { get; private set; }
-        public Task<BudgetConfigSnapshot> GetAsync(CancellationToken ct = default) => Task.FromResult(BudgetConfigSnapshot.Empty);
+        public BudgetConfigSnapshot Snapshot { get; set; } = BudgetConfigSnapshot.Empty;
+        public Task<BudgetConfigSnapshot> GetAsync(CancellationToken ct = default) => Task.FromResult(Snapshot);
         public void Invalidate() => Invalidations++;
     }
 
@@ -193,6 +194,59 @@ public sealed class BudgetRoleSyncTests : InMemoryTestBase
         (await SyncAsync()).MessageId.Should().Be(BudgetMessages.SsoSyncFailed,
             "an empty list would deactivate every role, the administrator's own included");
         Role("DDO").SsoIsActive.Should().BeTrue();
+    }
+
+    // Review finding 3: the empty-list guard does not cover a response that merely leaves out the administrator's
+    // own role. The caller below acts as IT_CELL.
+    [Fact]
+    public async Task Sync_refuses_to_deactivate_the_callers_own_acting_role()
+    {
+        var itCell = Guid.NewGuid();
+        await SyncAsync(new SsoRole(itCell, "IT_CELL", true), new SsoRole(DdoId, "DDO", true));
+        var invalidations = _config.Invalidations;
+
+        var r = await SyncAsync(new SsoRole(DdoId, "DDO", true));
+
+        r.IsSucced.Should().BeFalse();
+        r.MessageId.Should().Be(BudgetMessages.RoleSyncSelfLockout);
+        Role("IT_CELL").SsoIsActive.Should().BeTrue("a refused sync saves nothing");
+        _scope.Commits.Should().Be(1, "only the first sync committed");
+        _config.Invalidations.Should().Be(invalidations);
+    }
+
+    [Fact]
+    public async Task Sync_refuses_to_deactivate_the_last_administrator_role()
+    {
+        // The caller's own role (IT_CELL) is not a Budget row here; ProjectAdmin is the only Settings.Admin holder.
+        var admin = Guid.NewGuid();
+        await SyncAsync(new SsoRole(admin, "ProjectAdmin", true), new SsoRole(DdoId, "DDO", true));
+        _config.Snapshot = BudgetConfigSnapshot.Empty with
+        {
+            Rights = new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                [ConfigureRoleHandler.AdminRightKey] = ["ProjectAdmin"],
+            },
+        };
+
+        var r = await SyncAsync(new SsoRole(DdoId, "DDO", true));
+
+        r.MessageId.Should().Be(BudgetMessages.RoleSyncSelfLockout);
+        Role("ProjectAdmin").SsoIsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Sync_may_deactivate_one_administrator_role_while_another_stays_active()
+    {
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        await SyncAsync(new SsoRole(a, "ProjectAdmin", true), new SsoRole(b, "FIN_ADMIN", true));
+        _config.Snapshot = BudgetConfigSnapshot.Empty with { AdminRoles = ["ProjectAdmin", "FIN_ADMIN"] };
+
+        var r = await SyncAsync(new SsoRole(b, "FIN_ADMIN", true));
+
+        r.IsSucced.Should().BeTrue(r.Message);
+        r.Data!.Deactivated.Should().Be(1);
+        Role("ProjectAdmin").SsoIsActive.Should().BeFalse();
     }
 
     [Fact]

@@ -227,6 +227,9 @@ namespace BBMB.BudgetService.Features.AdminConfig
     /// then merges them in one audited action scope through <see cref="BudgetRoleSync.Plan"/>. Never touches
     /// Budget-owned columns or rows. An SSO failure, or an empty role list, changes nothing (an empty list would
     /// otherwise deactivate every role, including the administrator's own, and lock Budget administration out).
+    /// A response that would set <c>sso_is_active</c> false on the caller's own acting role, or on every role that
+    /// currently administers Budget (an effective admin or a <c>Settings.Admin</c> holder in the snapshot), is
+    /// refused with ROLE_SYNC_SELF_LOCKOUT and changes nothing: the narrower form of the same lockout.
     /// </summary>
     public sealed class SyncRolesHandler(
         BudgetContext context, IBudgetActorSource actorSource, IBudgetActionScope scope, IBudgetConfigProvider config,
@@ -238,7 +241,8 @@ namespace BBMB.BudgetService.Features.AdminConfig
 
         public async Task<Response<RoleSyncResultDto>> Handle(SyncRolesCommand request, CancellationToken ct)
         {
-            if (await actorSource.GetAsync(ct) is null)
+            var actor = await actorSource.GetAsync(ct);
+            if (actor is null)
                 return BudgetResponses.Fail<RoleSyncResultDto>(BudgetMessages.M20);
 
             var projectId = await context.BudgetProjectSettings.AsNoTracking()
@@ -258,9 +262,25 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 return BudgetResponses.Fail<RoleSyncResultDto>(BudgetMessages.SsoSyncFailed);
             }
 
+            var snapshot = await config.GetAsync(ct);
+            var adminNames = new HashSet<string>(snapshot.AdminRoles, StringComparer.OrdinalIgnoreCase);
+            if (snapshot.Rights.TryGetValue(ConfigureRoleHandler.AdminRightKey, out var holders))
+                adminNames.UnionWith(holders);
+
             await using var tx = await scope.BeginAsync(ActionCode, ct: ct);
             var existing = await context.BudgetRoles.ToListAsync(ct);
+            // Captured before the plan edits the tracked rows (it may rename them).
+            var callerRow = existing.FirstOrDefault(r => r.SsoIsActive
+                && string.Equals(r.RoleName, actor.RoleCode, StringComparison.OrdinalIgnoreCase));
+            var adminRows = existing.Where(r => r.SsoIsActive && adminNames.Contains(r.RoleName)).ToList();
             var plan = BudgetRoleSync.Plan(existing, fetched.Roles, (clock ?? TimeProvider.System).GetUtcNow());
+            if ((callerRow is not null && !callerRow.SsoIsActive) || (adminRows.Count > 0 && adminRows.All(r => !r.SsoIsActive)))
+            {
+                // Not saved and not committed: disposing the scope rolls back, and the edited tracked rows are
+                // discarded with this request's context.
+                logger.LogWarning("Budget role sync refused: it would deactivate the caller's acting role or the last administrator role");
+                return BudgetResponses.Fail<RoleSyncResultDto>(BudgetMessages.RoleSyncSelfLockout);
+            }
             if (plan.SkippedNames.Count > 0)
                 logger.LogWarning("Budget role sync skipped {Count} SSO role(s) whose name belongs to another Budget role: {Names}",
                     plan.SkippedNames.Count, string.Join(", ", plan.SkippedNames));

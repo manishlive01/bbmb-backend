@@ -66,6 +66,8 @@ namespace BBMB.BudgetService.Shared.Messages
         public const string SsoProjectUnset = "SSO_PROJECT_UNSET";
         /// <summary>Auth SSO could not be read, or returned no roles; nothing was changed (502). Interim id (OI-13).</summary>
         public const string SsoSyncFailed = "SSO_SYNC_FAILED";
+        /// <summary>The sync would deactivate the caller's acting role or the last administrator role (409). Interim id (OI-13).</summary>
+        public const string RoleSyncSelfLockout = "ROLE_SYNC_SELF_LOCKOUT";
 
         private static readonly IReadOnlyDictionary<string, string> Catalogue = new Dictionary<string, string>
         {
@@ -116,6 +118,7 @@ namespace BBMB.BudgetService.Shared.Messages
             [ConfigSelfLockout] = "This change would remove your own acting role's administration right. Make it from another administrator role.",
             [SsoProjectUnset] = "The Auth SSO project id of the Budget project is not set in the project settings.",
             [SsoSyncFailed] = "The roles could not be read from Auth SSO, or Auth SSO returned no roles. Nothing was changed.",
+            [RoleSyncSelfLockout] = "Auth SSO did not return your own acting role, or any administrator role, as active. Synchronising would lock Budget administration out, so nothing was changed. Correct the roles in Auth SSO first.",
         };
 
         /// <summary>
@@ -151,6 +154,11 @@ namespace BBMB.BudgetService.Shared.Messages
             ["ux_account_head_assignment_live"] = M19,
             // T-19 one limit per level and date (backstop behind CreateDelegationLimitHandler).
             ["IX_delegation_limit_authority_level_effective_from"] = M19,
+            // Role configuration and sync backstops behind the handler pre-checks (concurrent configure or sync).
+            ["ux_role_right"] = M19,
+            ["ux_role_query_field"] = M19,
+            ["ux_budget_role_sso_role_id"] = M19,
+            ["ux_budget_role_name"] = M19,
         };
 
         /// <summary>The uniqueness message id registered for <paramref name="constraintName"/>, or null.</summary>

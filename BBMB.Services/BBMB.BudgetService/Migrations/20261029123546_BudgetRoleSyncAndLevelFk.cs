@@ -81,6 +81,9 @@ namespace BBMB.BudgetService.Migrations
 
             // Data shaping under the named migration actor, so each UPDATE is stamped and audited (§11.1 rule 8):
             // office_level -> office_level_id by levels name (unmatched => NULL + WARNING), and sso_project_id.
+            // An active administrator role left without an active levels row aborts the migration unless
+            // bbmb_gate.role_level_unmapped_admin is set (development and tests only): it would lock Budget
+            // administration out.
             migrationBuilder.Sql(SqlResource.MigrationActor(MigrationName));
             migrationBuilder.Sql(SqlResource.Read("BudgetRoleSyncAndLevelFk_01_backfill.sql"));
 

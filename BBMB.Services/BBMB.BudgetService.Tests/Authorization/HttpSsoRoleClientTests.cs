@@ -50,7 +50,9 @@ public sealed class HttpSsoRoleClientTests
     [Theory]
     [InlineData("[{\"RoleId\":\"{A}\",\"RoleName\":\"DDO\",\"IsActive\":false}]", false)]           // PascalCase root array
     [InlineData("{\"data\":[{\"roleId\":\"{A}\",\"roleName\":\"DDO\",\"isActive\":false}]}", false)] // wrapped in data
-    [InlineData("{\"Data\":{\"roles\":[{\"id\":\"{A}\",\"name\":\"DDO\"}]}}", true)]              // nested, aliases, no isActive
+    [InlineData("{\"Data\":{\"roles\":[{\"id\":\"{A}\",\"name\":\"DDO\",\"active\":true}]}}", true)] // nested, aliases
+    [InlineData("[{\"roleId\":\"{A}\",\"roleName\":\"DDO\",\"isActive\":\"false\"}]", false)]      // string flag
+    [InlineData("[{\"roleId\":\"{A}\",\"roleName\":\"DDO\",\"isActive\":0}]", false)]            // numeric flag
     public void Parses_camel_and_Pascal_case_and_common_wrappers(string json, bool active)
     {
         var roles = HttpSsoRoleClient.Parse(JsonDocument.Parse(json.Replace("{A}", A.ToString())).RootElement);
@@ -64,6 +66,30 @@ public sealed class HttpSsoRoleClientTests
         HttpSsoRoleClient.Parse(JsonDocument.Parse($"[{{\"roleId\":\"x\",\"roleName\":\"DDO\"}},{{\"roleId\":\"{A}\"}}]").RootElement)
             .Should().BeEmpty();
         HttpSsoRoleClient.Parse(JsonDocument.Parse("{\"message\":\"ok\"}").RootElement).Should().BeNull();
+    }
+
+    // Fail closed (review finding 4): a missing or unreadable active flag is never read as active. The whole body is
+    // refused, so the sync reports SSO_SYNC_FAILED and changes nothing.
+    [Theory]
+    [InlineData("[{\"roleId\":\"{A}\",\"roleName\":\"DDO\"}]")]                          // flag missing
+    [InlineData("[{\"roleId\":\"{A}\",\"roleName\":\"DDO\",\"status\":\"Inactive\"}]")]     // another field
+    [InlineData("[{\"roleId\":\"{A}\",\"roleName\":\"DDO\",\"isActive\":\"Inactive\"}]")]   // unreadable string
+    [InlineData("[{\"roleId\":\"{A}\",\"roleName\":\"DDO\",\"isActive\":2}]")]             // unreadable number
+    [InlineData("[{\"roleId\":\"{A}\",\"roleName\":\"DDO\",\"isActive\":null}]")]          // null
+    public void A_missing_or_unreadable_active_flag_rejects_the_whole_body(string json)
+    {
+        HttpSsoRoleClient.Parse(JsonDocument.Parse(json.Replace("{A}", A.ToString())).RootElement).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task An_unrecognised_body_is_a_failure()
+    {
+        var (client, _) = Client(HttpStatusCode.OK, $"[{{\"roleId\":\"{A}\",\"roleName\":\"DDO\"}}]");
+
+        var r = await client.GetProjectRolesAsync(Guid.NewGuid(), "tok");
+
+        r.Roles.Should().BeNull();
+        r.Error.Should().Be("UNRECOGNISED_BODY");
     }
 
     [Fact]
