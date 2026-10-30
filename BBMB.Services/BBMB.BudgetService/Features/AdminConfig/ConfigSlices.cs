@@ -10,6 +10,7 @@ using BBMB.BudgetService.Shared.Services.BudgetActors;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BBMB.BudgetService.Features.AdminConfig
 {
@@ -230,17 +231,24 @@ namespace BBMB.BudgetService.Features.AdminConfig
     /// A response that would set <c>sso_is_active</c> false on the caller's own acting role, or on every role that
     /// currently administers Budget (an effective admin or a <c>Settings.Admin</c> holder in the snapshot), is
     /// refused with ROLE_SYNC_SELF_LOCKOUT and changes nothing: the narrower form of the same lockout.
+    /// While <see cref="BudgetRoleSyncOptions.Enabled"/> is off (the default, review R2-1) the sync is refused with
+    /// ROLE_SYNC_DISABLED before Auth SSO or the database is touched.
     /// </summary>
     public sealed class SyncRolesHandler(
         BudgetContext context, IBudgetActorSource actorSource, IBudgetActionScope scope, IBudgetConfigProvider config,
-        ISsoRoleClient ssoRoles, IHttpContextAccessor httpContextAccessor, ILogger<SyncRolesHandler> logger,
-        TimeProvider? clock = null)
+        ISsoRoleClient ssoRoles, IHttpContextAccessor httpContextAccessor, IOptions<BudgetRoleSyncOptions> syncOptions,
+        ILogger<SyncRolesHandler> logger, TimeProvider? clock = null)
         : IRequestHandler<SyncRolesCommand, Response<RoleSyncResultDto>>
     {
         public const string ActionCode = "CONFIG_ROLE_SYNC";
 
         public async Task<Response<RoleSyncResultDto>> Handle(SyncRolesCommand request, CancellationToken ct)
         {
+            if (!syncOptions.Value.Enabled)
+            {
+                logger.LogWarning("Budget role sync refused: {Section}:Enabled is off", BudgetRoleSyncOptions.Section);
+                return BudgetResponses.Fail<RoleSyncResultDto>(BudgetMessages.RoleSyncDisabled);
+            }
             var actor = await actorSource.GetAsync(ct);
             if (actor is null)
                 return BudgetResponses.Fail<RoleSyncResultDto>(BudgetMessages.M20);

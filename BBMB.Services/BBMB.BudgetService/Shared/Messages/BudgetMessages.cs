@@ -68,6 +68,8 @@ namespace BBMB.BudgetService.Shared.Messages
         public const string SsoSyncFailed = "SSO_SYNC_FAILED";
         /// <summary>The sync would deactivate the caller's acting role or the last administrator role (409). Interim id (OI-13).</summary>
         public const string RoleSyncSelfLockout = "ROLE_SYNC_SELF_LOCKOUT";
+        /// <summary>The role sync is switched off (BudgetRoleSync:Enabled, expand/contract window) (409). Interim id (OI-13).</summary>
+        public const string RoleSyncDisabled = "ROLE_SYNC_DISABLED";
 
         private static readonly IReadOnlyDictionary<string, string> Catalogue = new Dictionary<string, string>
         {
@@ -119,6 +121,7 @@ namespace BBMB.BudgetService.Shared.Messages
             [SsoProjectUnset] = "The Auth SSO project id of the Budget project is not set in the project settings.",
             [SsoSyncFailed] = "The roles could not be read from Auth SSO, or Auth SSO returned no roles. Nothing was changed.",
             [RoleSyncSelfLockout] = "Auth SSO did not return your own acting role, or any administrator role, as active. Synchronising would lock Budget administration out, so nothing was changed. Correct the roles in Auth SSO first.",
+            [RoleSyncDisabled] = "Role synchronisation with Auth SSO is switched off until every service instance using this database runs the current release. Nothing was changed.",
         };
 
         /// <summary>

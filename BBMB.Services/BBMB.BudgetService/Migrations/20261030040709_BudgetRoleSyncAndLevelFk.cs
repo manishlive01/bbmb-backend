@@ -25,6 +25,19 @@ namespace BBMB.BudgetService.Migrations
     /// EF ignores history rows of other contexts, so the order is by timestamp only.
     /// The existing row-level actor/audit triggers on <c>budget_role</c> audit the whole row, so the new columns are
     /// audited with no trigger change, and <c>budget.fn_config_version()</c> already covers the table.
+    /// <para>
+    /// OPEN ITEMS of the expand/contract window (review R2-1, R2-2):
+    /// <list type="number">
+    /// <item>The role sync stays off (<c>BudgetRoleSync:Enabled</c> false) while any instance of the previous release
+    /// serves the database: a synced role has <c>office_level</c> NULL, which the previous release cannot read.</item>
+    /// <item>The previous release writes only <c>office_level</c>, and the backfill above runs once. Freeze
+    /// role-config edits in the previous release, and run the read-only <see cref="BudgetRoleLevelDriftCheck"/>
+    /// before this release takes over and again immediately before the contract migration; resolve every row it
+    /// returns through roles/configure first.</item>
+    /// <item>CONTRACT step (not created): a later migration drops <c>office_level</c> and its CHECK, once the previous
+    /// release is no longer deployed and the drift check returns no row.</item>
+    /// </list>
+    /// </para>
     /// </summary>
     public partial class BudgetRoleSyncAndLevelFk : Migration
     {

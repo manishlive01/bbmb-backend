@@ -5,6 +5,19 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
     /// <summary>Counts returned by a role sync (the contract of <c>POST /api/budget-config/roles/sync</c>).</summary>
     public sealed record RoleSyncResultDto(int Created, int Updated, int Deactivated, int Unchanged);
 
+    /// <summary>
+    /// Runtime switch for <c>POST /api/budget-config/roles/sync</c> (configuration section <c>BudgetRoleSync</c>).
+    /// Off by default. During the expand/contract window of migration <c>BudgetRoleSyncAndLevelFk</c> the previous
+    /// release may still serve the same database and cannot read a role whose legacy <c>office_level</c> is NULL,
+    /// which is how the sync inserts a new role. Turn it on only when every instance serving the database runs this
+    /// release or later; while it is off the endpoint refuses with ROLE_SYNC_DISABLED and changes nothing.
+    /// </summary>
+    public sealed class BudgetRoleSyncOptions
+    {
+        public const string Section = "BudgetRoleSync";
+        public bool Enabled { get; set; }
+    }
+
     /// <summary>The planned change set of one sync: counts, rows to insert, and name clashes that were skipped.</summary>
     public sealed record RoleSyncPlan(RoleSyncResultDto Counts, IReadOnlyList<BudgetRole> NewRoles, IReadOnlyList<string> SkippedNames)
     {
@@ -40,8 +53,9 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
     /// </para>
     /// <para>
     /// A row inserted here has <c>office_level_id</c> and the legacy <c>office_level</c> string NULL. The previous
-    /// release reads that string as required; do not run a sync against a database the previous release still
-    /// serves (expand/contract window, open item in the migration report).
+    /// release reads that string as required, so one synced row would break its config snapshot for every user.
+    /// The sync endpoint is therefore OFF unless <see cref="BudgetRoleSyncOptions.Enabled"/> is set (review R2-1);
+    /// set it only once no instance of the previous release serves the database.
     /// </para>
     /// </summary>
     public static class BudgetRoleSync

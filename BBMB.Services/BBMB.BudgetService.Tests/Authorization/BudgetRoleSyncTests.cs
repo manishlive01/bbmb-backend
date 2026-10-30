@@ -11,6 +11,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 namespace BBMB.BudgetService.Tests.Authorization;
 /// <summary>
 /// The on-demand Auth SSO role sync (D3) through <see cref="SyncRolesHandler"/>, in memory. Only the SSO client
@@ -48,6 +49,7 @@ public sealed class BudgetRoleSyncTests : InMemoryTestBase
     private readonly FakeSsoRoleClient _sso = new();
     private readonly FakeBudgetActionScope _scope = new();
     private readonly CountingConfig _config = new();
+    private static readonly IOptions<BudgetRoleSyncOptions> Enabled = Options.Create(new BudgetRoleSyncOptions { Enabled = true });
 
     public BudgetRoleSyncTests()
     {
@@ -66,7 +68,7 @@ public sealed class BudgetRoleSyncTests : InMemoryTestBase
         var actor = new FakeBudgetActorSource(new BudgetActor(Guid.NewGuid(), Guid.NewGuid(), 1, "IT_CELL", "IT_CELL",
             "Admin", null, FakeBudgetActorSource.TestIp, Guid.NewGuid()));
         var handler = new SyncRolesHandler(Context, actor, _scope, _config, _sso,
-            new HttpContextAccessor { HttpContext = http }, NullLogger<SyncRolesHandler>.Instance);
+            new HttpContextAccessor { HttpContext = http }, Enabled, NullLogger<SyncRolesHandler>.Instance);
         return handler.Handle(new SyncRolesCommand(), default);
     }
 
@@ -178,6 +180,25 @@ public sealed class BudgetRoleSyncTests : InMemoryTestBase
         row.RoleName.Should().Be("ddo", "the SSO name is authoritative once adopted");
     }
 
+    // Review R2-1: the previous release cannot read a synced row (office_level NULL), so the sync is off by default.
+    [Fact]
+    public async Task Sync_is_refused_while_the_runtime_switch_is_off_and_touches_neither_SSO_nor_the_database()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers.Authorization = "Bearer " + Token;
+        _sso.Result = SsoRoleFetchResult.Ok([new SsoRole(DdoId, "DDO", true)]);
+        var handler = new SyncRolesHandler(Context, new FakeBudgetActorSource(new BudgetActor(Guid.NewGuid(), Guid.NewGuid(), 1,
+                "IT_CELL", "IT_CELL", "Admin", null, FakeBudgetActorSource.TestIp, Guid.NewGuid())),
+            _scope, _config, _sso, new HttpContextAccessor { HttpContext = http },
+            Options.Create(new BudgetRoleSyncOptions()), NullLogger<SyncRolesHandler>.Instance);
+        var r = await handler.Handle(new SyncRolesCommand(), default);
+        r.IsSucced.Should().BeFalse();
+        r.MessageId.Should().Be(BudgetMessages.RoleSyncDisabled);
+        _sso.SeenProject.Should().BeNull("Auth SSO is not called while the switch is off");
+        _scope.ActionCodes.Should().BeEmpty();
+        Context.BudgetRoles.Should().BeEmpty();
+        _config.Invalidations.Should().Be(0);
+    }
     [Fact]
     public async Task An_SSO_failure_or_an_empty_role_list_changes_nothing()
     {
@@ -188,7 +209,7 @@ public sealed class BudgetRoleSyncTests : InMemoryTestBase
         http.Request.Headers.Authorization = "Bearer " + Token;
         var handler = new SyncRolesHandler(Context, new FakeBudgetActorSource(new BudgetActor(Guid.NewGuid(), Guid.NewGuid(), 1,
                 "IT_CELL", "IT_CELL", "Admin", null, FakeBudgetActorSource.TestIp, Guid.NewGuid())),
-            _scope, _config, _sso, new HttpContextAccessor { HttpContext = http }, NullLogger<SyncRolesHandler>.Instance);
+            _scope, _config, _sso, new HttpContextAccessor { HttpContext = http }, Enabled, NullLogger<SyncRolesHandler>.Instance);
         (await handler.Handle(new SyncRolesCommand(), default)).MessageId.Should().Be(BudgetMessages.SsoSyncFailed);
 
         (await SyncAsync()).MessageId.Should().Be(BudgetMessages.SsoSyncFailed,

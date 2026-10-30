@@ -89,6 +89,9 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
     BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetConfigProvider>();
 builder.Services.AddScoped<BBMB.BudgetService.Authorization.RoleSource.IBudgetRoleSource,
     BBMB.BudgetService.Authorization.RoleSource.TokenClaimsRoleSource>();
+// Role sync runtime switch (review R2-1): off unless BudgetRoleSync:Enabled is true.
+builder.Services.Configure<BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetRoleSyncOptions>(
+    builder.Configuration.GetSection(BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.BudgetRoleSyncOptions.Section));
 // Auth SSO role catalogue for the on-demand role sync (D3): typed HttpClient, base address SSO:Authority.
 builder.Services.AddHttpClient<BBMB.BudgetService.Authorization.RoleSource.ISsoRoleClient,
     BBMB.BudgetService.Authorization.RoleSource.HttpSsoRoleClient>(client =>
