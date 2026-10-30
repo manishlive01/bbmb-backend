@@ -31,6 +31,18 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
     /// <c>ux_budget_role_name</c> unique index — so that SSO role is skipped, listed in
     /// <see cref="RoleSyncPlan.SkippedNames"/> and logged by the caller; it is not counted.
     /// </para>
+    /// <para>
+    /// Auth SSO migration <c>ProjectWiseRoleName</c> made a role name unique per project
+    /// (<c>auth."AspNetRoles"</c> index <c>RoleNameIndex</c> on (NormalizedName, ProjectMasterId) WHERE NOT IsDeleted),
+    /// so the same name may now exist in several projects. The sync reads ONE project
+    /// (<c>POST /api/roles/by-project</c> with the Budget project id), within which names stay unique, so the global
+    /// <c>ux_budget_role_name</c> index still holds. Roles are matched on the SSO role id first for the same reason.
+    /// </para>
+    /// <para>
+    /// A row inserted here has <c>office_level_id</c> and the legacy <c>office_level</c> string NULL. The previous
+    /// release reads that string as required; do not run a sync against a database the previous release still
+    /// serves (expand/contract window, open item in the migration report).
+    /// </para>
     /// </summary>
     public static class BudgetRoleSync
     {

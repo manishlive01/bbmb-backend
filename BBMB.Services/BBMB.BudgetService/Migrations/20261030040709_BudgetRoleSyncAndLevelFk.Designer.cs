@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BBMB.BudgetService.Migrations
 {
     [DbContext(typeof(BudgetContext))]
-    [Migration("20261029123546_BudgetRoleSyncAndLevelFk")]
+    [Migration("20261030040709_BudgetRoleSyncAndLevelFk")]
     partial class BudgetRoleSyncAndLevelFk
     {
         /// <inheritdoc />
@@ -1014,6 +1014,11 @@ namespace BBMB.BudgetService.Migrations
                     b.Property<DateTimeOffset?>("LastSyncedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_synced_at");
+
+                    b.Property<string>("LegacyOfficeLevel")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("office_level");
 
                     b.Property<int?>("OfficeLevelId")
                         .HasColumnType("integer")

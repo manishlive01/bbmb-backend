@@ -31,12 +31,34 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities
         public string RoleName { get; set; } = string.Empty;
         /// <summary>
         /// FK to the <c>levels</c> master (ON DELETE RESTRICT). NULL = unconfigured, so the role is denied. The
-        /// level's name is mapped to a Budget office level code by <see cref="BudgetRoleLevel"/> only.
+        /// level's name is mapped to a Budget office level code by <see cref="BudgetRoleLevel"/> only. Set it through
+        /// <see cref="SetOfficeLevel"/> so the legacy string stays in sync.
         /// </summary>
         [Column("office_level_id")]
         public int? OfficeLevelId { get; set; }
         [ForeignKey(nameof(OfficeLevelId))]
         public Levels? OfficeLevel { get; set; }
+
+        /// <summary>
+        /// Legacy <c>office_level</c> code string (expand/contract, D2). <see cref="OfficeLevelId"/> is the source of
+        /// truth; this column is kept, nullable, only because the previous release still reads it from the same
+        /// database. Every write that sets <see cref="OfficeLevelId"/> also writes the mapped code here
+        /// (<see cref="BudgetRoleLevel.ToOfficeLevelCode"/>). Nothing reads it. It is dropped by a later migration
+        /// once the previous release is no longer deployed.
+        /// </summary>
+        [Obsolete("Legacy dual-write column for the previous release. Read OfficeLevelId; write only through SetOfficeLevel.")]
+        [Column("office_level")]
+        [MaxLength(12)]
+        public string? LegacyOfficeLevel { get; set; }
+
+        /// <summary>Sets the office level FK and dual-writes the legacy code string for the previous release.</summary>
+        public void SetOfficeLevel(int levelId, string officeLevelCode)
+        {
+            OfficeLevelId = levelId;
+#pragma warning disable CS0618 // the one sanctioned writer of the legacy column
+            LegacyOfficeLevel = officeLevelCode;
+#pragma warning restore CS0618
+        }
         /// <summary>The Auth SSO role id. NULL only for a legacy seeded row not yet matched by a sync.</summary>
         [Column("sso_role_id")]
         public Guid? SsoRoleId { get; set; }

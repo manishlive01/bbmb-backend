@@ -1012,6 +1012,11 @@ namespace BBMB.BudgetService.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_synced_at");
 
+                    b.Property<string>("LegacyOfficeLevel")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("office_level");
+
                     b.Property<int?>("OfficeLevelId")
                         .HasColumnType("integer")
                         .HasColumnName("office_level_id");

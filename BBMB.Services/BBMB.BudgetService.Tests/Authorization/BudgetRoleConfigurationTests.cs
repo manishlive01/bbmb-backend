@@ -163,7 +163,8 @@ public sealed class BudgetRoleConfigurationTests : InMemoryTestBase
         s.RoleOfficeLevels.Should().ContainKey("AFA_BUDGET").WhoseValue.Should().Be(OfficeLevel.Finance,
             "' finance ' matches FINANCE trimmed and case-insensitively");
         s.RoleOfficeLevels.Should().NotContainKey("ON_SUB_DIVISION", "a level that is not a Budget office level is unconfigured");
-        s.RoleOfficeLevels.Should().NotContainKey("ON_RETIRED_LEVEL", "an inactive level is unconfigured");
+        s.RoleOfficeLevels.Should().ContainKey("ON_RETIRED_LEVEL").WhoseValue.Should().Be(OfficeLevel.Circle,
+            "levels.status belongs to the hierarchy master and is ignored by Budget authorisation");
         var office = await new BudgetOfficeScope(Context, Monitor(s)).ResolveActorOfficeAsync(new UserChargeContext(), "AFA_BUDGET");
         office.Should().Be(new ActorOffice(500, OfficeLevel.Finance));
     }
@@ -255,7 +256,6 @@ public sealed class BudgetRoleConfigurationTests : InMemoryTestBase
 
     [Theory]
     [InlineData(999, "Budget.View", "category", BudgetMessages.ConfigInvalid)]         // unknown level
-    [InlineData(10, "Budget.View", "category", BudgetMessages.ConfigInvalid)]          // inactive level
     [InlineData(9, "Budget.View", "category", BudgetMessages.ConfigLevelNotBudget)]    // not a Budget office level
     [InlineData(1, "No.Such.Right", "category", BudgetMessages.ConfigInvalid)]         // unknown right
     [InlineData(1, "Budget.View", "noSuchField", BudgetMessages.ConfigInvalid)]        // unknown field
@@ -292,6 +292,94 @@ public sealed class BudgetRoleConfigurationTests : InMemoryTestBase
             .MessageId.Should().Be(BudgetMessages.ConfigSelfLockout);
         (await ConfigureAsync(itCell.Id, DivisionLevel, ["Budget.View", "Settings.Admin"], [], actingRole: "IT_CELL"))
             .IsSucced.Should().BeTrue();
+    }
+
+    // ---------------- levels.status ignored, legacy office_level kept in sync (D2, D3) ----------------
+
+    [Fact]
+    public async Task Live_like_levels_all_with_status_false_configure_every_role()
+    {
+        // The live master: CE, CR, Div plus the three rows the migration inserts, every one status = false.
+        Context.Levels.AddRange(
+            new Levels { Id = 21, Name = "CE", Status = false },
+            new Levels { Id = 22, Name = "CR", Status = false },
+            new Levels { Id = 23, Name = "Div", Status = false },
+            new Levels { Id = 24, Name = "FINANCE", Status = false },
+            new Levels { Id = 25, Name = "SECRETARIAT", Status = false },
+            new Levels { Id = 26, Name = "IT_CELL", Status = false });
+        await Context.SaveChangesAsync();
+        AddRole("CE", 21, rights: "Budget.View");
+        AddRole("SE", 22, rights: "Budget.View");
+        AddRole("DDO", 23, rights: "Budget.View");
+        AddRole("ProjectAdmin", 24, rights: "Settings.Admin");
+        AddRole("SECRETARY", 25, rights: "Budget.View");
+        AddRole("IT_CELL", 26, rights: "Settings.Admin");
+
+        var s = await SnapshotAsync();
+
+        s.RoleOfficeLevels.Should().BeEquivalentTo(new Dictionary<string, string>
+        {
+            ["CE"] = OfficeLevel.Ce, ["SE"] = OfficeLevel.Circle, ["DDO"] = OfficeLevel.Division,
+            ["ProjectAdmin"] = OfficeLevel.Finance, ["SECRETARY"] = OfficeLevel.Secretariat, ["IT_CELL"] = OfficeLevel.ItCell,
+        });
+        s.Rights["Settings.Admin"].Should().BeEquivalentTo("ProjectAdmin", "IT_CELL");
+    }
+
+#pragma warning disable CS0618 // asserting the legacy dual-write column
+    [Fact]
+    public async Task Configure_accepts_a_status_false_level_and_writes_the_mapped_legacy_office_level()
+    {
+        var role = AddRole("SE", levelId: null);
+
+        var r = await ConfigureAsync(role.Id, RetiredLevel, ["Budget.View"], []);
+
+        r.IsSucced.Should().BeTrue(r.Message);
+        r.Data!.IsConfigured.Should().BeTrue();
+        var saved = Context.BudgetRoles.AsNoTracking().Single();
+        saved.OfficeLevelId.Should().Be(RetiredLevel);
+        saved.LegacyOfficeLevel.Should().Be(OfficeLevel.Circle);
+
+        (await ConfigureAsync(role.Id, DivisionLevel, ["Budget.View"], [])).IsSucced.Should().BeTrue();
+        Context.BudgetRoles.AsNoTracking().Single().LegacyOfficeLevel.Should().Be(OfficeLevel.Division,
+            "the level name 'Division' is written as the code the previous release reads");
+    }
+
+    [Fact]
+    public async Task A_refused_configure_leaves_the_legacy_office_level_unchanged()
+    {
+        var role = AddRole("SE", DivisionLevel, rights: "Budget.View");
+        role.LegacyOfficeLevel = OfficeLevel.Division;
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
+
+        (await ConfigureAsync(role.Id, SubDivisionLevel, ["Budget.View"], [])).MessageId.Should().Be(BudgetMessages.ConfigLevelNotBudget);
+
+        var saved = Context.BudgetRoles.AsNoTracking().Single();
+        saved.OfficeLevelId.Should().Be(DivisionLevel);
+        saved.LegacyOfficeLevel.Should().Be(OfficeLevel.Division);
+    }
+
+    [Fact]
+    public async Task Legacy_upsert_by_code_maps_to_a_status_false_level_and_dual_writes()
+    {
+        var handler = new UpsertRoleHandler(Context, Actor("IT_CELL"), _scope, new FixedConfig(BudgetConfigSnapshot.Empty));
+
+        var r = await handler.Handle(new UpsertRoleCommand(new UpsertRoleDto("NEW_SE", OfficeLevel.Circle, false, true)), default);
+
+        r.IsSucced.Should().BeTrue(r.Message);
+        var saved = Context.BudgetRoles.AsNoTracking().Single(x => x.RoleName == "NEW_SE");
+        saved.OfficeLevelId.Should().Be(RetiredLevel);
+        saved.LegacyOfficeLevel.Should().Be(OfficeLevel.Circle);
+    }
+#pragma warning restore CS0618
+
+    [Fact]
+    public async Task Levels_list_offers_every_Budget_level_whatever_its_status_and_hides_other_levels()
+    {
+        var r = await new ListLevelsHandler(Context, Actor("IT_CELL")).Handle(new ListLevelsQuery(), default);
+
+        r.Data!.Select(l => l.LevelId).Should().BeEquivalentTo(new[] { DivisionLevel, FinanceLevel, RetiredLevel },
+            "'Sub Division' is not a Budget office level; the status = false CIRCLE row is offered");
     }
 
     [Fact]

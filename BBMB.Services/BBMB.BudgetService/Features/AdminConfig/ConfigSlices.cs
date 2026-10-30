@@ -140,7 +140,6 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 {
                     r.Id, r.SsoRoleId, r.RoleName, r.IsActive, r.SsoIsActive, r.IsAdmin, r.OfficeLevelId, r.LastSyncedAt,
                     LevelName = r.OfficeLevel != null ? r.OfficeLevel.Name : null,
-                    LevelActive = r.OfficeLevel != null && r.OfficeLevel.Status,
                 })
                 .OrderBy(r => r.RoleName)
                 .ToListAsync(ct);
@@ -160,7 +159,7 @@ namespace BBMB.BudgetService.Features.AdminConfig
             return roles.Select(r =>
             {
                 var keys = rightsByRole[r.Id].OrderBy(k => k, StringComparer.Ordinal).ToList();
-                var code = BudgetRoleLevel.ToOfficeLevelCode(r.LevelName, r.LevelActive);
+                var code = BudgetRoleLevel.ToOfficeLevelCode(r.LevelName);
                 return new BudgetRoleConfigDto(
                     r.Id, r.SsoRoleId, r.RoleName, r.IsActive, r.SsoIsActive, r.IsAdmin, r.OfficeLevelId, r.LevelName,
                     BudgetRoleLevel.IsAuthorisable(r.IsActive, r.SsoIsActive, code, keys.Count > 0),
@@ -198,10 +197,11 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 return BudgetResponses.Fail(BudgetMessages.M20);
             var dto = request.Dto;
 
-            var levels = await context.Levels.AsNoTracking().Where(l => l.Status).OrderBy(l => l.Id)
+            // levels.status is not a Budget criterion (BudgetRoleLevel); the lowest id wins among aliases.
+            var levels = await context.Levels.AsNoTracking().OrderBy(l => l.Id)
                 .Select(l => new { l.Id, l.Name }).ToListAsync(ct);
             var level = levels.FirstOrDefault(l =>
-                string.Equals(BudgetRoleLevel.ToOfficeLevelCode(l.Name, true), dto.OfficeLevel, StringComparison.Ordinal));
+                string.Equals(BudgetRoleLevel.ToOfficeLevelCode(l.Name), dto.OfficeLevel, StringComparison.Ordinal));
             if (level is null)
                 return BudgetResponses.Fail(BudgetMessages.ConfigLevelNotBudget);
 
@@ -212,7 +212,7 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 row = new BudgetRole { RoleName = dto.RoleName.Trim() };
                 context.BudgetRoles.Add(row);
             }
-            row.OfficeLevelId = level.Id;
+            row.SetOfficeLevel(level.Id, dto.OfficeLevel);
             row.IsAdmin = dto.IsAdmin;
             row.IsActive = dto.IsActive;
             await context.SaveChangesAsync(ct);
@@ -337,10 +337,11 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 return BudgetResponses.Fail<BudgetRoleConfigDto>(BudgetMessages.RoleInactive);
 
             var level = await context.Levels.AsNoTracking()
-                .Where(l => l.Id == dto.OfficeLevelId && l.Status).Select(l => new { l.Id, l.Name }).FirstOrDefaultAsync(ct);
+                .Where(l => l.Id == dto.OfficeLevelId).Select(l => new { l.Id, l.Name }).FirstOrDefaultAsync(ct);
             if (level is null)
                 return BudgetResponses.Fail<BudgetRoleConfigDto>(BudgetMessages.ConfigInvalid);
-            if (BudgetRoleLevel.ToOfficeLevelCode(level.Name, true) is null)
+            var levelCode = BudgetRoleLevel.ToOfficeLevelCode(level.Name);
+            if (levelCode is null)
                 return BudgetResponses.Fail<BudgetRoleConfigDto>(BudgetMessages.ConfigLevelNotBudget);
 
             var rights = await context.BudgetRights.AsNoTracking()
@@ -360,7 +361,8 @@ namespace BBMB.BudgetService.Features.AdminConfig
 
             await using (var tx = await scope.BeginAsync(ActionCode, ct: ct))
             {
-                role.OfficeLevelId = level.Id;
+                // FK is the source of truth; the legacy office_level string is dual-written for the previous release.
+                role.SetOfficeLevel(level.Id, levelCode);
 
                 var wantedRightIds = rights.ToHashSet();
                 var roleRights = await context.BudgetRoleRights.Where(x => x.RoleId == role.Id).ToListAsync(ct);
@@ -401,8 +403,10 @@ namespace BBMB.BudgetService.Features.AdminConfig
         {
             if (await actorSource.GetAsync(ct) is null)
                 return BudgetResponses.Fail<IReadOnlyList<LevelOptionDto>>(BudgetMessages.M20);
-            var rows = await context.Levels.AsNoTracking().Where(l => l.Status).OrderBy(l => l.Name)
+            // Only levels a role can be configured on (a Budget office level alias); levels.status is not a filter.
+            var all = await context.Levels.AsNoTracking().OrderBy(l => l.Name)
                 .Select(l => new LevelOptionDto(l.Id, l.Name)).ToListAsync(ct);
+            var rows = all.Where(l => BudgetRoleLevel.ToOfficeLevelCode(l.Name) is not null).ToList();
             return new Response<IReadOnlyList<LevelOptionDto>> { IsSucced = true, Message = "Levels", Data = rows };
         }
     }

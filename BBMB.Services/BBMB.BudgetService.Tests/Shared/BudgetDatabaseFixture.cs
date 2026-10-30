@@ -30,7 +30,9 @@ public sealed class BudgetDatabaseFixture : IAsyncLifetime
         "p1_ddd_deviations",
         "work_code_reset",
         "p5_ddd_deviations",
-        // budget.levels is empty in a fresh database, so the seeded admin roles cannot be mapped to a level.
+        // Tolerates an administrator role without a levels row. A fresh database no longer needs it (the
+        // migration inserts FINANCE and IT_CELL, which the seeded admin roles use); kept so a test that seeds an
+        // unmapped admin role can still migrate. BudgetRoleSyncAndLevelFkTests runs the guard without it.
         "role_level_unmapped_admin",
     ];
 

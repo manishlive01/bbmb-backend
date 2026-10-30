@@ -67,8 +67,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
                     r.Id,
                     r.RoleName,
                     r.IsAdmin,
+                    // levels.status is not read: it belongs to the hierarchy master (BudgetRoleLevel).
                     LevelName = r.OfficeLevel != null ? r.OfficeLevel.Name : null,
-                    LevelActive = r.OfficeLevel != null && r.OfficeLevel.Status,
                 })
                 .ToListAsync(ct);
             var rights = await context.BudgetRights.AsNoTracking().Where(r => r.IsActive).ToListAsync(ct);
@@ -92,7 +92,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
                     r.Id,
                     r.RoleName,
                     r.IsAdmin,
-                    Level = BudgetRoleLevel.ToOfficeLevelCode(r.LevelName, r.LevelActive),
+                    Level = BudgetRoleLevel.ToOfficeLevelCode(r.LevelName),
                 })
                 .Where(r => BudgetRoleLevel.IsAuthorisable(isActive: true, ssoIsActive: true, r.Level, rolesWithRight.Contains(r.Id)))
                 .ToList();

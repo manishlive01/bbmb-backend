@@ -25,12 +25,13 @@ public sealed class MigrationActorTests(BudgetDatabaseFixture fixture)
         // P4-01 copies work_code -> work_code_prev and resets work_code, under its own migration actor; only
         // `work` carries the audit trigger (estimate is legacy, outside T-01..T-51, DV-19).
         ("BudgetP4WorkCodeConformance", ["work"]),
-        // The authz-config seed (all seven tables) and the role-sync backfill. On a fresh database budget.levels is
-        // empty, so no budget_role row maps to a level and only the settings row's sso_project_id is written.
+        // The authz-config seed (all seven tables) and the role-sync backfill. On a fresh database budget.levels holds
+        // only the FINANCE, SECRETARIAT and IT_CELL rows the migration inserts (levels has no audit trigger), so the
+        // roles on those levels are backfilled and the settings row's sso_project_id is written.
         ("BudgetAuthzConfigTables",
             ["budget_project_settings", "budget_role", "budget_right", "budget_query_field", "budget_role_right",
              "budget_role_query_field", "budget_admin_role_assignment"]),
-        ("BudgetRoleSyncAndLevelFk", ["budget_project_settings"]),
+        ("BudgetRoleSyncAndLevelFk", ["budget_project_settings", "budget_role"]),
     ];
 
     private static async Task<string?> ScalarAsync(string cs, string sql)
