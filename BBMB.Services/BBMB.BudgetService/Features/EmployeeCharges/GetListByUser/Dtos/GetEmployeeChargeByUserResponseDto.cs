@@ -7,7 +7,7 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser.Dtos
 
         public string ProjectCode { get; set; }
         public string ProjDesc { get; set; } = null!;
-
+        public Guid ChargeId { get; set; }
         public int? CEId { get; set; }
         public int? CECode { get; set; }
         public string? CEName { get; set; } = null!;

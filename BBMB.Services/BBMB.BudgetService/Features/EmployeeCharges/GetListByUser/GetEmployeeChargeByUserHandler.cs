@@ -109,7 +109,7 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser
                             ? divs[ec.DivisionId.Value].DivisionDesc
                             : "",
 
-
+                ChargeId=ec.Id,
                 IsChargeExpire = ec.IsChargeExpire
             }).ToList();
 

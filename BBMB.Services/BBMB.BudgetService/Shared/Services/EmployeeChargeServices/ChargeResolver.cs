@@ -68,19 +68,9 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
         }
 
         /// <summary>
-        /// Requirement 5 / design §5. Every current charge of the employee in the Budget project, then those
-        /// that resolve to a <c>budget.office</c> of the acting role's office level:
-        /// <list type="bullet">
-        /// <item>project code comes from the active <c>budget_project_settings</c> row (never <c>IConfiguration</c>,
-        /// never the hard-coded "1"); an empty project code or no acting role fails closed (None);</item>
-        /// <item>ALL employee rows for the token's user_id are considered — the DB has duplicate rows per user,
-        /// so a single <c>FirstOrDefault</c> silently drops charges (the former bug);</item>
-        /// <item>candidates are filtered by the acting role's office level (a DDO charge must resolve to a
-        /// DIVISION office, etc.), so "one candidate ⇒ use it" is meaningful across levels;</item>
-        /// <item>exactly one ⇒ it; several ⇒ the one named by <c>X-Budget-Charge</c>, else Ambiguous with the
-        /// ids; a header naming a charge outside the filtered set ⇒ treated as missing (Ambiguous), never
-        /// honoured; zero after filtering ⇒ None (fails closed).</item>
-        /// </list>
+        /// Resolves the single active Budget charge named by <c>X-Charge-Id</c>. The query scopes the ID
+        /// to the authenticated user, active Budget project, and expiry state, then validates the acting
+        /// role's office scope. Missing or invalid selections fail closed.
         /// </summary>
         public async Task<BudgetChargeResult> GetCurrentBudgetChargeAsync(CancellationToken ct)
         {
@@ -100,26 +90,21 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
             if (!Guid.TryParse(JwtClaimHelper.GetUserId(httpContext.User), out var userId))
                 return BudgetChargeResult.None;
 
-            // ALL employee rows for this user (duplicate rows per user exist); IN (ids) over every one of them.
-            var employeeIds = await _context.Employees
-                .AsNoTracking()
-                .Where(x => x.UserId == userId)
-                .Select(x => x.Id)
-                .ToListAsync(ct);
-            if (employeeIds.Count == 0)
+            var header = httpContext.Request.Headers[BudgetChargeResult.HeaderName].ToString();
+            if (!Guid.TryParse(header, out var selectedChargeId))
                 return BudgetChargeResult.None;
 
             var now = DateTime.UtcNow;
-            var charges = await _context.EmployeeCharges
+            var selectedCharge = await _context.EmployeeCharges
                 .AsNoTracking()
                 .Where(x =>
-                    employeeIds.Contains(x.EmployeeId) &&
+                    x.Id == selectedChargeId &&
+                    _context.Employees.Any(employee =>
+                        employee.Id == x.EmployeeId && employee.UserId == userId) &&
                     x.ProjectCode == projectCode &&
                     x.IsActive &&
                     !x.IsChargeExpire &&
                     (x.ChargeExpireTime == null || x.ChargeExpireTime > now))
-                .OrderBy(x => x.ChargeTime)
-                .ThenBy(x => x.Id)
                 .Select(x => new UserChargeContext
                 {
                     UserId = userId,
@@ -130,38 +115,15 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
                     CRId = x.CRId,
                     DivisionId = x.DivisionId
                 })
-                .ToListAsync(ct);
+                .FirstOrDefaultAsync(ct);
 
-            // Keep only charges that resolve to an office of the acting role's level (design §5 change 2).
-            var candidates = new List<UserChargeContext>(charges.Count);
-            foreach (var c in charges)
+            if (selectedCharge is null ||
+                await _officeScope.ResolveActorOfficeAsync(selectedCharge, actingRole, ct) is null)
             {
-                if (await _officeScope.ResolveActorOfficeAsync(c, actingRole, ct) is not null)
-                    candidates.Add(c);
+                return BudgetChargeResult.None;
             }
 
-            var header = httpContext.Request.Headers[BudgetChargeResult.HeaderName].ToString();
-            if (!string.IsNullOrWhiteSpace(header))
-            {
-                // A named charge must be one of the filtered candidate charges, else treated as missing.
-                if (!Guid.TryParse(header, out var named))
-                    return Missing(candidates);
-                var chosen = candidates.FirstOrDefault(c => c.ChargeId == named);
-                return chosen is null ? Missing(candidates) : BudgetChargeResult.Single(chosen);
-            }
-
-            return candidates.Count switch
-            {
-                0 => BudgetChargeResult.None,
-                1 => BudgetChargeResult.Single(candidates[0]),
-                _ => BudgetChargeResult.Ambiguous(candidates.Select(c => c.ChargeId).ToList()),
-            };
+            return BudgetChargeResult.Single(selectedCharge);
         }
-
-        /// <summary>An unresolved selection: Ambiguous with the selectable ids when any remain, else None.</summary>
-        private static BudgetChargeResult Missing(IReadOnlyList<UserChargeContext> candidates) =>
-            candidates.Count == 0
-                ? BudgetChargeResult.None
-                : BudgetChargeResult.Ambiguous(candidates.Select(c => c.ChargeId).ToList());
     }
 }

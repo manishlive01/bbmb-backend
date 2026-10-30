@@ -7,8 +7,7 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
         Task<UserChargeContext?> GetCurrentChargeAsync(CancellationToken ct);
 
         /// <summary>
-        /// The one current charge in the Budget project (design §4.3, D-12): never picks one of several;
-        /// <c>X-Budget-Charge</c> selects when more than one remains.
+        /// Resolves the active Budget charge named by <c>X-Charge-Id</c> for the authenticated user.
         /// </summary>
         Task<BudgetChargeResult> GetCurrentBudgetChargeAsync(CancellationToken ct);
     }

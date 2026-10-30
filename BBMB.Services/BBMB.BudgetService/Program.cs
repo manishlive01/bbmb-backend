@@ -286,6 +286,26 @@ builder.Services.AddOpenApi(options =>
                 }
             }
         ];
+
+        // Expose the selected employee charge as an optional header input in Swagger UI.
+        foreach (var operation in document.Paths.Values.SelectMany(path => path.Operations.Values))
+        {
+            operation.Parameters ??= [];
+            if (!operation.Parameters.Any(parameter =>
+                    parameter.Name.Equals("X-Charge-Id", StringComparison.OrdinalIgnoreCase) &&
+                    parameter.In == ParameterLocation.Header))
+            {
+                operation.Parameters.Add(new OpenApiParameter
+                {
+                    Name = "X-Charge-Id",
+                    In = ParameterLocation.Header,
+                    Required = false,
+                    Description = "Active employee charge ID to use for this request.",
+                    Schema = new OpenApiSchema { Type = JsonSchemaType.String }
+                });
+            }
+        }
+
         document.SetReferenceHostDocument();
         // Environment-specific API base path
         var basePath = builder.Environment.IsDevelopment()
