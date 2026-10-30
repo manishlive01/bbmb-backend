@@ -162,6 +162,21 @@ public sealed class AttachmentServicesTests
     }
 
     [Fact]
+    public async Task ScanEnabled_false_resolves_the_disabled_scanner_which_records_DISABLED()
+    {
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Attachments:ScanEnabled"] = "false", ["Attachments:ClamAv:Host"] = "clamd.local",
+        }).Build();
+        var services = new ServiceCollection().AddLogging();
+        services.AddAttachmentScanner(config, new FakeHostEnvironment(Environments.Production));
+        var scanner = services.BuildServiceProvider().GetRequiredService<IAttachmentScanner>();
+        scanner.Should().BeOfType<DisabledAttachmentScanner>();
+        var r = await scanner.ScanAsync(new MemoryStream(PdfBytes), CancellationToken.None);
+        r.Verdict.Should().Be(ScanVerdict.Clean);
+        r.Engine.Should().Be("DISABLED");
+    }
+    [Fact]
     public void Configured_host_resolves_the_ClamAv_scanner_in_any_environment()
     {
         Resolve(Environments.Production, "clamd.local").Should().BeOfType<ClamAvScanner>();

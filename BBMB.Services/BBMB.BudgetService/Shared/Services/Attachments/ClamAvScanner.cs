@@ -96,18 +96,39 @@ namespace BBMB.BudgetService.Shared.Services.Attachments
             Task.FromResult(new ScanResult(ScanVerdict.Unavailable, "none", "no scanner configured"));
     }
 
+    /// <summary>
+    /// <c>Attachments:ScanEnabled = false</c>: records <c>scan_engine = 'DISABLED'</c> and scans nothing, so every
+    /// unscanned file stays identifiable. TEMPORARY until a ClamAV server is available; BUD-018 requires re-enabling.
+    /// </summary>
+    public sealed class DisabledAttachmentScanner : IAttachmentScanner
+    {
+        public const string Engine = "DISABLED";
+        public Task<ScanResult> ScanAsync(Stream content, CancellationToken ct) =>
+            Task.FromResult(new ScanResult(ScanVerdict.Clean, Engine, "scan disabled by config"));
+    }
+
     public static class AttachmentScannerRegistration
     {
+        public const string ScanEnabledKey = "Attachments:ScanEnabled";
+
+        /// <summary>False only when <c>Attachments:ScanEnabled</c> is explicitly false; missing means enabled.</summary>
+        public static bool IsScanEnabled(IConfiguration configuration) =>
+            configuration.GetValue(ScanEnabledKey, true);
+
         /// <summary>
         /// ClamAV when <c>Attachments:ClamAv:Host</c> is set; else, in Development only, the no-scan scanner;
-        /// else a scanner that refuses every upload (design §4.8, OI-12).
+        /// else a scanner that refuses every upload (design §4.8, OI-12). <c>Attachments:ScanEnabled = false</c>
+        /// overrides all of these with <see cref="DisabledAttachmentScanner"/>.
         /// </summary>
         public static IServiceCollection AddAttachmentScanner(this IServiceCollection services, IConfiguration configuration,
             IHostEnvironment environment)
         {
             services.Configure<ClamAvOptions>(configuration.GetSection(ClamAvOptions.Section));
             var host = configuration[$"{ClamAvOptions.Section}:Host"];
-            if (!string.IsNullOrWhiteSpace(host))
+            // TEMPORARY: scanning disabled until a ClamAV server is available; BUD-018 requires it re-enabled.
+            if (!IsScanEnabled(configuration))
+                services.AddSingleton<IAttachmentScanner, DisabledAttachmentScanner>();
+            else if (!string.IsNullOrWhiteSpace(host))
                 services.AddSingleton<IAttachmentScanner, ClamAvScanner>();
             else if (environment.IsDevelopment())
                 services.AddSingleton<IAttachmentScanner, NoScanDevScanner>();

@@ -320,6 +320,9 @@ ExcelPackage.License.SetNonCommercialOrganization("BBMB");
 // BUILD APP
 // ===================================================================
 var app = builder.Build();
+// TEMPORARY: malware scanning disabled until a ClamAV server is available; BUD-018 requires it re-enabled.
+if (!BBMB.BudgetService.Shared.Services.Attachments.AttachmentScannerRegistration.IsScanEnabled(app.Configuration))
+    app.Logger.LogWarning("Attachment malware scanning is DISABLED (Attachments:ScanEnabled=false); uploads are stored unscanned with scan_engine 'DISABLED'. BUD-018 requires re-enabling.");
 
 // ===================================================================
 // AUTO REDIRECT TO SWAGGER
