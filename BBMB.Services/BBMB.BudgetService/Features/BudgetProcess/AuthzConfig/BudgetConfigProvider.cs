@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
     /// DB-backed <see cref="IBudgetConfigProvider"/> (design §2). On read, if the cache is fresh it is served;
     /// otherwise a cheap version stamp (<c>budget.fn_config_version()</c>) is read first — unchanged ⇒ the TTL
     /// window is extended without a rebuild; changed (or nothing cached) ⇒ the snapshot is rebuilt from the
-    /// seven tables (plus the <c>levels</c> master each role's office level references) and stored. Fails closed: no active settings row ⇒ <see cref="BudgetConfigSnapshot.Empty"/>
+    /// seven tables (a role's office level type is its stored <c>budget_role.office_level</c> code) and stored. Fails closed: no active settings row ⇒ <see cref="BudgetConfigSnapshot.Empty"/>
     /// (logged once per load); a DB error bubbles to the global handler, no stale snapshot is served past TTL.
     /// </summary>
     public sealed class BudgetConfigProvider(
@@ -58,8 +58,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
                 return BudgetConfigSnapshot.Empty;
             }
 
-            // Active and SSO-active roles with their levels master row. The level's name is mapped to the Budget
-            // office level code in BudgetRoleLevel only (the single resolution point, D1).
+            // Active and SSO-active roles with their stored office level code (budget_role.office_level).
             var candidates = await context.BudgetRoles.AsNoTracking()
                 .Where(r => r.IsActive && r.SsoIsActive)
                 .Select(r => new
@@ -67,8 +66,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
                     r.Id,
                     r.RoleName,
                     r.IsAdmin,
-                    // levels.status is not read: it belongs to the hierarchy master (BudgetRoleLevel).
-                    LevelName = r.OfficeLevel != null ? r.OfficeLevel.Name : null,
+                    // The office level type is budget_role.office_level; the levels master is not read here.
+                    r.OfficeLevelCode,
                 })
                 .ToListAsync(ct);
             var rights = await context.BudgetRights.AsNoTracking().Where(r => r.IsActive).ToListAsync(ct);
@@ -83,7 +82,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
             var fieldById = queryFields.ToDictionary(q => q.Id);
             var rolesWithRight = roleRights.Where(rr => rightById.ContainsKey(rr.RightId)).Select(rr => rr.RoleId).ToHashSet();
 
-            // D2: only a configured role (its level resolves to a Budget office level and it holds at least one
+            // D2: only a configured role (a valid office level code and at least one
             // active right) enters the snapshot. An unconfigured role therefore gets no right, no office, no query
             // field, no admin status and no acting-role candidacy.
             var roles = candidates
@@ -92,13 +91,13 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig
                     r.Id,
                     r.RoleName,
                     r.IsAdmin,
-                    Level = BudgetRoleLevel.ToOfficeLevelCode(r.LevelName),
+                    Level = BudgetRoleLevel.ToOfficeLevelCode(r.OfficeLevelCode),
                 })
                 .Where(r => BudgetRoleLevel.IsAuthorisable(isActive: true, ssoIsActive: true, r.Level, rolesWithRight.Contains(r.Id)))
                 .ToList();
             if (roles.Count < candidates.Count)
                 logger.LogInformation(
-                    "{Count} active Budget role(s) are unconfigured and denied (no Budget office level or no active right).",
+                    "{Count} active Budget role(s) are unconfigured and denied (no valid office level code or no active right).",
                     candidates.Count - roles.Count);
 
             var roleById = roles.ToDictionary(r => r.Id);

@@ -15,7 +15,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities
     /// <see cref="IsActive"/> and the role's rights and query fields (<c>roles/configure</c>).</item>
     /// </list>
     /// A role is authorised only when it is configured (see <see cref="BudgetRoleLevel.IsAuthorisable"/>): active,
-    /// SSO-active, with an office level that resolves to a Budget office level and at least one active right.
+    /// SSO-active, with a valid office level code (<see cref="OfficeLevelCode"/>) and at least one active right.
     /// </para>
     /// <see cref="IsAdmin"/> marks a role eligible to be a Budget administrator; it is only an <i>effective</i>
     /// admin once it has an APPROVED, document-backed <see cref="BudgetAdminRoleAssignment"/> (requirement 4).
@@ -30,9 +30,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities
         [MaxLength(200)]
         public string RoleName { get; set; } = string.Empty;
         /// <summary>
-        /// FK to the <c>levels</c> master (ON DELETE RESTRICT). NULL = unconfigured, so the role is denied. The
-        /// level's name is mapped to a Budget office level code by <see cref="BudgetRoleLevel"/> only. Set it through
-        /// <see cref="SetOfficeLevel"/> so the legacy string stays in sync.
+        /// FK to the <c>levels</c> master (ON DELETE RESTRICT), for display and reference only. Authorisation does
+        /// not read it and the level's name is never interpreted.
         /// </summary>
         [Column("office_level_id")]
         public int? OfficeLevelId { get; set; }
@@ -40,24 +39,19 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AuthzConfig.Entities
         public Levels? OfficeLevel { get; set; }
 
         /// <summary>
-        /// Legacy <c>office_level</c> code string (expand/contract, D2). <see cref="OfficeLevelId"/> is the source of
-        /// truth; this column is kept, nullable, only because the previous release still reads it from the same
-        /// database. Every write that sets <see cref="OfficeLevelId"/> also writes the mapped code here
-        /// (<see cref="BudgetRoleLevel.ToOfficeLevelCode"/>). Nothing reads it. It is dropped by a later migration
-        /// once the previous release is no longer deployed.
+        /// <c>office_level</c>: the role's Budget office level type, one of <c>OfficeLevel.All</c> (CHECK
+        /// <c>ck_budget_role_office_level</c>). This is the permanent source of the type. NULL = unconfigured, so the
+        /// role is denied (<see cref="BudgetRoleLevel.IsAuthorisable"/>).
         /// </summary>
-        [Obsolete("Legacy dual-write column for the previous release. Read OfficeLevelId; write only through SetOfficeLevel.")]
         [Column("office_level")]
         [MaxLength(12)]
-        public string? LegacyOfficeLevel { get; set; }
+        public string? OfficeLevelCode { get; set; }
 
-        /// <summary>Sets the office level FK and dual-writes the legacy code string for the previous release.</summary>
-        public void SetOfficeLevel(int levelId, string officeLevelCode)
+        /// <summary>Sets the office level reference and the office level type together.</summary>
+        public void SetOfficeLevel(int? levelId, string? officeLevelCode)
         {
             OfficeLevelId = levelId;
-#pragma warning disable CS0618 // the one sanctioned writer of the legacy column
-            LegacyOfficeLevel = officeLevelCode;
-#pragma warning restore CS0618
+            OfficeLevelCode = officeLevelCode;
         }
         /// <summary>The Auth SSO role id. NULL only for a legacy seeded row not yet matched by a sync.</summary>
         [Column("sso_role_id")]

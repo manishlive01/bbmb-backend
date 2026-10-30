@@ -133,34 +133,6 @@ public sealed class BudgetRoleSyncAndLevelFkTests(BudgetDatabaseFixture fixture)
         (await ScalarAsync(cs, "SELECT count(*) FROM budget.budget_role WHERE office_level_id IS NULL")).Should().Be("0");
     }
 
-    /// <summary>Review R2-2: rows of the drift check as "role=kind", in id order.</summary>
-    private static async Task<List<string>> DriftAsync(string cs)
-    {
-        var rows = new List<string>();
-        await using var conn = new NpgsqlConnection(cs);
-        await conn.OpenAsync();
-        await using var cmd = new NpgsqlCommand(BudgetRoleLevelDriftCheck.Sql(), conn);
-        await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-            rows.Add(reader.GetString(reader.GetOrdinal("role_name")) + "=" + reader.GetString(reader.GetOrdinal("drift")));
-        return rows;
-    }
-    [Fact]
-    public async Task Drift_check_is_empty_after_the_backfill_and_reports_previous_release_writes()
-    {
-        var cs = await fixture.CreateFreshDatabaseAsync("rslf_drift", GatesWithoutAdminGate);
-        await fixture.MigrateToAsync(cs, Before);
-        await SeedLiveLikeLevelsAsync(cs);
-        await fixture.MigrateToAsync(cs, Target);
-        (await DriftAsync(cs)).Should().BeEmpty("the backfill leaves both columns in agreement on live-like data");
-        // What the previous release can do during the window: change a level by string only, and create a role
-        // with the string only. A synced, unconfigured role has both columns NULL.
-        await ExecAsActorAsync(cs, "UPDATE budget.budget_role SET office_level = 'CE' WHERE role_name = 'DDO'");
-        await ExecAsActorAsync(cs, "INSERT INTO budget.budget_role (role_name, office_level, is_admin, is_active) " +
-            "VALUES ('OLD_NEW', 'CIRCLE', false, true)");
-        await ExecAsActorAsync(cs, "INSERT INTO budget.budget_role (role_name, is_admin, is_active) VALUES ('SYNCED', false, true)");
-        (await DriftAsync(cs)).Should().Equal("DDO=LEGACY_STALE", "OLD_NEW=FK_MISSING", "SYNCED=BOTH_NULL");
-    }
     [Fact]
     public async Task On_a_fresh_database_only_roles_on_the_inserted_levels_are_mapped()
     {

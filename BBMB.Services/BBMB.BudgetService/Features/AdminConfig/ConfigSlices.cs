@@ -88,12 +88,18 @@ namespace BBMB.BudgetService.Features.AdminConfig
     // "configured" exactly when the config snapshot would authorise it (BudgetRoleLevel.IsAuthorisable, D2).
     public sealed record BudgetRoleConfigDto(
         long RoleId, Guid? SsoRoleId, string RoleName, bool IsActive, bool SsoIsActive, bool IsAdmin,
-        int? OfficeLevelId, string? OfficeLevelName, bool IsConfigured,
+        int? OfficeLevelId, string? OfficeLevelName, string? OfficeLevelCode, bool IsConfigured,
         IReadOnlyList<string> RightKeys, IReadOnlyList<string> QueryFieldNames, DateTimeOffset? LastSyncedAt);
-    /// <summary>Legacy upsert by name: <c>OfficeLevel</c> is a Budget office level code, mapped to its levels row.</summary>
+    /// <summary>Legacy upsert by name: <c>OfficeLevel</c> is a Budget office level code, stored as the role's type.</summary>
     public sealed record UpsertRoleDto(string RoleName, string OfficeLevel, bool IsAdmin, bool IsActive);
-    public sealed record ConfigureRoleDto(long RoleId, int OfficeLevelId, IReadOnlyList<string> RightKeys, IReadOnlyList<string> QueryFieldNames);
+    /// <summary>
+    /// <c>OfficeLevelId</c> references the <c>levels</c> master (display only); <c>OfficeLevelCode</c> is the role's
+    /// Budget office level type, one of the six codes, and is required whenever <c>OfficeLevelId</c> is set.
+    /// </summary>
+    public sealed record ConfigureRoleDto(
+        long RoleId, int? OfficeLevelId, string? OfficeLevelCode, IReadOnlyList<string> RightKeys, IReadOnlyList<string> QueryFieldNames);
     public sealed record LevelOptionDto(int LevelId, string Name);
+    public sealed record OfficeLevelTypeDto(string Code, string Description);
     public sealed record RightCatalogItemDto(string RightKey, string? Description);
     public sealed record QueryFieldCatalogItemDto(string FieldName, string? Label);
 
@@ -102,6 +108,7 @@ namespace BBMB.BudgetService.Features.AdminConfig
     public sealed record SyncRolesCommand : IRequest<Response<RoleSyncResultDto>>;
     public sealed record ConfigureRoleCommand(ConfigureRoleDto Dto) : IRequest<Response<BudgetRoleConfigDto>>;
     public sealed record ListLevelsQuery : IRequest<Response<IReadOnlyList<LevelOptionDto>>>;
+    public sealed record ListOfficeLevelTypesQuery : IRequest<Response<IReadOnlyList<OfficeLevelTypeDto>>>;
     public sealed record RightCatalogQuery : IRequest<Response<IReadOnlyList<RightCatalogItemDto>>>;
     public sealed record QueryFieldCatalogQuery : IRequest<Response<IReadOnlyList<QueryFieldCatalogItemDto>>>;
 
@@ -120,7 +127,12 @@ namespace BBMB.BudgetService.Features.AdminConfig
         public ConfigureRoleValidator()
         {
             RuleFor(x => x.Dto.RoleId).GreaterThan(0).OverridePropertyName("roleId");
-            RuleFor(x => x.Dto.OfficeLevelId).GreaterThan(0).OverridePropertyName("officeLevelId");
+            RuleFor(x => x.Dto.OfficeLevelId).GreaterThan(0).When(x => x.Dto.OfficeLevelId is not null)
+                .OverridePropertyName("officeLevelId");
+            RuleFor(x => x.Dto.OfficeLevelCode).NotEmpty().When(x => x.Dto.OfficeLevelId is not null)
+                .WithMessage("officeLevelCode is required when officeLevelId is set.").OverridePropertyName("officeLevelCode");
+            RuleFor(x => x.Dto.OfficeLevelCode).Must(c => c is null || OfficeLevel.All.Contains(c))
+                .WithMessage($"officeLevelCode must be one of {string.Join(", ", OfficeLevel.All)}.").OverridePropertyName("officeLevelCode");
             RuleFor(x => x.Dto.RightKeys).NotNull().OverridePropertyName("rightKeys");
             RuleForEach(x => x.Dto.RightKeys).NotEmpty().MaximumLength(100).OverridePropertyName("rightKeys");
             RuleFor(x => x.Dto.QueryFieldNames).NotNull().OverridePropertyName("queryFieldNames");
@@ -140,6 +152,7 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 .Select(r => new
                 {
                     r.Id, r.SsoRoleId, r.RoleName, r.IsActive, r.SsoIsActive, r.IsAdmin, r.OfficeLevelId, r.LastSyncedAt,
+                    r.OfficeLevelCode,
                     LevelName = r.OfficeLevel != null ? r.OfficeLevel.Name : null,
                 })
                 .OrderBy(r => r.RoleName)
@@ -160,9 +173,9 @@ namespace BBMB.BudgetService.Features.AdminConfig
             return roles.Select(r =>
             {
                 var keys = rightsByRole[r.Id].OrderBy(k => k, StringComparer.Ordinal).ToList();
-                var code = BudgetRoleLevel.ToOfficeLevelCode(r.LevelName);
+                var code = BudgetRoleLevel.ToOfficeLevelCode(r.OfficeLevelCode);
                 return new BudgetRoleConfigDto(
-                    r.Id, r.SsoRoleId, r.RoleName, r.IsActive, r.SsoIsActive, r.IsAdmin, r.OfficeLevelId, r.LevelName,
+                    r.Id, r.SsoRoleId, r.RoleName, r.IsActive, r.SsoIsActive, r.IsAdmin, r.OfficeLevelId, r.LevelName, code,
                     BudgetRoleLevel.IsAuthorisable(r.IsActive, r.SsoIsActive, code, keys.Count > 0),
                     keys, fieldsByRole[r.Id].OrderBy(f => f, StringComparer.Ordinal).ToList(), r.LastSyncedAt);
             }).ToList();
@@ -182,9 +195,9 @@ namespace BBMB.BudgetService.Features.AdminConfig
     }
 
     /// <summary>
-    /// Legacy upsert by role name (kept working). The office level code is mapped to its <c>levels</c> row through
-    /// <see cref="BudgetRoleLevel"/>; no such row ⇒ CONFIG_LEVEL_NOT_BUDGET. A role created here has no SSO id
-    /// until a sync adopts it by name.
+    /// Legacy upsert by role name (kept working). The office level code (validated as one of the six) is stored as
+    /// the role's type; the <c>levels</c> reference is left as it is. A role created here has no SSO id until a sync
+    /// adopts it by name.
     /// </summary>
     public sealed class UpsertRoleHandler(
         BudgetContext context, IBudgetActorSource actorSource, IBudgetActionScope scope, IBudgetConfigProvider config)
@@ -198,12 +211,7 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 return BudgetResponses.Fail(BudgetMessages.M20);
             var dto = request.Dto;
 
-            // levels.status is not a Budget criterion (BudgetRoleLevel); the lowest id wins among aliases.
-            var levels = await context.Levels.AsNoTracking().OrderBy(l => l.Id)
-                .Select(l => new { l.Id, l.Name }).ToListAsync(ct);
-            var level = levels.FirstOrDefault(l =>
-                string.Equals(BudgetRoleLevel.ToOfficeLevelCode(l.Name), dto.OfficeLevel, StringComparison.Ordinal));
-            if (level is null)
+            if (BudgetRoleLevel.ToOfficeLevelCode(dto.OfficeLevel) is null)
                 return BudgetResponses.Fail(BudgetMessages.ConfigLevelNotBudget);
 
             await using var tx = await scope.BeginAsync(ActionCode, ct: ct);
@@ -213,7 +221,7 @@ namespace BBMB.BudgetService.Features.AdminConfig
                 row = new BudgetRole { RoleName = dto.RoleName.Trim() };
                 context.BudgetRoles.Add(row);
             }
-            row.SetOfficeLevel(level.Id, dto.OfficeLevel);
+            row.OfficeLevelCode = dto.OfficeLevel;
             row.IsAdmin = dto.IsAdmin;
             row.IsActive = dto.IsActive;
             await context.SaveChangesAsync(ct);
@@ -315,8 +323,8 @@ namespace BBMB.BudgetService.Features.AdminConfig
     }
 
     /// <summary>
-    /// Replace-set configuration of one role: its office level (a <c>levels</c> row that is a Budget office level),
-    /// and exactly the listed rights and query fields. Listed grants are added or reactivated; active grants not
+    /// Replace-set configuration of one role: its office level type (<c>officeLevelCode</c>, one of the six), its
+    /// <c>levels</c> reference (<c>officeLevelId</c>, display only), and exactly the listed rights and query fields. Listed grants are added or reactivated; active grants not
     /// listed are soft-deactivated (the tables forbid DELETE). One audited transaction; the cache is invalidated.
     /// An inactive or SSO-inactive role is refused. A change that would leave the caller's own acting role unable to
     /// administer (not an effective admin and no Settings.Admin, or no right at all) is refused, so an administrator
@@ -344,12 +352,13 @@ namespace BBMB.BudgetService.Features.AdminConfig
             if (!role.IsActive || !role.SsoIsActive)
                 return BudgetResponses.Fail<BudgetRoleConfigDto>(BudgetMessages.RoleInactive);
 
-            var level = await context.Levels.AsNoTracking()
-                .Where(l => l.Id == dto.OfficeLevelId).Select(l => new { l.Id, l.Name }).FirstOrDefaultAsync(ct);
-            if (level is null)
+            // The levels row is a reference only; its name is never interpreted. The type is the code in the body.
+            if (dto.OfficeLevelId is { } levelId && !await context.Levels.AsNoTracking().AnyAsync(l => l.Id == levelId, ct))
                 return BudgetResponses.Fail<BudgetRoleConfigDto>(BudgetMessages.ConfigInvalid);
-            var levelCode = BudgetRoleLevel.ToOfficeLevelCode(level.Name);
-            if (levelCode is null)
+            if (dto.OfficeLevelId is not null && string.IsNullOrWhiteSpace(dto.OfficeLevelCode))
+                return BudgetResponses.Fail<BudgetRoleConfigDto>(BudgetMessages.ConfigInvalid);
+            var levelCode = BudgetRoleLevel.ToOfficeLevelCode(dto.OfficeLevelCode?.Trim());
+            if (dto.OfficeLevelCode is not null && levelCode is null)
                 return BudgetResponses.Fail<BudgetRoleConfigDto>(BudgetMessages.ConfigLevelNotBudget);
 
             var rights = await context.BudgetRights.AsNoTracking()
@@ -363,14 +372,16 @@ namespace BBMB.BudgetService.Features.AdminConfig
             {
                 var snapshot = await config.GetAsync(ct);
                 var effectiveAdmin = snapshot.AdminRoles.Contains(role.RoleName, StringComparer.OrdinalIgnoreCase);
-                if (wantedRights.Count == 0 || (!effectiveAdmin && !wantedRights.Contains(AdminRightKey, StringComparer.Ordinal)))
+                // A NULL type leaves the caller's own role unconfigured, which is the same lockout.
+                if (levelCode is null || wantedRights.Count == 0
+                    || (!effectiveAdmin && !wantedRights.Contains(AdminRightKey, StringComparer.Ordinal)))
                     return BudgetResponses.Fail<BudgetRoleConfigDto>(BudgetMessages.ConfigSelfLockout);
             }
 
             await using (var tx = await scope.BeginAsync(ActionCode, ct: ct))
             {
-                // FK is the source of truth; the legacy office_level string is dual-written for the previous release.
-                role.SetOfficeLevel(level.Id, levelCode);
+                // office_level is the type (authorisation); office_level_id is the levels reference (display).
+                role.SetOfficeLevel(dto.OfficeLevelId, levelCode);
 
                 var wantedRightIds = rights.ToHashSet();
                 var roleRights = await context.BudgetRoleRights.Where(x => x.RoleId == role.Id).ToListAsync(ct);
@@ -411,11 +422,37 @@ namespace BBMB.BudgetService.Features.AdminConfig
         {
             if (await actorSource.GetAsync(ct) is null)
                 return BudgetResponses.Fail<IReadOnlyList<LevelOptionDto>>(BudgetMessages.M20);
-            // Only levels a role can be configured on (a Budget office level alias); levels.status is not a filter.
-            var all = await context.Levels.AsNoTracking().OrderBy(l => l.Name)
+            // Every levels row (id, name), for reference. The name is not interpreted and levels.status is not a filter.
+            var rows = await context.Levels.AsNoTracking().OrderBy(l => l.Name)
                 .Select(l => new LevelOptionDto(l.Id, l.Name)).ToListAsync(ct);
-            var rows = all.Where(l => BudgetRoleLevel.ToOfficeLevelCode(l.Name) is not null).ToList();
             return new Response<IReadOnlyList<LevelOptionDto>> { IsSucced = true, Message = "Levels", Data = rows };
+        }
+    }
+
+    /// <summary>
+    /// The six Budget office level types a role can be configured with, from the <see cref="OfficeLevel"/> code
+    /// constants (they define behaviour, so they live in code), so the admin UI hard-codes none of them.
+    /// </summary>
+    public sealed class ListOfficeLevelTypesHandler(IBudgetActorSource actorSource)
+        : IRequestHandler<ListOfficeLevelTypesQuery, Response<IReadOnlyList<OfficeLevelTypeDto>>>
+    {
+        private static readonly IReadOnlyDictionary<string, string> Descriptions = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            [OfficeLevel.Division] = "Division",
+            [OfficeLevel.Circle] = "Circle",
+            [OfficeLevel.Ce] = "Chief Engineer",
+            [OfficeLevel.Secretariat] = "Secretariat",
+            [OfficeLevel.Finance] = "Finance",
+            [OfficeLevel.ItCell] = "IT Cell",
+        };
+
+        public async Task<Response<IReadOnlyList<OfficeLevelTypeDto>>> Handle(ListOfficeLevelTypesQuery request, CancellationToken ct)
+        {
+            if (await actorSource.GetAsync(ct) is null)
+                return BudgetResponses.Fail<IReadOnlyList<OfficeLevelTypeDto>>(BudgetMessages.M20);
+            var rows = OfficeLevel.All
+                .Select(c => new OfficeLevelTypeDto(c, Descriptions.TryGetValue(c, out var d) ? d : c)).ToList();
+            return new Response<IReadOnlyList<OfficeLevelTypeDto>> { IsSucced = true, Message = "Office level types", Data = rows };
         }
     }
 
@@ -644,6 +681,10 @@ namespace BBMB.BudgetService.Features.AdminConfig
                     async (IMediator m, CancellationToken ct) => BudgetResults.Ok(await m.Send(new ListLevelsQuery(), ct)))
                 .RequireAuthorization(Policy).WithName("ListBudgetConfigLevels").WithTags("BudgetConfig")
                 .Produces<Response<IReadOnlyList<LevelOptionDto>>>(StatusCodes.Status200OK);
+            app.MapPost("/api/budget-config/office-level-types/list",
+                    async (IMediator m, CancellationToken ct) => BudgetResults.Ok(await m.Send(new ListOfficeLevelTypesQuery(), ct)))
+                .RequireAuthorization(Policy).WithName("ListBudgetConfigOfficeLevelTypes").WithTags("BudgetConfig")
+                .Produces<Response<IReadOnlyList<OfficeLevelTypeDto>>>(StatusCodes.Status200OK);
             app.MapPost("/api/budget-config/rights/catalog",
                     async (IMediator m, CancellationToken ct) => BudgetResults.Ok(await m.Send(new RightCatalogQuery(), ct)))
                 .RequireAuthorization(Policy).WithName("ListBudgetConfigRightCatalog").WithTags("BudgetConfig")
