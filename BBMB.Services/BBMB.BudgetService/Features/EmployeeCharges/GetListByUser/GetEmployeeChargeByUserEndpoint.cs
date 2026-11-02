@@ -23,8 +23,7 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser
             .WithSummary("Get Employee Charges by Logged-in User")
             .WithDescription("Returns employee charge details based on logged-in user token")
             .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .RequireAuthorization();
+            .Produces(StatusCodes.Status401Unauthorized);
         }
     }
 }
