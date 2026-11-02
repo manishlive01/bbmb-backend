@@ -181,7 +181,7 @@ jobs:
 
           sudo -n /usr/bin/systemctl stop "$SERVICE_NAME"
 
-          cp -a "$PUBLISH_DIR/." "$DEPLOY_DIR/"
+          cp -R "$PUBLISH_DIR/." "$DEPLOY_DIR/"
 
           sudo -n /usr/bin/chown -R bhakra:bhakra "$DEPLOY_DIR"
 
