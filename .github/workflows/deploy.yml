@@ -28,6 +28,7 @@ jobs:
       DOTNET_ROOT: /usr/lib64/dotnet
 
     steps:
+      # Step 1: Verify deployment server and runner user
       - name: Verify Deployment Server and User
         shell: bash
         run: |
@@ -46,6 +47,7 @@ jobs:
             exit 1
           fi
 
+      # Step 2: Verify .NET 10 SDK
       - name: Verify .NET SDK
         shell: bash
         run: |
@@ -61,6 +63,7 @@ jobs:
             exit 1
           }
 
+      # Step 3: Checkout repository
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -68,6 +71,7 @@ jobs:
           submodules: false
           clean: false
 
+      # Step 4: Verify project file
       - name: Verify Project
         shell: bash
         run: |
@@ -78,14 +82,19 @@ jobs:
             exit 1
           fi
 
+          echo "Project file found: $PROJECT_PATH"
+
+      # Step 5: Restore dependencies
       - name: Restore
         shell: bash
         run: |
           set -euo pipefail
 
           export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
+
           dotnet restore "$PROJECT_PATH"
 
+      # Step 6: Build application
       - name: Build
         shell: bash
         run: |
@@ -97,6 +106,7 @@ jobs:
             --configuration Release \
             --no-restore
 
+      # Step 7: Publish application
       - name: Publish
         shell: bash
         run: |
@@ -104,11 +114,16 @@ jobs:
 
           export PATH="$DOTNET_ROOT:$DOTNET_ROOT/tools:$PATH"
 
+          PUBLISH_DIR="$RUNNER_TEMP/bbmb-api-publish"
+
+          mkdir -p "$PUBLISH_DIR"
+
           dotnet publish "$PROJECT_PATH" \
             --configuration Release \
             --no-build \
-            --output "$RUNNER_TEMP/bbmb-api-publish"
+            --output "$PUBLISH_DIR"
 
+      # Step 8: Verify publish output
       - name: Verify Publish Output
         shell: bash
         run: |
@@ -121,8 +136,10 @@ jobs:
             exit 1
           fi
 
+          echo "Published application files:"
           ls -lh "$PUBLISH_DIR"
 
+      # Step 9: Verify deployment target and permissions
       - name: Verify Deployment Target and Permissions
         shell: bash
         run: |
@@ -143,8 +160,12 @@ jobs:
           test -w "$DEPLOY_DIR"
           test -w "$BACKUP_DIR"
 
-          sudo -n /usr/bin/systemctl is-active "$SERVICE_NAME"
+          sudo -n /usr/bin/systemctl is-enabled "$SERVICE_NAME"
 
+          echo "Deployment directories verified."
+          echo "Service is enabled."
+
+      # Step 10: Backup existing application
       - name: Backup Existing Application
         shell: bash
         run: |
@@ -155,11 +176,15 @@ jobs:
 
           tar -czf "$BACKUP_PATH" -C "$DEPLOY_DIR" .
 
-          test -s "$BACKUP_PATH"
+          if [ ! -s "$BACKUP_PATH" ]; then
+            echo "ERROR: Backup creation failed."
+            exit 1
+          fi
 
           echo "Backup created: $BACKUP_PATH"
           ls -lh "$BACKUP_PATH"
 
+      # Step 11: Deploy application
       - name: Deploy Application
         shell: bash
         run: |
@@ -179,32 +204,66 @@ jobs:
 
           test -f "$PUBLISH_DIR/BBMB.BudgetService.dll"
 
+          echo "Stopping API service..."
+
           sudo -n /usr/bin/systemctl stop "$SERVICE_NAME"
+
+          echo "Copying published application files..."
 
           cp -R "$PUBLISH_DIR/." "$DEPLOY_DIR/"
 
+          echo "Setting application ownership..."
+
           sudo -n /usr/bin/chown -R bhakra:bhakra "$DEPLOY_DIR"
+
+          echo "Starting API service..."
 
           sudo -n /usr/bin/systemctl start "$SERVICE_NAME"
 
           sleep 5
 
-          sudo -n /usr/bin/systemctl is-active --quiet "$SERVICE_NAME"
+          if ! sudo -n /usr/bin/systemctl is-active --quiet "$SERVICE_NAME"; then
+            echo "ERROR: API service failed to start."
 
-          RUNNING_USER="$(ps -eo user,args | awk '/[B]BMB.BudgetService.dll/ {print $1; exit}')"
+            sudo -n /usr/bin/systemctl status \
+              "$SERVICE_NAME" --no-pager || true
+
+            sudo -n /usr/bin/journalctl \
+              -u "$SERVICE_NAME" -n 100 --no-pager || true
+
+            exit 1
+          fi
+
+          RUNNING_USER="$(
+            ps -eo user,args |
+            awk '/[B]BMB.BudgetService.dll/ {print $1; exit}'
+          )"
 
           if [ "$RUNNING_USER" != "bhakra" ]; then
             echo "ERROR: API process is not running as bhakra."
-            sudo -n /usr/bin/systemctl status "$SERVICE_NAME" --no-pager || true
+
+            sudo -n /usr/bin/systemctl status \
+              "$SERVICE_NAME" --no-pager || true
+
             exit 1
           fi
 
           echo "Deployment completed successfully."
+          echo "Service: $SERVICE_NAME"
+          echo "Process user: $RUNNING_USER"
 
+      # Step 12: Verify application status
       - name: Verify Application
         if: always()
         shell: bash
         run: |
           echo "Hostname: $(hostname)"
           echo "Runner user: $(whoami)"
-          sudo -n /usr/bin/systemctl status "$SERVICE_NAME" --no-pager || true
+
+          sudo -n /usr/bin/systemctl status \
+            "$SERVICE_NAME" --no-pager || true
+
+          echo "Recent service logs:"
+
+          sudo -n /usr/bin/journalctl \
+            -u "$SERVICE_NAME" -n 30 --no-pager || true
