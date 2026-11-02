@@ -159,16 +159,37 @@ builder.Services.AddScoped<BBMB.BudgetService.Features.BudgetProcess.Reappropria
 // ===================================================================
 builder.Services.AddEndpointsApiExplorer();
 
+// The issuer is validated explicitly instead of relying on the issuer advertised by the SSO discovery
+// document. The SSO portal issues tokens with the address it is reached on (plain HTTP inside NIC), so a
+// deployment whose SSO:Authority uses HTTPS (Staging/Production appsettings) rejected every token with
+// "The issuer 'http://10.43.19.32/sso-api/' is invalid". Accept the configured authority plus its
+// other-scheme form; SSO:ValidIssuers can add more (e.g. a public host name) without a rebuild.
+var ssoAuthority = builder.Configuration["SSO:Authority"];
+if (string.IsNullOrWhiteSpace(ssoAuthority))
+    throw new InvalidOperationException("SSO:Authority is not configured.");
+ssoAuthority = ssoAuthority.Trim().TrimEnd('/') + "/";
+var ssoIssuers = new HashSet<string>(StringComparer.Ordinal) { ssoAuthority };
+if (ssoAuthority.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+    ssoIssuers.Add("http://" + ssoAuthority["https://".Length..]);
+else if (ssoAuthority.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+    ssoIssuers.Add("https://" + ssoAuthority["http://".Length..]);
+foreach (var issuer in builder.Configuration.GetSection("SSO:ValidIssuers").Get<string[]>() ?? [])
+{
+    if (!string.IsNullOrWhiteSpace(issuer))
+        ssoIssuers.Add(issuer.Trim().TrimEnd('/') + "/");
+}
+
 builder.Services.AddAuthentication("Bearer")
 .AddJwtBearer("Bearer", options =>
 {
-    options.Authority = builder.Configuration["SSO:Authority"];   // IMPORTANT
+    options.Authority = ssoAuthority;
     options.RequireHttpsMetadata = false; // because your SSO is HTTP
 
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
-        //ValidIssuer = builder.Configuration["SSO:Issuer"],//use this in case of only trusted one Issuer
+        // Both the http:// and https:// form of SSO:Authority, plus SSO:ValidIssuers.
+        ValidIssuers = ssoIssuers.ToArray(),
 
         ValidateAudience = true,
         ValidAudiences = builder.Configuration
