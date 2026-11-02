@@ -12,13 +12,16 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser
     {
         private readonly EmployeeContext _employeeContext;
         private readonly BudgetContext _budgetContext;
+        private readonly ILogger<GetEmployeeChargeByUserHandler> _logger;
 
         public GetEmployeeChargeByUserHandler(
             EmployeeContext employeeContext,
-            BudgetContext budgetContext)
+            BudgetContext budgetContext,
+            ILogger<GetEmployeeChargeByUserHandler> logger)
         {
             _employeeContext = employeeContext;
             _budgetContext = budgetContext;
+            _logger = logger;
         }
 
         public async Task<List<GetEmployeeChargeByUserResponseDto>> Handle(
@@ -27,10 +30,14 @@ namespace BBMB.BudgetService.Features.EmployeeCharges.GetListByUser
         {
             var userId = JwtClaimHelper.GetUserId(request.User);
 
-            if (string.IsNullOrEmpty(userId))
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                _logger.LogWarning(
+                    "GetEmployeeChargeByUser: request has no valid user id (sub) claim. Authenticated: {Authenticated}, User: {UserName}",
+                    request.User.Identity?.IsAuthenticated,
+                    JwtClaimHelper.GetUserName(request.User));
                 return new List<GetEmployeeChargeByUserResponseDto>();
-
-            var userGuid = Guid.Parse(userId);
+            }
 
             // 🔥 STEP 1: Update expired charges in ONE DB HIT
             await _employeeContext.EmployeeCharges
