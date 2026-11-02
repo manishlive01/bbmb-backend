@@ -68,9 +68,16 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
         }
 
         /// <summary>
-        /// Resolves the single active Budget charge named by <c>X-Charge-Id</c>. The query scopes the ID
-        /// to the authenticated user, active Budget project, and expiry state, then validates the acting
-        /// role's office scope. Missing or invalid selections fail closed.
+        /// Resolves the acting user's current Budget charge (design §4.3 "Charge selection", D-12):
+        /// <list type="number">
+        /// <item>the current Budget charges of the authenticated user (active, not expired, matching the
+        /// configured project code) are loaded;</item>
+        /// <item>exactly one → it is selected without needing a header;</item>
+        /// <item>several → <c>X-Charge-Id</c> must name one of them; no header is <see cref="BudgetChargeOutcome.Ambiguous"/>
+        /// (the caller answers M-20 with the ids, never picks); a header naming a charge not held is
+        /// <see cref="BudgetChargeOutcome.None"/>;</item>
+        /// <item>the selected charge must resolve to an office for the acting role.</item>
+        /// </list>
         /// </summary>
         public async Task<BudgetChargeResult> GetCurrentBudgetChargeAsync(CancellationToken ct)
         {
@@ -90,15 +97,11 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
             if (!Guid.TryParse(JwtClaimHelper.GetUserId(httpContext.User), out var userId))
                 return BudgetChargeResult.None;
 
-            var header = httpContext.Request.Headers[BudgetChargeResult.HeaderName].ToString();
-            if (!Guid.TryParse(header, out var selectedChargeId))
-                return BudgetChargeResult.None;
-
+            // D-12: current = active, not flagged expired, and not past charge_expire_time.
             var now = DateTime.UtcNow;
-            var selectedCharge = await _context.EmployeeCharges
+            var current = await _context.EmployeeCharges
                 .AsNoTracking()
                 .Where(x =>
-                    x.Id == selectedChargeId &&
                     _context.Employees.Any(employee =>
                         employee.Id == x.EmployeeId && employee.UserId == userId) &&
                     x.ProjectCode == projectCode &&
@@ -115,15 +118,37 @@ namespace BBMB.BudgetService.Shared.Services.EmployeeChargeServices
                     CRId = x.CRId,
                     DivisionId = x.DivisionId
                 })
-                .FirstOrDefaultAsync(ct);
+                .ToListAsync(ct);
 
-            if (selectedCharge is null ||
-                await _officeScope.ResolveActorOfficeAsync(selectedCharge, actingRole, ct) is null)
-            {
+            if (current.Count == 0)
                 return BudgetChargeResult.None;
+
+            UserChargeContext selected;
+            var header = httpContext.Request.Headers[BudgetChargeResult.HeaderName].ToString();
+            if (!string.IsNullOrWhiteSpace(header))
+            {
+                if (!Guid.TryParse(header, out var selectedChargeId))
+                    return BudgetChargeResult.None;
+
+                var named = current.FirstOrDefault(x => x.ChargeId == selectedChargeId);
+                if (named is null)
+                    return BudgetChargeResult.None;
+                selected = named;
+            }
+            else if (current.Count == 1)
+            {
+                // One current Budget charge needs no selection: this is the common DDO case.
+                selected = current[0];
+            }
+            else
+            {
+                return BudgetChargeResult.Ambiguous(current.Select(x => x.ChargeId).ToList());
             }
 
-            return BudgetChargeResult.Single(selectedCharge);
+            if (await _officeScope.ResolveActorOfficeAsync(selected, actingRole, ct) is null)
+                return BudgetChargeResult.None;
+
+            return BudgetChargeResult.Single(selected);
         }
     }
 }
