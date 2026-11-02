@@ -8,7 +8,7 @@ namespace BBMB.BudgetService.Shared.ServiceDTOs
         /// <summary>Exactly one charge is selected.</summary>
         Single,
 
-        /// <summary>Several current Budget charges and no <c>X-Budget-Charge</c> header: M-20 with the ids, never a pick.</summary>
+        /// <summary>Several current Budget charges and no <c>X-Charge-Id</c> header: M-20 with the ids, never a pick.</summary>
         Ambiguous,
     }
 
@@ -19,7 +19,7 @@ namespace BBMB.BudgetService.Shared.ServiceDTOs
         IReadOnlyList<Guid> ChargeIds)
     {
         /// <summary>Header naming the charge to act under when the employee holds several.</summary>
-        public const string HeaderName = "X-Budget-Charge";
+        public const string HeaderName = "X-Charge-Id";
 
         public static BudgetChargeResult None { get; } = new(BudgetChargeOutcome.None, null, []);
 
