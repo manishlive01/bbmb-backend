@@ -36,7 +36,26 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetByProposal
             FloorCheckUnchecked = r.FloorCheckUnchecked, AddedOnReturn = r.AddedOnReturn, IsDeleted = r.IsDeleted,
             LevelFigures = (JsonSerializer.Deserialize<List<LevelFigureJson>>(r.LevelFigures) ?? [])
                 .Select(f => new LevelFigureDto(f.level_office_id, f.figure, f.value)).ToList(),
+            AdminApprovalId = r.AdminApprovalId, AaReferenceNo = r.AaReferenceNo, AaDateOfApproval = r.AaDateOfApproval,
+            AaAmountSanctioned = r.AaAmountSanctioned, AaNameOfWork = r.AaNameOfWork,
+            TsCount = r.TsCount ?? 0, TsAmountToDate = r.TsAmountToDate,
+            NameOfWork = r.AaNameOfWork ?? r.WorkDesc, IsNameLocked = r.AdminApprovalId != null,
         };
+
+        /// <summary>
+        /// Fills <see cref="DemandLineRowDto.WorkCode"/> from the work master in one query (V-04 carries no
+        /// work_code).
+        /// </summary>
+        public static async Task FillWorkCodesAsync(BudgetContext context, IReadOnlyCollection<DemandLineRowDto> rows, CancellationToken ct)
+        {
+            var ids = rows.Where(r => r.WorkId != null).Select(r => r.WorkId!.Value).Distinct().ToList();
+            if (ids.Count == 0) return;
+            var codes = await context.Works.AsNoTracking().Where(w => ids.Contains(w.Id))
+                .Select(w => new { w.Id, w.WorkCode }).ToDictionaryAsync(w => w.Id, w => w.WorkCode, ct);
+            foreach (var r in rows)
+                if (r.WorkId is { } id && codes.TryGetValue(id, out var code))
+                    r.WorkCode = code;
+        }
 
         public async Task<Response<GetDemandLinesResponseDto>> Handle(GetDemandLinesByProposalQuery request, CancellationToken ct)
         {
@@ -63,6 +82,8 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetByProposal
             var pageSize = Math.Min(request.PageSize <= 0 ? 50 : request.PageSize, 500);
             var total = await q.CountAsync(ct);
             var rows = await q.OrderBy(r => r.SerialNo).Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+            var lines = rows.Select(ToRow).ToList();
+            await FillWorkCodesAsync(context, lines, ct);
             var pages = (int)Math.Ceiling(total / (double)pageSize);
             return new Response<GetDemandLinesResponseDto>
             {
@@ -71,7 +92,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetByProposal
                 {
                     ProposalId = p.ProposalId, Category = p.Category,
                     Headings = DemandLineHeadings.For(p.Category, cycle.CurrentFinYear, cycle.NextFinYear),
-                    Lines = rows.Select(ToRow).ToList(),
+                    Lines = lines,
                     Pagination = new PaginationMetadata
                     {
                         TotalCount = total, PageNumber = pageNumber, PageSize = pageSize, TotalPages = pages,

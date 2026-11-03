@@ -146,6 +146,31 @@ public sealed partial class WorkMasterP1Tests
         reclass.WorkClass = "AMR";
         (await UpdateAsync(_w.WorkAId, reclass)).MessageId.Should().Be("M-19");
     }
+    [Fact]
+    public async Task G3_Works_RenameWithAdminApprovalRefusedM19()
+    {
+        var att = await BudgetProcess.AdminApprovals.CreateAdminApprovalTests.EvidenceAsync(_w, _w.DivisionA);
+        var (c, tx) = await _w.BeginAsync(_w.DivisionA, "AA_CREATE");
+        await using (c)
+        {
+            await using var h = new Npgsql.NpgsqlCommand(
+                "INSERT INTO budget.admin_approval (work_id, division_office_id, serial_no, current_version_no) " +
+                $"VALUES ({_w.WorkAId}, {_w.DivisionAOfficeId}, 1, 1) RETURNING admin_approval_id", c, tx);
+            var aa = Convert.ToInt64(await h.ExecuteScalarAsync());
+            await using var v = new Npgsql.NpgsqlCommand(
+                "INSERT INTO budget.admin_approval_version (admin_approval_id, version_no, name_of_work, aa_reference_no, date_of_approval, " +
+                "account_code_id, amount_sanctioned, aa_copy_attachment_id, competent_authority, exceeds_delegation) " +
+                $"VALUES ({aa}, 1, 'Work', 'AA/1', current_date - 1, {_w.AccountCodeId}, 1000, {att}, 'EE', false)", c, tx);
+            await v.ExecuteNonQueryAsync();
+            await tx.CommitAsync();
+        }
+        var rename = await UpdateAsync(_w.WorkAId, SameAs("Renamed work"));
+        rename.MessageId.Should().Be("M-19");
+        rename.Message.Should().Contain("A&A revision");
+        (await UpdateAsync(_w.WorkAId, SameAs(" Work 500001 "))).IsSucced.Should().BeTrue("the same name, trimmed, is not a rename");
+        await using var ctx = _w.NewContext();
+        (await ctx.Works.AsNoTracking().SingleAsync(x => x.Id == _w.WorkAId)).WorkDesc.Trim().Should().Be("Work 500001");
+    }
 
     [Fact]
     public async Task S113_Works_Reclassify_unreferenced_work_succeeds()

@@ -49,6 +49,15 @@ namespace BBMB.BudgetService.Features.Works.Update
                 return BudgetResponses.Fail(BudgetMessages.NotFound);
 
             var dto = request.dto;
+            // G3: once an A&A exists, Name of Work is the A&A's name_of_work; it changes only by an A&A revision.
+            if ((dto.WorkDesc ?? string.Empty).Trim() != (work.WorkDesc ?? string.Empty).Trim() &&
+                await _context.AdminApprovals.AsNoTracking().AnyAsync(a => a.WorkId == work.Id, ct))
+                return new Response
+                {
+                    IsSucced = false,
+                    MessageId = BudgetMessages.M19,
+                    Message = "Name of Work comes from the Administrative Approval (A&A) and cannot be edited here; change it by an A&A revision.",
+                };
             var classChanges =
                 (dto.WorkClass is not null && dto.WorkClass != work.WorkClass) ||
                 (dto.PrecedingAmrWorkId is not null && dto.PrecedingAmrWorkId != work.PrecedingAmrWorkId);

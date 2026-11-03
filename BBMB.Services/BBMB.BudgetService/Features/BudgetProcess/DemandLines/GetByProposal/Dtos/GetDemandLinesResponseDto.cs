@@ -54,6 +54,23 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetByProposal.Dt
         public bool IsDeleted { get; set; }
         /// <summary>The latest figure at each level office (T-31, BUD-115).</summary>
         public List<LevelFigureDto> LevelFigures { get; set; } = [];
+
+        // ---- Table 3 A&A / TS / work-code columns (V-04 version 2 and the work master) ----
+        public long? AdminApprovalId { get; set; }
+        public string? AaReferenceNo { get; set; }
+        /// <summary>Serialised as yyyy-MM-dd.</summary>
+        public DateOnly? AaDateOfApproval { get; set; }
+        public decimal? AaAmountSanctioned { get; set; }
+        public string? AaNameOfWork { get; set; }
+        /// <summary>Number of technical sanctions of the work; 0 when none.</summary>
+        public int TsCount { get; set; }
+        public decimal? TsAmountToDate { get; set; }
+        /// <summary>The work's code from the work master; null until generated or for a non-WORK line.</summary>
+        public string? WorkCode { get; set; }
+        /// <summary>Table 3 column 5: the A&amp;A name of work where an A&amp;A exists, else <see cref="WorkDesc"/>.</summary>
+        public string? NameOfWork { get; set; }
+        /// <summary>True where an A&amp;A exists: the name then changes only by an A&amp;A revision.</summary>
+        public bool IsNameLocked { get; set; }
     }
 
     public sealed record LevelFigureDto(long LevelOfficeId, string Figure, decimal? Value);

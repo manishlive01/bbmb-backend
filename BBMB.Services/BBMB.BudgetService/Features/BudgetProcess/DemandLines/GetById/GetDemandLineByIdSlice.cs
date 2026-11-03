@@ -34,10 +34,12 @@ namespace BBMB.BudgetService.Features.BudgetProcess.DemandLines.GetById
                 .FirstOrDefaultAsync(r => r.ProposalId == p.ProposalId && r.DemandLineId == request.DemandLineId, ct);
             if (row is null)
                 return BudgetResponses.Fail<DemandLineRowDto>(BudgetMessages.NotFound);
+            var dto = GetDemandLinesByProposalHandler.ToRow(row);
+            await GetDemandLinesByProposalHandler.FillWorkCodesAsync(context, [dto], ct);
             return new Response<DemandLineRowDto>
             {
                 IsSucced = true, Message = "Demand line retrieved successfully",
-                Data = GetDemandLinesByProposalHandler.ToRow(row),
+                Data = dto,
             };
         }
     }
