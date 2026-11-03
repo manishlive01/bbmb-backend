@@ -399,3 +399,6 @@ FodyWeavers.xsd
 
 # local git worktrees
 .worktrees/
+
+# agent task reports (not committed)
+.agents/
