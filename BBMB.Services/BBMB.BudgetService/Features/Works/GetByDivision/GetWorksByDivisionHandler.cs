@@ -39,16 +39,22 @@ namespace BBMB.BudgetService.Features.Works.GetByDivision
 
             var totalCount = await query.CountAsync(ct);
 
-            var pageSize = Math.Min(request.PageSize, 100);
+            var pageSize = Math.Clamp(request.PageSize <= 0 ? 10 : request.PageSize, 1, 100);
+            var pageNumber = Math.Max(request.PageNumber, 1);
             var items = await query
-                .Skip((request.PageNumber - 1) * pageSize)
+                .OrderBy(w => w.Id)
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(w => new GetWorkListResponseDto
                 {
-                    //WorkCode = w.WorkCode,
+                    Id = w.Id,
+                    WorkCode = w.WorkCode,
                     WorkDesc = w.WorkDesc,
-                    //DivisionCode = w.DivisionCode,
+                    DivisionId = w.DivisionId,
+                    DivisionCode = w.Division != null ? w.Division.DivisionCode : 0,
                     DivisionDesc = w.Division != null ? w.Division.DivisionDesc : null,
+                    WorkClass = w.WorkClass,
+                    PrecedingAmrWorkId = w.PrecedingAmrWorkId,
                     AccountCode = $"{w.MajorAccCode}-{w.SubMajorAccCode}-{w.MinorAccCode}-{w.SubMinorAccCode}-{w.DetailAccCode}-{w.ObjectAccCode}",
                     Status = w.Status,
                     Nature = w.Nature,
@@ -63,11 +69,11 @@ namespace BBMB.BudgetService.Features.Works.GetByDivision
                 Pagination = new PaginationMetadata
                 {
                     TotalCount = totalCount,
-                    PageNumber = request.PageNumber,
+                    PageNumber = pageNumber,
                     PageSize = pageSize,
                     TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
-                    HasPreviousPage = request.PageNumber > 1,
-                    HasNextPage = request.PageNumber < (int)Math.Ceiling(totalCount / (double)pageSize)
+                    HasPreviousPage = pageNumber > 1,
+                    HasNextPage = pageNumber < (int)Math.Ceiling(totalCount / (double)pageSize)
                 }
             };
         }

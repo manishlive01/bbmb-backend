@@ -16,7 +16,7 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 [FromQuery] int pageSize = 10,
                 [FromQuery] string? sortBy = null,
                 [FromQuery] bool sortDescending = false,
-                [FromQuery] int? workCode = null,
+                [FromQuery] string? workCode = null,
                 [FromQuery] string? workDesc = null,
                 [FromQuery] int? divisionId = null,
                 [FromQuery] string? status = null,

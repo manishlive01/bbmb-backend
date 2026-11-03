@@ -45,7 +45,7 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 from d in divJoin.DefaultIfEmpty()
 
                 join ds in _context.DivSections.AsNoTracking()
-        on w.DivisionId equals ds.DivisionId into divsJoin
+        on w.DivSectionId equals ds.Id into divsJoin
                 from ds in divsJoin.DefaultIfEmpty()
 
                 join mh in _context.MajorHeads.AsNoTracking()
@@ -104,8 +104,8 @@ namespace BBMB.BudgetService.Features.Works.GetList
             query = query.Where(x => visibleDivisions.Contains(x.w.DivisionId));
             // ================= REQUEST FILTERS =================
 
-            //if (!string.IsNullOrWhiteSpace(request.WorkCode))
-            //    query = query.Where(x => x.w.WorkCode.Contains(request.WorkCode));
+            if (!string.IsNullOrWhiteSpace(request.WorkCode))
+                query = query.Where(x => x.w.WorkCode == request.WorkCode.Trim());
 
             if (!string.IsNullOrWhiteSpace(request.WorkDesc))
                 query = query.Where(x => x.w.WorkDesc.Contains(request.WorkDesc));
@@ -125,16 +125,28 @@ namespace BBMB.BudgetService.Features.Works.GetList
 
             // ================= PAGINATION =================
 
-            var pageSize = Math.Min(request.PageSize <= 0 ? 10 : request.PageSize, 100);
+            var pageSize = Math.Clamp(request.PageSize <= 0 ? 10 : request.PageSize, 1, 100);
+            var pageNumber = Math.Max(request.PageNumber, 1);
 
-            var items = await query
-                .OrderBy(x => x.w.WorkCode)
-                .Skip((request.PageNumber - 1) * pageSize)
+            var ordered = (request.SortBy?.Trim().ToLowerInvariant(), request.SortDescending) switch
+            {
+                ("workcode", false) => query.OrderBy(x => x.w.WorkCode).ThenBy(x => x.w.Id),
+                ("workcode", true) => query.OrderByDescending(x => x.w.WorkCode).ThenBy(x => x.w.Id),
+                ("workdesc", false) => query.OrderBy(x => x.w.WorkDesc).ThenBy(x => x.w.Id),
+                ("workdesc", true) => query.OrderByDescending(x => x.w.WorkDesc).ThenBy(x => x.w.Id),
+                _ => query.OrderBy(x => x.w.Id)
+            };
+
+            var items = await ordered
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(x => new GetWorkListResponseDto
                 {
+                    Id = x.w.Id,
                     WorkCode = x.w.WorkCode,
                     WorkDesc = x.w.WorkDesc,
+                    WorkClass = x.w.WorkClass,
+                    PrecedingAmrWorkId = x.w.PrecedingAmrWorkId,
 
                     DivisionId = x.w.DivisionId,
                     DivisionCode = x.d != null ? x.d.DivisionCode : 0,
@@ -205,11 +217,11 @@ namespace BBMB.BudgetService.Features.Works.GetList
                 Pagination = new PaginationMetadata
                 {
                     TotalCount = totalCount,
-                    PageNumber = request.PageNumber,
+                    PageNumber = pageNumber,
                     PageSize = pageSize,
                     TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
-                    HasPreviousPage = request.PageNumber > 1,
-                    HasNextPage = request.PageNumber <
+                    HasPreviousPage = pageNumber > 1,
+                    HasNextPage = pageNumber <
                                   (int)Math.Ceiling(totalCount / (double)pageSize)
                 }
             };

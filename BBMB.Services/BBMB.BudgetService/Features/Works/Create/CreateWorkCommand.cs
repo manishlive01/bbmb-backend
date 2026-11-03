@@ -4,5 +4,5 @@ using MediatR;
 
 namespace BBMB.BudgetService.Features.Works.Create
 {
-    public sealed record CreateWorkCommand(CreateWorkDto dto) : IRequest<Response>;
+    public sealed record CreateWorkCommand(CreateWorkDto dto) : IRequest<Response<int>>;
 }

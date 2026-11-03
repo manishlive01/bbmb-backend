@@ -15,14 +15,16 @@ namespace BBMB.BudgetService.Features.Works.Create
                 var response = await mediator.Send(command);
 
                 // Design §4.9: M-20 → 403, other refusals → 409.
-                return BudgetResults.From(response, r => Results.Created($"/api/works/{dto.WorkCode}", r));
+                // A work may not have a work code until budget allocation (URS WKB-004 / SRS BUD-232).
+                // Do not construct the Location header from a client supplied or empty work code.
+                return BudgetResults.From(response, r => Results.Created($"/api/works/{r.Data}", r));
             })
             .RequireAuthorization("BudgetRight:Works.Enter")
             .WithName("CreateWork")
             .WithTags("Works")
-            .Produces<Response>(StatusCodes.Status201Created)
-            .Produces<Response>(StatusCodes.Status403Forbidden)
-            .Produces<Response>(StatusCodes.Status409Conflict)
+            .Produces<Response<int>>(StatusCodes.Status201Created)
+            .Produces<Response<int>>(StatusCodes.Status403Forbidden)
+            .Produces<Response<int>>(StatusCodes.Status409Conflict)
             .Produces<ValidationErrorResponse>(StatusCodes.Status400BadRequest);
         }
     }

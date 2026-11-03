@@ -9,7 +9,7 @@ namespace BBMB.BudgetService.Features.Works.GetList
         int PageSize,
         string? SortBy,
         bool SortDescending,
-        int? WorkCode,
+        string? WorkCode,
         string? WorkDesc,
         int? DivisionId,
         string? Status,
