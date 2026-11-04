@@ -71,7 +71,14 @@ public sealed class BudgetCyclesTests(BudgetDatabaseFixture fixture) : IAsyncLif
     [Fact]
     public async Task S82_create_refuses_missing_years_a_second_cycle_for_a_year_and_a_second_first_cycle()
     {
-        (await CreateAsync(2030)).MessageId.Should().Be("M-05", "fa_financial_years has no 2030/2031");
+        var none = await CreateAsync(2030);
+        none.MessageId.Should().Be("FIN_YEAR_MISSING", "fa_financial_years has no 2030/2031");
+        none.Message.Should().Be("FIN_YEAR_MISSING: Financial years 2029-30 and 2030-31 are not defined in the Financial Year master. " +
+                                 "Add them before creating this budget cycle.");
+        var one = await CreateAsync(2028);
+        one.MessageId.Should().Be("FIN_YEAR_MISSING");
+        one.Message.Should().Be("FIN_YEAR_MISSING: Financial year 2028-29 is not defined in the Financial Year master. " +
+                                "Add it before creating this budget cycle.");
         (await CreateAsync(2026)).MessageId.Should().Be("M-19", "one cycle per current year");
         (await CreateAsync(2027, first: true)).MessageId.Should().Be("M-19", "one first cycle");
         (await CreateAsync(2027)).IsSucced.Should().BeTrue();

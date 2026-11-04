@@ -71,6 +71,8 @@ namespace BBMB.BudgetService.Shared.Messages
         /// <summary>The role sync is switched off (BudgetRoleSync:Enabled, expand/contract window) (409). Interim id (OI-13).</summary>
         public const string RoleSyncDisabled = "ROLE_SYNC_DISABLED";
 
+        /// <summary>A year of the cycle is absent from fa_financial_years (409; was M-05, misleading). Interim id (OI-13).</summary>
+        public const string FinYearMissing = "FIN_YEAR_MISSING";
         private static readonly IReadOnlyDictionary<string, string> Catalogue = new Dictionary<string, string>
         {
             [M01] = "The code entered already exists under the same parent head. Enter a code not already used at this level.",
@@ -121,6 +123,7 @@ namespace BBMB.BudgetService.Shared.Messages
             [SsoProjectUnset] = "The Auth SSO project id of the Budget project is not set in the project settings.",
             [SsoSyncFailed] = "The roles could not be read from Auth SSO, or Auth SSO returned no roles. Nothing was changed.",
             [RoleSyncSelfLockout] = "Auth SSO did not return your own acting role, or any administrator role, as active. Synchronising would lock Budget administration out, so nothing was changed. Correct the roles in Auth SSO first.",
+            [FinYearMissing] = "A financial year of this budget cycle is not defined in the Financial Year master. Add it before creating this budget cycle.",
             [RoleSyncDisabled] = "Role synchronisation with Auth SSO is switched off until every service instance using this database runs the current release. Nothing was changed.",
         };
 

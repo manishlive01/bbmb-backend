@@ -11,11 +11,11 @@ namespace BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Create
             app.MapPost("/api/technical-sanctions",
                     async (CreateTechnicalSanctionDto dto, IMediator mediator, CancellationToken ct) =>
                         BudgetResults.From(await mediator.Send(new CreateTechnicalSanctionCommand(dto), ct),
-                            r => Results.Created($"/api/technical-sanctions/{r.Data}", r)))
+                            r => Results.Created($"/api/technical-sanctions/{r.Data!.TechnicalSanctionId}", r)))
                 .RequireAuthorization("BudgetRight:F06.Enter")
                 .WithName("CreateTechnicalSanction")
                 .WithTags("TechnicalSanctions")
-                .Produces<Response<long>>(StatusCodes.Status201Created)
+                .Produces<Response<CreateTechnicalSanctionResponseDto>>(StatusCodes.Status201Created)
                 .Produces<Response>(StatusCodes.Status403Forbidden)
                 .Produces<Response>(StatusCodes.Status404NotFound)
                 .Produces<Response>(StatusCodes.Status409Conflict)

@@ -96,28 +96,7 @@ namespace BBMB.BudgetService.Features.BudgetProcess.AdminApprovals.Rules
         /// current cycle, no proposal, or a proposal in another state: no line, and the approval stands.
         /// Returns the new line id, or null. Call inside the action scope after the work is saved.
         /// </summary>
-        public async Task<long?> AddWorkLineIfOpenAsync(long divisionOfficeId, Work work, long accountCodeId, CancellationToken ct = default)
-        {
-            var cycle = await BudgetCycleQueries.GetCurrentAsync(context, ct);
-            if (cycle is null)
-                return null;
-            var p = await context.BudgetProposals.AsNoTracking().FirstOrDefaultAsync(x =>
-                x.CycleId == cycle.CycleId && x.Category == ProposalCategory.Works && x.OriginOfficeId == divisionOfficeId, ct);
-            if (p is null || (p.StateCode != ProposalStateCode.S01 && p.StateCode != ProposalStateCode.S04))
-                return null;
-            await DemandLineWrites.LockProposalAsync(context, p.ProposalId, ct);
-            if (await context.DemandLines.AsNoTracking().AnyAsync(l => l.ProposalId == p.ProposalId && l.WorkId == work.Id && !l.IsDeleted, ct))
-                return null;
-            var line = new DemandLine
-            {
-                ProposalId = p.ProposalId, LineType = DemandLineType.Work, WorkId = work.Id, AccountCodeId = accountCodeId,
-                AddedOnReturn = p.StateCode == ProposalStateCode.S04,
-                SerialNo = (await context.DemandLines.AsNoTracking()
-                    .Where(l => l.ProposalId == p.ProposalId).MaxAsync(l => (int?)l.SerialNo, ct) ?? 0) + 1,
-            };
-            context.DemandLines.Add(line);
-            await context.SaveChangesAsync(ct);
-            return line.DemandLineId;
-        }
+        public Task<long?> AddWorkLineIfOpenAsync(long divisionOfficeId, Work work, long accountCodeId, CancellationToken ct = default) =>
+            DemandLineWrites.AddWorkLineIfOpenAsync(context, divisionOfficeId, work, accountCodeId, ct);
     }
 }

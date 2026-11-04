@@ -1,7 +1,9 @@
+using BBMB.BudgetService.Features.BudgetProcess.DemandLines;
 using BBMB.BudgetService.Features.BudgetProcess.Settings;
 using BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Create;
 using BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Create.Dtos;
 using BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.GetById;
+using BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.GetWorkCandidates;
 using BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Revise;
 using BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Revise.Dtos;
 using BBMB.BudgetService.Features.BudgetProcess.TechnicalSanctions.Rules;
@@ -58,12 +60,53 @@ public sealed class TechnicalSanctionTests(BudgetDatabaseFixture fixture) : IAsy
         NameOfEstimate = "AM&R estimate", TsNumber = number, TsDate = RupeeRuleExtensions.TodayIst(), TsAmount = amount, TsCopyAttachmentId = _att,
     };
 
-    private async Task<Response<long>> CreateAsync(CreateTechnicalSanctionDto dto, FakeBudgetActorSource? actor = null)
+    private async Task<Response<CreateTechnicalSanctionResponseDto>> CreateFullAsync(CreateTechnicalSanctionDto dto, FakeBudgetActorSource? actor = null)
     {
         actor ??= _w.DivisionA;
         await using var ctx = _w.NewContext();
         return await new CreateTechnicalSanctionHandler(ctx, actor, new BudgetActionScope(ctx, actor), Rules(ctx), new WorkRules(ctx))
             .Handle(new CreateTechnicalSanctionCommand(dto), default);
+    }
+    /// <summary>The create result reduced to the sanction id, for the tests that need only that.</summary>
+    private async Task<Response<long>> CreateAsync(CreateTechnicalSanctionDto dto, FakeBudgetActorSource? actor = null)
+    {
+        var r = await CreateFullAsync(dto, actor);
+        return new Response<long> { IsSucced = r.IsSucced, MessageId = r.MessageId, Message = r.Message, Data = r.Data?.TechnicalSanctionId ?? 0 };
+    }
+    /// <summary>An AM&amp;R work of Division A (the head of work A) with no sanction and no demand line.</summary>
+    private async Task<int> AmrWorkAsync(string desc)
+    {
+        var (c, tx) = await _w.BeginAsync(_w.DivisionA, "WORKS_ENTER");
+        await using var _ = c;
+        await using var cmd = new NpgsqlCommand(
+            "INSERT INTO budget.work (work_code, division_id, work_desc, user_code, work_class, entered_via, pre_ddd, " +
+            "major_acc_code, sub_major_acc_code, minor_acc_code, sub_minor_acc_code, detail_acc_code, object_acc_code, " +
+            "original_budget, revised_budget, proposed_budget, remarks) " +
+            $"SELECT NULL, division_id, '{desc}', 'T', 'AMR', 'LEGACY_OPENING', false, major_acc_code, sub_major_acc_code, " +
+            "minor_acc_code, sub_minor_acc_code, detail_acc_code, object_acc_code, '', '', '', '' " +
+            $"FROM budget.work WHERE id = {_w.WorkAId} RETURNING id", c, tx);
+        var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+        await tx.CommitAsync();
+        return id;
+    }
+    private async Task<long?> LineWorkAsync(int workId)
+    {
+        await using var ctx = _w.NewContext();
+        await using var tx = await new BudgetActionScope(ctx, _w.DivisionA).BeginAsync("WORKS_ENTER");
+        var work = await ctx.Works.SingleAsync(w => w.Id == workId);
+        var id = await DemandLineWrites.AddWorkLineIfOpenAsync(ctx, _w.DivisionA.Actor!.OfficeId, work, _w.AccountCodeId);
+        await tx.CommitAsync();
+        return id;
+    }
+    private async Task<List<long>> LiveLinesOfWorkAsync(int workId)
+    {
+        await using var ctx = _w.NewContext();
+        return await ctx.DemandLines.Where(l => l.WorkId == workId && !l.IsDeleted).Select(l => l.DemandLineId).ToListAsync();
+    }
+    private async Task<Response<List<AmrWorkCandidateDto>>> CandidatesAsync(FakeBudgetActorSource actor)
+    {
+        await using var ctx = _w.NewContext();
+        return await new GetAmrWorkCandidatesHandler(ctx, actor, Rules(ctx)).Handle(new GetAmrWorkCandidatesQuery(), default);
     }
 
     private async Task<Response<int>> ReviseAsync(long id, decimal amount, string number, IFinancialAccountingGateway? fa = null)
@@ -194,6 +237,81 @@ public sealed class TechnicalSanctionTests(BudgetDatabaseFixture fixture) : IAsy
         (await CreateAsync(Aa(100, "TS/Y"), _w.Circle)).MessageId.Should().Be(BudgetMessages.M20);
     }
 
+    [Fact]
+    public async Task AMR_work_candidates_are_the_Division_AMR_works_without_a_sanction()
+    {
+        var amr = await AmrWorkAsync("AMR open");
+        var sanctioned = await CreateFullAsync(Amr(100, "TS/C1"));
+        sanctioned.IsSucced.Should().BeTrue(sanctioned.Message);
+        var rows = (await CandidatesAsync(_w.DivisionA)).Data!;
+        // not work A (AA class), not the sanctioned AM&R work (BUD-274), nothing of Division B
+        rows.Should().ContainSingle().Which.Should().Match<AmrWorkCandidateDto>(c =>
+            c.WorkId == amr && c.NameOfWork == "AMR open" && c.AccountCodeId == _w.AccountCodeId && c.HeadDesc == "Test head"
+            && c.DemandProposalId == null);
+        (await LineWorkAsync(amr)).Should().NotBeNull();
+        (await CandidatesAsync(_w.DivisionA)).Data!.Single().DemandProposalId.Should().Be(_w.WorksProposalAId);
+        (await CandidatesAsync(_w.DivisionB)).Data!.Should().BeEmpty("Division B has no AM&R work");
+        (await CandidatesAsync(_w.Circle)).MessageId.Should().Be(BudgetMessages.M20);
+    }
+    [Fact]
+    public async Task AMR_sanction_with_a_new_work_adds_the_demand_line_at_S01()
+    {
+        var r = await CreateFullAsync(Amr(5000, "TS/L1"));
+        r.IsSucced.Should().BeTrue(r.Message);
+        r.Data!.DemandLineId.Should().NotBeNull();
+        await using var ctx = _w.NewContext();
+        var line = await ctx.DemandLines.SingleAsync(l => l.DemandLineId == r.Data.DemandLineId);
+        line.ProposalId.Should().Be(_w.WorksProposalAId);
+        line.WorkId.Should().Be(r.Data.WorkId);
+        line.LineType.Should().Be("WORK");
+        line.AccountCodeId.Should().Be(_w.AccountCodeId);
+        (await ctx.Works.SingleAsync(w => w.Id == r.Data.WorkId)).WorkClass.Should().Be(WorkClass.Amr);
+    }
+    [Fact]
+    public async Task AMR_sanction_with_an_existing_work_adds_the_line_unless_already_lined()
+    {
+        var unlined = await AmrWorkAsync("AMR unlined");
+        var a = await CreateFullAsync(Amr(100, "TS/E1", unlined));
+        a.IsSucced.Should().BeTrue(a.Message);
+        (await LiveLinesOfWorkAsync(unlined)).Should().Equal(a.Data!.DemandLineId!.Value);
+        var lined = await AmrWorkAsync("AMR lined");
+        var existing = await LineWorkAsync(lined);
+        var b = await CreateFullAsync(Amr(100, "TS/E2", lined));
+        b.IsSucced.Should().BeTrue(b.Message);
+        b.Data!.DemandLineId.Should().BeNull("the work is already lined");
+        (await LiveLinesOfWorkAsync(lined)).Should().Equal(existing!.Value);
+    }
+    [Fact]
+    public async Task AMR_sanction_adds_no_line_when_the_demand_is_not_at_S01_or_S04()
+    {
+        // Submit S-01 → S-02 with its movement row (DB-10), as BudgetP1ProposalSpineTests.
+        var (c, tx) = await _w.BeginAsync(_w.DivisionA, "SUBMIT");
+        await using (c)
+        {
+            await using (var m = new NpgsqlCommand(
+                "INSERT INTO budget.proposal_movement (proposal_id, from_state, action_code, to_state, from_office_id, to_office_id, role_code, client_ip) " +
+                $"VALUES ({_w.WorksProposalAId}, 'S-01', 'SUBMIT', 'S-02', {_w.DivisionAOfficeId}, {_w.CircleOfficeId}, 'DDO', '192.0.2.1')", c, tx))
+                await m.ExecuteNonQueryAsync();
+            await using (var u = new NpgsqlCommand(
+                $"UPDATE budget.proposal SET state_code = 'S-02', holder_office_id = {_w.CircleOfficeId} WHERE proposal_id = {_w.WorksProposalAId}", c, tx))
+                await u.ExecuteNonQueryAsync();
+            await tx.CommitAsync();
+        }
+        var r = await CreateFullAsync(Amr(100, "TS/N1"));
+        r.IsSucced.Should().BeTrue(r.Message);
+        r.Data!.DemandLineId.Should().BeNull();
+        (await LiveLinesOfWorkAsync(r.Data.WorkId)).Should().BeEmpty();
+    }
+    [Fact]
+    public async Task AA_tab_sanction_adds_no_demand_line()
+    {
+        var before = await LiveLinesOfWorkAsync(_w.WorkAId);
+        var r = await CreateFullAsync(Aa(500, "TS/AA1"));
+        r.IsSucced.Should().BeTrue(r.Message);
+        r.Data!.DemandLineId.Should().BeNull();
+        r.Data.WorkId.Should().Be(_w.WorkAId);
+        (await LiveLinesOfWorkAsync(_w.WorkAId)).Should().Equal(before);
+    }
     [Fact]
     public void Routes_carry_F06_Enter_and_Budget_View()
     {

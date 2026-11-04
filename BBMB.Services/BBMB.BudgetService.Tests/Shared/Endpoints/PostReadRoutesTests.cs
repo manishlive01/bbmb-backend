@@ -66,6 +66,7 @@ public sealed class PostReadRoutesTests
         // Existing-work pickers (no duplicate work rows): demand grid and F-03 "existing work" mode.
         { "/api/budget-proposals/work-candidates", "BudgetRight:F07.Enter" },
         { "/api/admin-approvals/work-candidates", "BudgetRight:F03.Enter" },
+        { "/api/technical-sanctions/work-candidates", "BudgetRight:F06.Enter" },
     };
     [Theory]
     [MemberData(nameof(PostReads))]
